@@ -590,7 +590,7 @@ const stTag = d => html`<span class="st st-${String(d).split(' ')[0]}">${d}</spa
 /* ---------- veri katmanı + Supabase Realtime ---------- */
 const PRONTO_SUPABASE_URL = 'https://yxkaohidodevfwzfbkol.supabase.co';
 const PRONTO_SUPABASE_KEY = 'sb_publishable_uTYai05b_mn_nuzo6stHBA_F-VCWYNi';
-const cloudSyncKeys = new Set(['cariler','personeller','urunler','teklifler','odemeler','odeme_yontemleri','settings','seq','menu_collapsed']);
+const cloudSyncKeys = new Set(['cariler','personeller','urunler','teklifler','odemeler','odeme_yontemleri','settings','seq','menu_collapsed','security_pins']);
 const cloud = { client:null, userId:null, ready:false, applying:false, timer:null, pending:new Set(), channel:null, renderTimer:null };
 try { if (window.supabase?.createClient) cloud.client = window.supabase.createClient(PRONTO_SUPABASE_URL, PRONTO_SUPABASE_KEY, { auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false} }); } catch (_) {}
 const tableRegistry = new Map();
@@ -602,7 +602,25 @@ async function flushCloudSync() {
   const {error}=await cloud.client.from('pronto_v24_state').upsert(rows,{onConflict:'key'});
   if(error) { console.warn('PRONTO cloud sync:',error.message); keys.forEach(k=>cloud.pending.add(k)); }
 }
-function applyCloudValue(key,value) { cloud.applying=true; try { localStorage.setItem('pt_'+key,JSON.stringify(value)); tableRegistry.get(key)?.invalidate?.(value); } finally { cloud.applying=false; } }
+function applyCloudValue(key,value) {
+  cloud.applying=true;
+  try {
+    if (key === 'security_pins') {
+      const cur = Store.get('security', null);
+      const base = cur && typeof cur === 'object' ? cur : { lock:{login:{fails:0,until:0},settings:{fails:0,until:0}}, devices:[] };
+      if (value?.login?.salt && value?.login?.hash) base.login = value.login;
+      if (value?.settings?.salt && value?.settings?.hash) base.settings = value.settings;
+      if (!base.lock) base.lock={login:{fails:0,until:0},settings:{fails:0,until:0}};
+      if (!base.lock.login) base.lock.login={fails:0,until:0};
+      if (!base.lock.settings) base.lock.settings={fails:0,until:0};
+      if (!Array.isArray(base.devices)) base.devices=[];
+      localStorage.setItem('pt_security',JSON.stringify(base));
+      return;
+    }
+    localStorage.setItem('pt_'+key,JSON.stringify(value));
+    tableRegistry.get(key)?.invalidate?.(value);
+  } finally { cloud.applying=false; }
+}
 async function initCloudSync() {
   if (!cloud.client) return false;
   try {
@@ -611,6 +629,12 @@ async function initCloudSync() {
     cloud.userId=session?.user?.id||null; if(!cloud.userId) throw new Error('Supabase oturumu alınamadı');
     const {data,error}=await cloud.client.from('pronto_v24_state').select('key,payload,updated_by,updated_at'); if(error) throw error;
     const remote=new Map((data||[]).map(r=>[r.key,r])); const localKeys=[...cloudSyncKeys];
+    // Mevcut V24'lerde PIN güvenliği daha önce yalnızca localStorage'da tutulduysa,
+    // ilk bağlantıda yalnızca PIN hash/salt bilgisini buluta tek seferlik aktar.
+    const localSec=Store.get('security',null);
+    if (!remote.has('security_pins') && localSec?.login?.salt && localSec?.login?.hash && localSec?.settings?.salt && localSec?.settings?.hash) {
+      cloud.pending.add('security_pins');
+    }
     const localHasData=localKeys.some(k=>{const v=Store.get(k,null);return Array.isArray(v)?v.length>0:(v&&typeof v==='object'?Object.keys(v).length>0:v!=null);});
     if((data||[]).length) { for(const [key,row] of remote) if(cloudSyncKeys.has(key)) applyCloudValue(key,row.payload); for(const key of localKeys) if(!remote.has(key) && Store.get(key,null)!=null) cloud.pending.add(key); await flushCloudSync(); }
     else if(localHasData) { localKeys.forEach(k=>{if(Store.get(k,null)!=null) cloud.pending.add(k);}); }
@@ -686,7 +710,13 @@ async function hashPin(pin, salt) {
   return hex(await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: e.encode(salt), iterations: 150000, hash: 'SHA-256' }, k, 256));
 }
 const getSec = () => Store.get('security', null);
-const saveSec = s => Store.set('security', s);
+const saveSec = s => {
+  const ok = Store.set('security', s);
+  if (ok && !cloud.applying && s?.login?.salt && s?.login?.hash && s?.settings?.salt && s?.settings?.hash) {
+    Store.set('security_pins', { login:s.login, settings:s.settings });
+  }
+  return ok;
+};
 async function verifyPin(kind, pin) {
   const s = getSec(); const L = s.lock[kind];
   if (L.until > Date.now()) return { ok: false, locked: L.until };

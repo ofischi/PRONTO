@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; connect-src 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; connect-src 'self' https://yxkaohidodevfwzfbkol.supabase.co wss://yxkaohidodevfwzfbkol.supabase.co">
 <title>PRONTO SİPARİŞ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -500,6 +500,7 @@ body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;bac
 <div id="app" class="app"></div>
 <div id="toasts" class="toasts" aria-live="polite"></div>
 <div id="print-root"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 'use strict';
 /* =====================================================================
@@ -586,21 +587,60 @@ const ULKELER = ['Türkiye','ABD','Afganistan','Almanya','Arnavutluk','Arjantin'
 const DURUMLAR = ['Beklemede','Üretimde','Sevkiyata Hazır','Teslim Edildi','İptal'];
 const stTag = d => html`<span class="st st-${String(d).split(' ')[0]}">${d}</span>`;
 
-/* ---------- veri katmanı ---------- */
+/* ---------- veri katmanı + Supabase Realtime ---------- */
+const PRONTO_SUPABASE_URL = 'https://yxkaohidodevfwzfbkol.supabase.co';
+const PRONTO_SUPABASE_KEY = 'sb_publishable_uTYai05b_mn_nuzo6stHBA_F-VCWYNi';
+const cloudSyncKeys = new Set(['cariler','personeller','urunler','teklifler','odemeler','odeme_yontemleri','settings','seq','menu_collapsed']);
+const cloud = { client:null, userId:null, ready:false, applying:false, timer:null, pending:new Set(), channel:null, renderTimer:null };
+try { if (window.supabase?.createClient) cloud.client = window.supabase.createClient(PRONTO_SUPABASE_URL, PRONTO_SUPABASE_KEY, { auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false} }); } catch (_) {}
+const tableRegistry = new Map();
+function queueCloudSync(key) { if (!cloud.ready || cloud.applying || !cloudSyncKeys.has(key)) return; cloud.pending.add(key); clearTimeout(cloud.timer); cloud.timer=setTimeout(flushCloudSync,180); }
+async function flushCloudSync() {
+  if (!cloud.ready || !cloud.client || !cloud.pending.size) return;
+  const keys=[...cloud.pending]; cloud.pending.clear();
+  const rows=keys.map(key=>({key,payload:Store.get(key,null),updated_by:cloud.userId,updated_at:new Date().toISOString()}));
+  const {error}=await cloud.client.from('pronto_v24_state').upsert(rows,{onConflict:'key'});
+  if(error) { console.warn('PRONTO cloud sync:',error.message); keys.forEach(k=>cloud.pending.add(k)); }
+}
+function applyCloudValue(key,value) { cloud.applying=true; try { localStorage.setItem('pt_'+key,JSON.stringify(value)); tableRegistry.get(key)?.invalidate?.(value); } finally { cloud.applying=false; } }
+async function initCloudSync() {
+  if (!cloud.client) return false;
+  try {
+    let session=(await cloud.client.auth.getSession()).data.session;
+    if(!session) { const r=await cloud.client.auth.signInAnonymously(); if(r.error) throw r.error; session=r.data.session; }
+    cloud.userId=session?.user?.id||null; if(!cloud.userId) throw new Error('Supabase oturumu alınamadı');
+    const {data,error}=await cloud.client.from('pronto_v24_state').select('key,payload,updated_by,updated_at'); if(error) throw error;
+    const remote=new Map((data||[]).map(r=>[r.key,r])); const localKeys=[...cloudSyncKeys];
+    const localHasData=localKeys.some(k=>{const v=Store.get(k,null);return Array.isArray(v)?v.length>0:(v&&typeof v==='object'?Object.keys(v).length>0:v!=null);});
+    if((data||[]).length) { for(const [key,row] of remote) if(cloudSyncKeys.has(key)) applyCloudValue(key,row.payload); for(const key of localKeys) if(!remote.has(key) && Store.get(key,null)!=null) cloud.pending.add(key); await flushCloudSync(); }
+    else if(localHasData) { localKeys.forEach(k=>{if(Store.get(k,null)!=null) cloud.pending.add(k);}); }
+    cloud.ready=true; await flushCloudSync();
+    cloud.channel=cloud.client.channel('pronto-v24-state').on('postgres_changes',{event:'*',schema:'public',table:'pronto_v24_state'},payload=>{
+      const row=payload.new||payload.old; if(!row||!cloudSyncKeys.has(row.key)||row.updated_by===cloud.userId) return;
+      applyCloudValue(row.key,row.payload);
+      if(state?.view && state.view!=='teklifForm') { clearTimeout(cloud.renderTimer); cloud.renderTimer=setTimeout(()=>{ try { go(state.view,state.params); } catch(_){} },60); }
+      toast('Başka bir cihazda değişiklik yapıldı. Ekran güncellendi.','ok');
+    }).subscribe();
+    return true;
+  } catch(error) { console.warn('PRONTO Supabase bağlantısı kullanılamıyor:',error?.message||error); return false; }
+}
 const Store = {
   get(k, d) { try { const v = localStorage.getItem('pt_' + k); return v ? JSON.parse(v) : d; } catch { return d; } },
-  set(k, v) { try { localStorage.setItem('pt_' + k, JSON.stringify(v)); return true; } catch { toast('Depolama alanı doldu. Fotoğrafları azaltın veya küçültün.', 'err'); return false; } },
+  set(k, v) { try { localStorage.setItem('pt_' + k, JSON.stringify(v)); queueCloudSync(k); return true; } catch { toast('Depolama alanı doldu. Fotoğrafları azaltın veya küçültün.', 'err'); return false; } },
+  applyRemote(k,v){ applyCloudValue(k,v); },
   seq(n) { const s = this.get('seq', {}); s[n] = (s[n] || 0) + 1; this.set('seq', s); return s[n]; }
 };
 function Table(name) {
   let cache = null;
-  return {
+  const table={
     all() { if (!cache) cache = Store.get(name, []); return cache; },
     save(rows) { if (Store.set(name, rows)) { cache = rows; return true; } return false; },
     find(id) { return this.all().find(r => r.id === id); },
     upsert(row) { const rows = [...this.all()]; const i = rows.findIndex(r => r.id === row.id); if (i >= 0) rows[i] = row; else rows.push(row); return this.save(rows); },
-    remove(id) { return this.save(this.all().filter(r => r.id !== id)); }
+    remove(id) { return this.save(this.all().filter(r => r.id !== id)); },
+    invalidate(value) { cache = Array.isArray(value) ? value : null; }
   };
+  tableRegistry.set(name,table); return table;
 }
 const DB = { cari: Table('cariler'), personel: Table('personeller'), urun: Table('urunler'), teklif: Table('teklifler'), odeme: Table('odemeler'), yontem: Table('odeme_yontemleri') };
 const PHOTO_DB_NAME = 'pronto_photo_store_v1';
@@ -2024,6 +2064,8 @@ function seed() {
 }
 async function boot() {
   applyTheme();
+  // Ortak V24 verisini Supabase'den yükle ve Realtime kanalını aç.
+  await initCloudSync();
   // Fotoğrafları localStorage'dan IndexedDB'ye taşıyarak kota sorununu çözer.
   await initPhotoStore();
   if (!window.crypto?.subtle) { mount(app, html`<div class="empty" style="margin:auto"><b>Güvenli bağlantı gerekli</b>PRONTO SİPARİŞ'i HTTPS üzerinden veya doğrudan dosya olarak açın.</div>`); return; }

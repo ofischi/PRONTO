@@ -37,6 +37,7 @@ svg.i{width:18px;height:18px;flex-shrink:0;fill:none;stroke:currentColor;stroke-
 .ham:hover{color:var(--text);background:var(--hover)}
 .brand{display:flex;flex-direction:column;align-items:flex-start;gap:6px;user-select:none;-webkit-user-select:none;touch-action:none;position:relative;padding:4px 2px;border-radius:var(--r-sm);-webkit-touch-callout:none}
 .brand img,.brand .mark{height:var(--logo-size);max-width:100%;object-fit:contain}
+.brand img{pointer-events:none} .pin-card .pin-logo{pointer-events:none}
 .mark{aspect-ratio:1;display:grid;place-items:center;border-radius:11px;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 95%,#fff),color-mix(in srgb,var(--accent) 70%,#000));color:#1b1407;font-weight:800;font-size:calc(var(--logo-size)*.5)}
 .brand-text{font-size:var(--brand-size);font-weight:var(--brand-weight);color:var(--brand-color);letter-spacing:.14em}
 .nav{flex:1;padding:8px 10px;display:flex;flex-direction:column;gap:3px;overflow-y:auto;overflow-x:hidden}
@@ -217,8 +218,8 @@ img.thumb{cursor:zoom-in}
 @media (max-width:560px){.ov{padding:8px;align-items:end}.mdl{max-height:calc(100dvh - 16px)}}
 .pin-ov{z-index:80;background:rgba(18,20,24,.22);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);place-items:center;padding:16px}
 .pin-card{width:min(360px,calc(100vw - 32px));padding:40px 32px 34px;border-radius:24px;background:#fff;border:1px solid rgba(28,28,30,.08);box-shadow:0 18px 50px rgba(20,24,32,.16);text-align:center;animation:zoom .2s ease;color:#252525}
-.pin-card .pin-logo{width:248px;height:68px;object-fit:contain;display:block;margin:0 auto 24px;border-radius:12px}
-.pin-card .mark{width:248px;height:68px;margin:0 auto 24px;border-radius:12px}
+.pin-card .pin-logo{width:248px;height:68px;object-fit:contain;display:block;margin:0 auto 24px;border-radius:12px;background:#000}
+.pin-card .mark{width:248px;height:68px;margin:0 auto 24px;border-radius:12px;background:#000;color:#fff}
 .pin-card h3{font-size:23px;line-height:1.2;font-weight:700;margin:0;color:#252525;letter-spacing:-.3px}
 .pin-card p{margin:8px 0 20px;min-height:18px;font-size:15px;color:#747474}
 .pin-entry{width:100%;height:52px;border:1px solid #dedede;border-radius:12px;background:#fff;color:#333;text-align:center;font-size:17px;outline:none;box-sizing:border-box;transition:border-color .15s,box-shadow .15s}
@@ -591,7 +592,7 @@ const stTag = d => html`<span class="st st-${String(d).split(' ')[0]}">${d}</spa
 const PRONTO_SUPABASE_URL = 'https://yxkaohidodevfwzfbkol.supabase.co';
 const PRONTO_SUPABASE_KEY = 'sb_publishable_uTYai05b_mn_nuzo6stHBA_F-VCWYNi';
 const cloudSyncKeys = new Set(['cariler','personeller','urunler','teklifler','odemeler','odeme_yontemleri','settings','seq','menu_collapsed','security_pins']);
-const cloud = { client:null, userId:null, ready:false, applying:false, timer:null, pending:new Set(), channel:null, renderTimer:null, error:null };
+const cloud = { client:null, userId:null, ready:false, applying:false, timer:null, pending:new Set(), channel:null, renderTimer:null, pollTimer:null, error:null, remoteVersions:new Map() };
 try { if (window.supabase?.createClient) cloud.client = window.supabase.createClient(PRONTO_SUPABASE_URL, PRONTO_SUPABASE_KEY, { auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false} }); } catch (_) {}
 const tableRegistry = new Map();
 function queueCloudSync(key) { if (!cloud.ready || cloud.applying || !cloudSyncKeys.has(key)) return; cloud.pending.add(key); clearTimeout(cloud.timer); cloud.timer=setTimeout(flushCloudSync,180); }
@@ -649,12 +650,45 @@ async function initCloudSync() {
       localKeys.forEach(k=>{if(Store.get(k,null)!=null) cloud.pending.add(k);});
     }
     cloud.ready=true; await flushCloudSync();
-    cloud.channel=cloud.client.channel('pronto-v24-state').on('postgres_changes',{event:'*',schema:'public',table:'pronto_v24_state'},payload=>{
-      const row=payload.new||payload.old; if(!row||!cloudSyncKeys.has(row.key)||row.updated_by===cloud.userId) return;
+    // İlk açılıştaki sürümleri kaydet. Böylece sadece gerçekten yeni bir uzak değişiklik geldiğinde ekran yenilenir.
+    for(const [key,row] of remote) if(cloudSyncKeys.has(key)) cloud.remoteVersions.set(key,row.updated_at||'');
+
+    const refreshFromRemote = (row) => {
+      if(!row || !cloudSyncKeys.has(row.key) || row.updated_by===cloud.userId) return false;
+      const ver=row.updated_at||'';
+      if(ver && cloud.remoteVersions.get(row.key)===ver) return false;
+      cloud.remoteVersions.set(row.key,ver);
       applyCloudValue(row.key,row.payload);
-      if(state?.view && state.view!=='teklifForm') { clearTimeout(cloud.renderTimer); cloud.renderTimer=setTimeout(()=>{ try { go(state.view,state.params); } catch(_){} },60); }
-      toast('Başka bir cihazda değişiklik yapıldı. Ekran güncellendi.','ok');
+      return true;
+    };
+    const scheduleRemoteRender = () => {
+      // Kullanıcı form doldururken formu yeniden çizip girdiği alanları silme.
+      if(!state?.view || state.view==='teklifForm') return;
+      clearTimeout(cloud.renderTimer);
+      cloud.renderTimer=setTimeout(()=>{ try { go(state.view,state.params); } catch(_){} },30);
+    };
+
+    // Realtime ana kanal. Supabase dokümantasyonundaki postgres_changes akışını kullanır.
+    cloud.channel=cloud.client.channel('pronto-v24-state').on('postgres_changes',{event:'*',schema:'public',table:'pronto_v24_state'},payload=>{
+      if(refreshFromRemote(payload.new||payload.old)) scheduleRemoteRender();
     }).subscribe();
+
+    // Realtime bağlantısı tarayıcı/ağ tarafından kesilirse sayfa yenilemeye gerek kalmaması için
+    // 1 saniyelik hafif bir senkronizasyon yedeği kullanılır. Değişiklik bulunduğunda ekran otomatik güncellenir.
+    const pollRemote = async () => {
+      if(!cloud.ready || !cloud.client || cloud.applying) return;
+      try {
+        const {data,error}=await cloud.client.from('pronto_v24_state').select('key,payload,updated_by,updated_at');
+        if(error) return;
+        let changed=false;
+        for(const row of (data||[])) if(refreshFromRemote(row)) changed=true;
+        if(changed) scheduleRemoteRender();
+      } catch(_) {}
+    };
+    clearInterval(cloud.pollTimer);
+    pollRemote();
+    cloud.pollTimer=setInterval(pollRemote,300);
+
     cloud.error=null;
     return true;
   } catch(error) {
@@ -831,7 +865,7 @@ function picker({ title, options, value, onPick, addLabel, onAdd }) {
 function pinPad({ title, sub = '', lockKind = null, cancellable = true, submit, onCancel }) {
   const ov = document.createElement('div'); ov.className = 'ov pin-ov';
   mount(ov, html`<div class="pin-card" role="dialog" aria-modal="true" aria-label="${title}">
-    ${safeImg(S.logo) ? html`<img class="pin-logo" src="${safeImg(S.logo)}" alt="Ofischi Premium">` : html`<div class="mark">P</div>`}
+    ${safeImg(S.logo) ? html`<img class="pin-logo" src="${safeImg(S.logo)}" alt="">` : html`<div class="mark">P</div>`}
     <h3>${title}</h3><p>${sub}</p>
     <input class="pin-entry" type="password" inputmode="numeric" autocomplete="one-time-code" maxlength="4" placeholder="Parola" aria-label="${title} parolası">
     <div class="pin-msg" aria-live="assertive"></div>
@@ -915,7 +949,7 @@ const NAV = [['teklifler','Teklifler','doc'],['musteriler','Müşteriler','users
 function renderShell() {
   mount(app, html`<aside class="side" id="side" aria-label="Ana menü">
     <div class="side-top"><button class="ham" data-act="toggleMenu" aria-label="Menüyü aç/kapat">${I('menu')}</button>
-      <div class="brand" id="brand" title="Ayarlar için 3 saniye basılı tutun">${brandInner()}</div></div>
+      <div class="brand" id="brand" title="">${brandInner()}</div></div>
     <nav class="nav" id="nav">${NAV.map(([v, l, ic]) => html`<button class="nav-item" data-act="nav" data-v="${v}" data-tip="${l}">${I(ic)}<span class="lbl">${l}</span></button>`)}</nav>
     <div class="side-bot">
       <button class="nav-item" data-act="toggleTheme" data-tip="Karanlık Mod">${I('moon')}<span class="lbl">Karanlık Mod</span><span class="tgl ${document.documentElement.dataset.theme === 'dark' ? 'on' : ''}" id="tgl"></span></button>
@@ -923,7 +957,7 @@ function renderShell() {
     </div></aside><div class="backdrop" data-act="closeMenu"></div><main class="main" id="main"></main>`);
   bindBrand(); bindTips(); if (Store.get('menu_collapsed', false) && innerWidth >= 1100) $('#side').classList.add('collapsed');
 }
-function brandInner() { const s = safeImg(S.logo); return html`${s ? html`<img src="${s}" alt="Logo">` : html`<div class="mark">P</div>`}<div class="brand-text">PRONTO SİPARİŞ</div>`; }
+function brandInner() { const s = safeImg(S.logo); return html`${s ? html`<img src="${s}" alt="">` : html`<div class="mark">P</div>`}<div class="brand-text">PRONTO SİPARİŞ</div>`; }
 function markNav() { $$('#nav .nav-item').forEach(b => b.classList.toggle('active', navOf(state.view) === b.dataset.v)); }
 const navOf = v => ({ teklifler:'teklifler', teklifForm:'teklifler', teklifDetay:'teklifler', musteriler:'musteriler', musteriDetay:'musteriler', personeller:'personeller', personelDetay:'personeller', urunler:'urunler', raporlar:'raporlar' }[v] || '');
 function bindBrand() {

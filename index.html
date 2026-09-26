@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; connect-src 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; connect-src 'self' https://ehdoledrfdoluixohypp.supabase.co">
 <title>PRONTO SİPARİŞ</title>
-<meta name="pronto-version" content="V111">
+<meta name="pronto-version" content="V112">
 <meta name="pronto-local-engine" content="offline-first-backup-conflict">
 <meta name="pronto-sidebar" content="fixed-no-hamburger">
 <meta name="pronto-theme" content="per-device-local-only">
@@ -642,13 +642,73 @@ const DURUMLAR = ['Beklemede','Üretimde','Sevkiyata Hazır','Teslim Edildi','İ
 const stTag = d => html`<span class="st st-${String(d).split(' ')[0]}">${d}</span>`;
 
 /* ---------- veri katmanı ---------- */
-/* V111: yerel/offline-first çekirdek. Merkezi Supabase + Realtime daha sonra ayrı katman olarak eklenecek. */
+/* V112: yerel/offline-first çekirdek korunur. Supabase bağlantısı ilk aşamada yalnızca READ-ONLY teşhis katmanıdır. */
+const PRONTO_SUPABASE_V112_URL = 'https://ehdoledrfdoluixohypp.supabase.co';
+const PRONTO_SUPABASE_V112_KEY = 'sb_publishable_S20ikh0v3D0AFjY-zX6p8Q_aHATfRxW';
+
+async function prontoSupabaseReadV112(table, select = '*', limit = 1) {
+  const url =
+    `${PRONTO_SUPABASE_V112_URL}/rest/v1/${table}` +
+    `?select=${encodeURIComponent(select)}&limit=${encodeURIComponent(limit)}`;
+
+  const res = await fetch(url, {
+    method: 'GET',
+    headers: {
+      apikey: PRONTO_SUPABASE_V112_KEY,
+      Authorization: `Bearer ${PRONTO_SUPABASE_V112_KEY}`
+    },
+    cache: 'no-store'
+  });
+
+  if (!res.ok) {
+    const txt = await res.text().catch(() => '');
+    throw new Error(`${table}: HTTP ${res.status}${txt ? ` ${txt}` : ''}`);
+  }
+  return res.json();
+}
+
+async function testSupabaseV112ReadOnly() {
+  const result = {
+    ok: false,
+    project: PRONTO_SUPABASE_V112_URL,
+    mode: 'read-only',
+    tables: {}
+  };
+
+  try {
+    const checks = [
+      ['customers', 'id,name'],
+      ['orders', 'id,status'],
+      ['products', 'id,name'],
+      ['suppliers', 'id,name'],
+      ['stock_movements', 'id']
+    ];
+
+    for (const [table, select] of checks) {
+      const rows = await prontoSupabaseReadV112(table, select, 1);
+      result.tables[table] = { ok: true, rows: rows.length };
+    }
+
+    result.ok = true;
+    console.info('[PRONTO V112] Supabase READ OK', result);
+  } catch (err) {
+    result.error = err?.message || String(err);
+    console.error('[PRONTO V112] Supabase READ ERROR', result);
+  }
+
+  return result;
+}
+
+window.PRONTOSupabaseV112 = {
+  read: prontoSupabaseReadV112,
+  testReadOnly: testSupabaseV112ReadOnly
+};
 
 const tableRegistry = new Map();
 const PRONTO_LOCAL_THEME_KEY = 'pronto_theme_local_v110';
 
 /* ---------- PRONTO V111: Offline-first / Backup / Conflict Engine ---------- */
-const PRONTO_LOCAL_ENGINE_VERSION = 'V111';
+const PRONTO_LOCAL_ENGINE_VERSION = 'V112';
 const PRONTO_DEVICE_ID_KEY = 'pronto_device_id_v111';
 const PRONTO_LOCAL_DB = 'pronto_local_engine_v111';
 const PRONTO_LOCAL_DB_VERSION = 1;
@@ -2529,6 +2589,8 @@ function seed() {
   DB.yontem.save(['Nakit', 'Havale', 'Kart', 'Çek'].map((ad, i) => ({ id: uid(), ad, aciklama: '', sira: i })));
 }
 async function boot() {
+  // V112 ilk aşama: yalnızca Supabase erişimini teşhis et; yerel veri akışına dokunma.
+  testSupabaseV112ReadOnly().catch(() => {});
   applyTheme();
   await initPhotoStore();
   if (!window.crypto?.subtle) { mount(app, html`<div class="empty" style="margin:auto"><b>Güvenli bağlantı gerekli</b>PRONTO SİPARİŞ'i HTTPS üzerinden veya doğrudan dosya olarak açın.</div>`); return; }

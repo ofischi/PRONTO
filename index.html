@@ -674,7 +674,7 @@ async function initCloudSync() {
     }).subscribe();
 
     // Realtime bağlantısı tarayıcı/ağ tarafından kesilirse sayfa yenilemeye gerek kalmaması için
-    // 1 saniyelik hafif bir senkronizasyon yedeği kullanılır. Değişiklik bulunduğunda ekran otomatik güncellenir.
+    // Realtime kesilirse hafif bir senkronizasyon yedeği kullanılır. Değişiklik bulunduğunda ekran otomatik güncellenir.
     const pollRemote = async () => {
       if(!cloud.ready || !cloud.client || cloud.applying) return;
       try {
@@ -687,7 +687,7 @@ async function initCloudSync() {
     };
     clearInterval(cloud.pollTimer);
     pollRemote();
-    cloud.pollTimer=setInterval(pollRemote,300);
+    cloud.pollTimer=setInterval(pollRemote,5000);
 
     cloud.error=null;
     return true;
@@ -1472,7 +1472,7 @@ VIEWS.teklifDetay = (main, { id, tab = 'urunler' }) => {
   const c = calc(t, pays), cs = t.cariSnap, pct = c.genel ? Math.min(100, c.pes / c.genel * 100) : 0;
   mount(main, html`<div class="page detail"><div class="ph"><div class="ph-l"><button class="btn icon" data-act="nav" data-v="teklifler" aria-label="Geri">${I('back')}</button>
       <div><h1 style="display:flex;gap:10px;align-items:center">Teklif ${t.no} ${stTag(t.durum)}</h1><div class="muted sm">${cs.unvan}</div></div></div>
-    <div class="ph-act"><button class="btn" data-act="editTeklif" data-id="${t.id}">${I('edit')} Düzenle</button><button class="btn" data-act="pdf" data-id="${t.id}">${I('pdf')} PDF</button><button class="btn" data-act="pdf" data-id="${t.id}">${I('print')} Yazdır</button><button class="btn icon" data-act="rowMenu" data-id="${t.id}" aria-label="Diğer">${I('dots')}</button></div></div>
+    <div class="ph-act"><button class="btn" data-act="editTeklif" data-id="${t.id}">${I('edit')} Düzenle</button><button class="btn" data-act="pdf" data-id="${t.id}">${I('pdf')} PDF</button><button class="btn" data-act="printTeklif" data-id="${t.id}">${I('print')} Yazdır</button><button class="btn icon" data-act="rowMenu" data-id="${t.id}" aria-label="Diğer">${I('dots')}</button></div></div>
     <div class="dgrid">
       <div class="card"><div class="card-h"><h3>Müşteri</h3></div><dl class="kv"><dt>Ünvan</dt><dd>${cs.unvan}</dd><dt>Telefon</dt><dd>${cs.gsm || '—'}</dd><dt>E-posta</dt><dd>${cs.eposta || '—'}</dd><dt>Adres</dt><dd>${[cs.adres, cs.ilce, cs.sehir, cs.ulke].filter(Boolean).join(', ')}</dd></dl></div>
       <div class="card"><div class="card-h"><h3>Teklif</h3></div><dl class="kv"><dt>Teklif Tarihi</dt><dd>${fmtDate(t.tarih)}</dd><dt>Teslim Tarihi</dt><dd>${fmtDate(t.teslim)}</dd><dt>Döviz</dt><dd>${t.doviz}</dd><dt>Personel</dt><dd>${t.personelAd}</dd>
@@ -1501,6 +1501,11 @@ VIEWS.teklifDetay = (main, { id, tab = 'urunler' }) => {
 A.dTab = el => go('teklifDetay', { id: el.dataset.id, tab: el.dataset.t });
 A.editTeklif = el => go('teklifForm', { id: el.dataset.id });
 A.pdf = el => pdfPreview(el.dataset.id);
+A.printTeklif = el => {
+  const t = DB.teklif.find(el.dataset.id); if (!t) return;
+  const o = { ...S.pdf, ...(Store.get('pdf_last', null) || {}) };
+  printHTML(pdfDoc(t, o), pageCss(o.size, o.orient, (PL[o.lang] || PL.tr).sayfa));
+};
 A.totDetail = el => { const t = DB.teklif.find(el.dataset.id); const c = calc(t, payMap()[t.id]); modal({ title: `Teklif ${t.no} toplamlar`, size: 'sm', body: totsHTML(c, t) }); };
 function kurText(pd, td, kur) { return pd === 'TRY' ? `1 ${td} = ${NF.format(kur)} TRY` : `1 ${pd} = ${NF.format(kur)} ${td}`; }
 function convert(tutar, pd, td, kur) { if (pd === td) return r2(tutar); return pd === 'TRY' ? r2(tutar / kur) : r2(tutar * kur); }

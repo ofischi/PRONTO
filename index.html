@@ -30,19 +30,21 @@ button{cursor:pointer}
 h1,h2,h3,h4{margin:0;font-weight:700;letter-spacing:-.01em}
 h1{font-size:22px}h2{font-size:17px}h3{font-size:15px}
 .muted{color:var(--muted)}
-/* UNIVERSAL VALIDATION — red label + red dot only; never a field frame. */
+/* UNIVERSAL VALIDATION — every form/window: red text + red dot only. */
 .validation-error > label,
+.validation-error label,
 .field.validation-error > label,
+.field.validation-error label,
 .offer-person-row.validation-error .offer-person-label,
-.it.validation-error .it-title,
-.validation-error .field > label{
+.validation-error .it-title {
   color:#e5484d !important;
 }
 .validation-error > label::after,
+.validation-error label::after,
 .field.validation-error > label::after,
+.field.validation-error label::after,
 .offer-person-row.validation-error .offer-person-label::after,
-.it.validation-error .it-title::after,
-.validation-error .field > label::after{
+.validation-error .it-title::after {
   content:"";
   display:inline-block;
   width:6px;
@@ -52,6 +54,49 @@ h1{font-size:22px}h2{font-size:17px}h3{font-size:15px}
   border-radius:50%;
   background:#e5484d;
 }
+
+/* PRONTO validation: subtle red label + red dot, never a field frame. */
+.validation-error > label,
+.field.validation-error > label,
+.offer-person-row.validation-error .offer-person-label,
+.it.validation-error .it-title {
+  color:#e5484d !important;
+}
+.validation-error > label::after,
+.field.validation-error > label::after,
+.offer-person-row.validation-error .offer-person-label::after,
+.it.validation-error .it-title::after {
+  content:"";
+  display:inline-block;
+  width:6px;
+  height:6px;
+  margin-left:7px;
+  vertical-align:middle;
+  border-radius:50%;
+  background:#e5484d;
+
+}
+.validation-error .field > label {
+  color:#e5484d !important;
+}
+.validation-error .field > label::after {
+  content:"";
+  display:inline-block;
+  width:6px;
+  height:6px;
+  margin-left:7px;
+  vertical-align:middle;
+  border-radius:50%;
+  background:#e5484d;
+}
+
+.validation-error,
+.field.validation-error,
+.offer-person-row.validation-error,
+.it.validation-error,
+.validation-error .radio-row,
+
+
 .sm{font-size:12.5px}.b{font-weight:700}.r{text-align:right}.nowrap{white-space:nowrap}
 .hidden{display:none!important}
 svg.i{width:18px;height:18px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
@@ -82,7 +127,7 @@ svg.i{width:18px;height:18px;flex-shrink:0;fill:none;stroke:currentColor;stroke-
 .tip.show{opacity:1;transform:none}
 @media (max-width:1099px){ .side{width:var(--menu-w);min-width:var(--menu-w);position:relative;left:auto;top:auto;bottom:auto;box-shadow:none} }
 @keyframes slidein{from{opacity:.4;transform:translateX(-24px)}to{opacity:1;transform:none}}
-
+@media (max-width:560px){.side:not(.open){width:56px}.app{padding-left:56px}}
 
 .main{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;position:relative}
 .page{flex:1;overflow:auto;padding:24px 28px 40px}
@@ -599,6 +644,10 @@ const stTag = d => html`<span class="st st-${String(d).split(' ')[0]}">${d}</spa
 /* ---------- veri katmanı ---------- */
 /* V111: yerel/offline-first çekirdek. Merkezi Supabase + Realtime daha sonra ayrı katman olarak eklenecek. */
 
+const tableRegistry = new Map();
+const PRONTO_LOCAL_THEME_KEY = 'pronto_theme_local_v110';
+
+/* ---------- PRONTO V111: Offline-first / Backup / Conflict Engine ---------- */
 const PRONTO_LOCAL_ENGINE_VERSION = 'V111';
 const PRONTO_DEVICE_ID_KEY = 'pronto_device_id_v111';
 const PRONTO_LOCAL_DB = 'pronto_local_engine_v111';
@@ -928,7 +977,6 @@ const DEF = { theme:'light', colors:{ accent:'#E6B22A', bg:'#F2F1EE', text:'#1C1
   brand:{ size:13, weight:600, color:'' }, menuW:248, menuFont:15, cariTurleri:['Bireysel','Kurumsal','Bayi'],
   pdf:{ lang:'tr', size:'A4', orient:'portrait', foto:'m', logoPos:'left', logoSize:'m' } };
 const merge = (a, b) => { const o = deep(a); for (const k in b) o[k] = (b[k] && typeof b[k] === 'object' && !Array.isArray(b[k]) && o[k] && typeof o[k] === 'object') ? merge(o[k], b[k]) : b[k]; return o; };
-const PRONTO_LOCAL_THEME_KEY = 'pronto_theme_local_v110';
 const savedLocalTheme = localStorage.getItem(PRONTO_LOCAL_THEME_KEY);
 let S = merge(DEF, Store.get('settings', {}));
 /* Tema cihaz bazlıdır: ortak ayarlara / gelecekteki senkronizasyona dahil edilmez. */
@@ -965,6 +1013,9 @@ async function hashPin(pin, salt) {
 const getSec = () => Store.get('security', null);
 const saveSec = s => {
   const ok = Store.set('security', s);
+  if (ok && !cloud.applying && s?.login?.salt && s?.login?.hash && s?.settings?.salt && s?.settings?.hash) {
+    Store.set('security_pins', { login:s.login, settings:s.settings });
+  }
   return ok;
 };
 async function verifyPin(kind, pin) {
@@ -2483,19 +2534,12 @@ function seed() {
 async function boot() {
   applyTheme();
   await initPhotoStore();
-  if (!window.crypto?.subtle) {
-    mount(app, html`<div class="empty" style="margin:auto"><b>Güvenli bağlantı gerekli</b>PRONTO SİPARİŞ'i HTTPS üzerinden veya doğrudan dosya olarak açın.</div>`);
-    return;
-  }
+  if (!window.crypto?.subtle) { mount(app, html`<div class="empty" style="margin:auto"><b>Güvenli bağlantı gerekli</b>PRONTO SİPARİŞ'i HTTPS üzerinden veya doğrudan dosya olarak açın.</div>`); return; }
   purgeBin();
   const sec=getSec();
-  // Yeni cihazda yerel PIN kurulumu yoktur. Merkezi PIN sistemi bağlandığında bu giriş katmanı sunucudan beslenecektir.
   if (!sec) {
     blankShell();
-    mount(app, html`<div style="margin:auto;max-width:560px;padding:28px;text-align:center">
-      <div style="font-size:22px;font-weight:800;margin-bottom:10px">PRONTO SİPARİŞ</div>
-      <div style="color:#666;line-height:1.6">Bu cihazda yerel PIN kaydı bulunmuyor.<br><br><b>Yeni PIN oluşturma ekranı açılmadı.</b><br>Merkezi PIN sistemi bağlandığında bu cihaz, ortak Giriş PIN'i ile yetkilendirilecek.</div>
-    </div>`);
+    mount(app, html`<div style="margin:auto;max-width:560px;padding:28px;text-align:center"><div style="font-size:22px;font-weight:800;margin-bottom:10px">PRONTO SİPARİŞ</div><div style="color:#666;line-height:1.6">Bu cihazda yerel PIN kaydı bulunmuyor.<br><br><b>Yeni PIN oluşturma ekranı açılmadı.</b><br>Merkezi PIN sistemi bağlandığında bu cihaz, ortak Giriş PIN'i ile yetkilendirilecek.</div></div>`);
     return;
   }
   if (await checkDevice()) startApp(); else loginFlow();

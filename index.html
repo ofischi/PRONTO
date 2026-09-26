@@ -1013,17 +1013,14 @@ async function hashPin(pin, salt) {
 const getSec = () => Store.get('security', null);
 const saveSec = s => {
   const ok = Store.set('security', s);
-  if (ok && !cloud.applying && s?.login?.salt && s?.login?.hash && s?.settings?.salt && s?.settings?.hash) {
-    Store.set('security_pins', { login:s.login, settings:s.settings });
-  }
   return ok;
 };
 async function verifyPin(kind, pin) {
   const s = getSec(); const L = s.lock[kind];
   if (L.until > Date.now()) return { ok: false, locked: L.until };
-  if (!/^\d{4}$/.test(pin)) return { ok: false };
+  if (!/^[\s\S]{4,8}$/.test(pin)) return { ok: false };
   if (await hashPin(pin, s[kind].salt) === s[kind].hash) { L.fails = 0; L.until = 0; saveSec(s); return { ok: true }; }
-  L.fails++; if (L.fails >= 3) { L.fails = 0; L.until = Date.now() + 15 * 60e3; }
+  L.fails++; if (L.fails >= 3) { L.fails = 0; L.until = Date.now() + 60 * 60e3; }
   saveSec(s); return { ok: false, locked: L.until > Date.now() ? L.until : 0 };
 }
 function deviceInfo() {

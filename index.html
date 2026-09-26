@@ -3,8 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; connect-src 'self' https://yxkaohidodevfwzfbkol.supabase.co wss://yxkaohidodevfwzfbkol.supabase.co">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; connect-src 'self'">
 <title>PRONTO SİPARİŞ</title>
+<meta name="pronto-version" content="V110">
+<meta name="pronto-local-engine" content="offline-first-backup-conflict">
+<meta name="pronto-sidebar" content="fixed-no-hamburger">
+<meta name="pronto-theme" content="per-device-local-only">
+<meta name="pronto-validation" content="universal-all-windows-red-label-dot-only">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -24,17 +29,83 @@ button{cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 h1,h2,h3,h4{margin:0;font-weight:700;letter-spacing:-.01em}
 h1{font-size:22px}h2{font-size:17px}h3{font-size:15px}
-.muted{color:var(--muted)}.sm{font-size:12.5px}.b{font-weight:700}.r{text-align:right}.nowrap{white-space:nowrap}
+.muted{color:var(--muted)}
+/* UNIVERSAL VALIDATION — every form/window: red text + red dot only. */
+.validation-error > label,
+.validation-error label,
+.field.validation-error > label,
+.field.validation-error label,
+.offer-person-row.validation-error .offer-person-label,
+.validation-error .it-title {
+  color:#e5484d !important;
+}
+.validation-error > label::after,
+.validation-error label::after,
+.field.validation-error > label::after,
+.field.validation-error label::after,
+.offer-person-row.validation-error .offer-person-label::after,
+.validation-error .it-title::after {
+  content:"";
+  display:inline-block;
+  width:6px;
+  height:6px;
+  margin-left:7px;
+  vertical-align:middle;
+  border-radius:50%;
+  background:#e5484d;
+}
+
+/* PRONTO validation: subtle red label + red dot, never a field frame. */
+.validation-error > label,
+.field.validation-error > label,
+.offer-person-row.validation-error .offer-person-label,
+.it.validation-error .it-title {
+  color:#e5484d !important;
+}
+.validation-error > label::after,
+.field.validation-error > label::after,
+.offer-person-row.validation-error .offer-person-label::after,
+.it.validation-error .it-title::after {
+  content:"";
+  display:inline-block;
+  width:6px;
+  height:6px;
+  margin-left:7px;
+  vertical-align:middle;
+  border-radius:50%;
+  background:#e5484d;
+
+}
+.validation-error .field > label {
+  color:#e5484d !important;
+}
+.validation-error .field > label::after {
+  content:"";
+  display:inline-block;
+  width:6px;
+  height:6px;
+  margin-left:7px;
+  vertical-align:middle;
+  border-radius:50%;
+  background:#e5484d;
+}
+
+.validation-error,
+.field.validation-error,
+.offer-person-row.validation-error,
+.it.validation-error,
+.validation-error .radio-row,
+
+
+.sm{font-size:12.5px}.b{font-weight:700}.r{text-align:right}.nowrap{white-space:nowrap}
 .hidden{display:none!important}
 svg.i{width:18px;height:18px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 
 /* ---------- shell ---------- */
 .app{position:relative;display:flex;height:100%;overflow:hidden}
-.side{width:var(--menu-w);flex-shrink:0;display:flex;flex-direction:column;background:var(--glass);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);border-right:1px solid var(--border);transition:width .25s ease,transform .25s ease,opacity .25s;z-index:40;overflow:hidden}
+.side{width:var(--menu-w);flex-shrink:0;display:flex;flex-direction:column;background:var(--glass);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);border-right:1px solid var(--border);transition:none;z-index:40;overflow:hidden}
 .side-top{padding:14px 14px 10px;display:flex;flex-direction:column;gap:14px}
-.ham{width:34px;height:34px;display:grid;place-items:center;border-radius:var(--r-sm);border:1px solid var(--border);background:transparent;color:var(--muted)}
-.ham:hover{color:var(--text);background:var(--hover)}
 .brand{display:flex;flex-direction:column;align-items:flex-start;gap:6px;user-select:none;-webkit-user-select:none;touch-action:none;position:relative;padding:4px 2px;border-radius:var(--r-sm);-webkit-touch-callout:none}
 .brand img,.brand .mark{height:var(--logo-size);max-width:100%;object-fit:contain}
 .brand img{pointer-events:none} .pin-card .pin-logo{pointer-events:none}
@@ -52,26 +123,9 @@ svg.i{width:18px;height:18px;flex-shrink:0;fill:none;stroke:currentColor;stroke-
 .tgl{margin-left:auto;width:34px;height:20px;border-radius:20px;background:var(--surface-2);border:1px solid var(--border-2);position:relative;flex-shrink:0}
 .tgl::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--muted);transition:transform .2s,background .2s}
 .tgl.on::after{transform:translateX(14px);background:var(--accent)}
-.side.collapsed{width:68px}
-.side.collapsed .lbl,.side.collapsed .brand-text,.side.collapsed .tgl{display:none}
-.side.collapsed .nav-item{justify-content:center;padding:11px 0}
-.side.collapsed .side-top{align-items:center}
-.side.collapsed .brand{align-items:center}
-.side.collapsed .brand img,.side.collapsed .brand .mark{height:34px}
-.backdrop{position:fixed;inset:0;background:rgba(5,7,10,.45);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .25s;z-index:35}
 .tip{position:fixed;z-index:90;display:flex;align-items:center;gap:8px;padding:7px 11px;border-radius:10px;background:var(--glass);border:1px solid var(--border-2);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:var(--shadow);font-weight:600;font-size:13px;opacity:0;transform:translateX(-4px);transition:opacity .15s,transform .15s;pointer-events:none}
 .tip.show{opacity:1;transform:none}
-@media (max-width:1099px){
- .side{width:68px}
- .side:not(.open) .lbl,.side:not(.open) .brand-text,.side:not(.open) .tgl{display:none}
- .side:not(.open) .nav-item{justify-content:center;padding:11px 0}
- .side:not(.open) .side-top,.side:not(.open) .brand{align-items:center}
- .side:not(.open) .brand img,.side:not(.open) .brand .mark{height:34px}
- .side.open{position:fixed;left:0;top:0;bottom:0;width:min(80vw,280px);box-shadow:var(--shadow);animation:slidein .25s ease}
- .side.open~.backdrop{opacity:1;pointer-events:auto}
- .app{padding-left:68px}
- .app>.side{position:fixed;left:0;top:0;bottom:0}
-}
+@media (max-width:1099px){ .side{width:var(--menu-w);min-width:var(--menu-w);position:relative;left:auto;top:auto;bottom:auto;box-shadow:none} }
 @keyframes slidein{from{opacity:.4;transform:translateX(-24px)}to{opacity:1;transform:none}}
 @media (max-width:560px){.side:not(.open){width:56px}.app{padding-left:56px}}
 
@@ -104,7 +158,7 @@ svg.i{width:18px;height:18px;flex-shrink:0;fill:none;stroke:currentColor;stroke-
 textarea.inp{height:auto;min-height:62px;padding:9px 11px;resize:vertical;line-height:1.45}
 .inp:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
 .inp:disabled{opacity:.5}
-.inp.bad{border-color:var(--err)}
+.inp.bad{border-color:inherit!important;box-shadow:none!important}
 select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 16px) 16px,calc(100% - 11px) 16px;background-size:5px 5px;background-repeat:no-repeat;padding-right:30px}
 select.inp option{background:var(--bg2);color:var(--text)}
 .pickbtn{justify-content:space-between;width:100%;font-weight:500;background:var(--input)}
@@ -456,7 +510,7 @@ body::before{
 }
 body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background-image:radial-gradient(rgba(28,28,30,.028) 1px,transparent 1px);background-size:22px 22px;}
 [data-theme=dark] body::after{background-image:radial-gradient(rgba(255,255,255,.022) 1px,transparent 1px)}
-.side{background:var(--glass)!important;backdrop-filter:blur(20px) saturate(160%)!important;-webkit-backdrop-filter:blur(20px) saturate(160%)!important;border-color:var(--border)!important;transition:width .25s var(--ease),transform .25s var(--ease),opacity .25s var(--ease)!important}
+.side{background:var(--glass)!important;backdrop-filter:blur(20px) saturate(160%)!important;-webkit-backdrop-filter:blur(20px) saturate(160%)!important;border-color:var(--border)!important;transition:none!important}
 .ham{border-color:var(--border)!important}.ham:hover{background:var(--hover)!important;color:var(--text)!important}
 .nav-item{transition:background-color .18s var(--ease),color .18s var(--ease),padding-left .18s var(--ease)!important}
 .nav-item::before{background:var(--accent)!important;transition:height .2s var(--ease-out),opacity .18s var(--ease)!important}
@@ -501,7 +555,6 @@ body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;bac
 <div id="app" class="app"></div>
 <div id="toasts" class="toasts" aria-live="polite"></div>
 <div id="print-root"></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 'use strict';
 /* =====================================================================
@@ -589,20 +642,13 @@ const DURUMLAR = ['Beklemede','Üretimde','Sevkiyata Hazır','Teslim Edildi','İ
 const stTag = d => html`<span class="st st-${String(d).split(' ')[0]}">${d}</span>`;
 
 /* ---------- veri katmanı + Supabase Realtime ---------- */
-const PRONTO_SUPABASE_URL = 'https://yxkaohidodevfwzfbkol.supabase.co';
-const PRONTO_SUPABASE_KEY = 'sb_publishable_uTYai05b_mn_nuzo6stHBA_F-VCWYNi';
-const cloudSyncKeys = new Set(['cariler','personeller','urunler','teklifler','odemeler','odeme_yontemleri','settings','seq','menu_collapsed','security_pins']);
+const PRONTO_SUPABASE_URL = '';
+const PRONTO_SUPABASE_KEY = '';
+const cloudSyncKeys = new Set(['cariler','personeller','urunler','teklifler','odemeler','odeme_yontemleri','settings','seq','security_pins']);
 const cloud = { client:null, userId:null, ready:false, applying:false, timer:null, pending:new Set(), channel:null, renderTimer:null, pollTimer:null, error:null, remoteVersions:new Map() };
-try { if (window.supabase?.createClient) cloud.client = window.supabase.createClient(PRONTO_SUPABASE_URL, PRONTO_SUPABASE_KEY, { auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false} }); } catch (_) {}
 const tableRegistry = new Map();
-function queueCloudSync(key) { if (!cloud.ready || cloud.applying || !cloudSyncKeys.has(key)) return; cloud.pending.add(key); clearTimeout(cloud.timer); cloud.timer=setTimeout(flushCloudSync,180); }
-async function flushCloudSync() {
-  if (!cloud.ready || !cloud.client || !cloud.pending.size) return;
-  const keys=[...cloud.pending]; cloud.pending.clear();
-  const rows=keys.map(key=>({key,payload:Store.get(key,null),updated_by:cloud.userId,updated_at:new Date().toISOString()}));
-  const {error}=await cloud.client.from('pronto_v24_state').upsert(rows,{onConflict:'key'});
-  if(error) { console.warn('PRONTO cloud sync:',error.message); keys.forEach(k=>cloud.pending.add(k)); }
-}
+function queueCloudSync(key) { /* Supabase deliberately disabled in V110. Local mutation queue handles future sync. */ }
+async function flushCloudSync() { return false; }
 function applyCloudValue(key,value) {
   cloud.applying=true;
   try {
@@ -618,88 +664,326 @@ function applyCloudValue(key,value) {
       localStorage.setItem('pt_security',JSON.stringify(base));
       return;
     }
-    localStorage.setItem('pt_'+key,JSON.stringify(value));
-    tableRegistry.get(key)?.invalidate?.(value);
+    if (key === 'settings') {
+      const localTheme = S?.theme || (localStorage.getItem(PRONTO_LOCAL_THEME_KEY) || 'light');
+      const shared = deep(value || {});
+      delete shared.theme;
+      localStorage.setItem('pt_settings',JSON.stringify(shared));
+      if (typeof S === 'object' && S) S = merge(DEF, shared);
+      S.theme = ['dark','light'].includes(localTheme) ? localTheme : 'light';
+      applyTheme();
+    } else {
+      localStorage.setItem('pt_'+key,JSON.stringify(value));
+      tableRegistry.get(key)?.invalidate?.(value);
+    }
   } finally { cloud.applying=false; }
 }
 async function initCloudSync() {
-  if (!cloud.client) { cloud.error='Supabase istemcisi yüklenemedi'; return false; }
+  cloud.ready=false;
+  cloud.error=null;
+  return false;
+}
+
+/* ---------- PRONTO V110: Offline-first / Backup / Conflict Engine ---------- */
+const PRONTO_LOCAL_ENGINE_VERSION = 'V110';
+const PRONTO_DEVICE_ID_KEY = 'pronto_device_id_v110';
+const PRONTO_LOCAL_DB = 'pronto_local_engine_v110';
+const PRONTO_LOCAL_DB_VERSION = 1;
+const PRONTO_BACKUP_STORE = 'backups';
+const PRONTO_MUTATION_STORE = 'mutations';
+const PRONTO_META_STORE = 'meta';
+
+const prontoLocal = {
+  ready: false,
+  db: null,
+  deviceId: localStorage.getItem(PRONTO_DEVICE_ID_KEY) || ('DEV-' + cryptoRandomId()),
+  backupTimer: null,
+  periodicTimer: null,
+  mutationMemory: [],
+  revisionMemory: {},
+  conflictMemory: [],
+  maxBackups: 12,
+  maxMutations: 5000
+};
+try { localStorage.setItem(PRONTO_DEVICE_ID_KEY, prontoLocal.deviceId); } catch (_) {}
+
+function cryptoRandomId(){
   try {
-    let session=(await cloud.client.auth.getSession()).data.session;
-    if(!session) {
-      let r=null;
-      for(let i=0;i<3 && !r?.data?.session;i++) {
-        r=await cloud.client.auth.signInAnonymously();
-        if(r?.data?.session) break;
-        await new Promise(res=>setTimeout(res,500*(i+1)));
+    if (crypto?.randomUUID) return crypto.randomUUID();
+    if (crypto?.getRandomValues) {
+      const a = new Uint32Array(4); crypto.getRandomValues(a);
+      return Array.from(a).map(x=>x.toString(36)).join('-');
+    }
+  } catch (_) {}
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+
+function openProntoLocalDB(){
+  if (prontoLocal.db) return Promise.resolve(prontoLocal.db);
+  if (!('indexedDB' in window)) return Promise.reject(new Error('IndexedDB kullanılamıyor'));
+  return new Promise((resolve,reject)=>{
+    const req = indexedDB.open(PRONTO_LOCAL_DB, PRONTO_LOCAL_DB_VERSION);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(PRONTO_BACKUP_STORE)) {
+        const st = db.createObjectStore(PRONTO_BACKUP_STORE, {keyPath:'id'});
+        st.createIndex('createdAt','createdAt');
       }
-      if(!r?.data?.session) throw (r?.error||new Error('Anonim giriş etkin değil veya Supabase bağlantısı reddedildi'));
-      session=r.data.session;
+      if (!db.objectStoreNames.contains(PRONTO_MUTATION_STORE)) {
+        const st = db.createObjectStore(PRONTO_MUTATION_STORE, {keyPath:'id'});
+        st.createIndex('createdAt','createdAt');
+        st.createIndex('status','status');
+      }
+      if (!db.objectStoreNames.contains(PRONTO_META_STORE)) {
+        db.createObjectStore(PRONTO_META_STORE, {keyPath:'key'});
+      }
+    };
+    req.onsuccess = () => { prontoLocal.db=req.result; resolve(req.result); };
+    req.onerror = () => reject(req.error || new Error('Yerel veri tabanı açılamadı'));
+  });
+}
+
+function idbPut(storeName, value){
+  return openProntoLocalDB().then(db=>new Promise((resolve,reject)=>{
+    const tx=db.transaction(storeName,'readwrite');
+    tx.objectStore(storeName).put(value);
+    tx.oncomplete=resolve; tx.onerror=()=>reject(tx.error);
+  }));
+}
+function idbGetAll(storeName){
+  return openProntoLocalDB().then(db=>new Promise((resolve,reject)=>{
+    const tx=db.transaction(storeName,'readonly'), req=tx.objectStore(storeName).getAll();
+    req.onsuccess=()=>resolve(req.result||[]); req.onerror=()=>reject(req.error);
+  }));
+}
+function idbDelete(storeName, key){
+  return openProntoLocalDB().then(db=>new Promise((resolve,reject)=>{
+    const tx=db.transaction(storeName,'readwrite');
+    tx.objectStore(storeName).delete(key);
+    tx.oncomplete=resolve; tx.onerror=()=>reject(tx.error);
+  }));
+}
+
+function prontoNow(){ return new Date().toISOString(); }
+
+function readAllLocalData(){
+  const data = {};
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(k && k.startsWith('pt_')){
+      try { data[k] = JSON.parse(localStorage.getItem(k)); }
+      catch(_) { data[k] = localStorage.getItem(k); }
     }
-    cloud.userId=session?.user?.id||null; if(!cloud.userId) throw new Error('Supabase oturumu alınamadı');
-    const {data,error}=await cloud.client.from('pronto_v24_state').select('key,payload,updated_by,updated_at'); if(error) throw error;
-    const remote=new Map((data||[]).map(r=>[r.key,r])); const localKeys=[...cloudSyncKeys];
-    const localSec=Store.get('security',null);
-    if (!remote.has('security_pins') && localSec?.login?.salt && localSec?.login?.hash && localSec?.settings?.salt && localSec?.settings?.hash) cloud.pending.add('security_pins');
-    const localHasData=localKeys.some(k=>{const v=Store.get(k,null);return Array.isArray(v)?v.length>0:(v&&typeof v==='object'?Object.keys(v).length>0:v!=null);});
-    if((data||[]).length) {
-      for(const [key,row] of remote) if(cloudSyncKeys.has(key)) applyCloudValue(key,row.payload);
-      for(const key of localKeys) if(!remote.has(key) && Store.get(key,null)!=null) cloud.pending.add(key);
-      await flushCloudSync();
-    } else if(localHasData) {
-      localKeys.forEach(k=>{if(Store.get(k,null)!=null) cloud.pending.add(k);});
-    }
-    cloud.ready=true; await flushCloudSync();
-    // İlk açılıştaki sürümleri kaydet. Böylece sadece gerçekten yeni bir uzak değişiklik geldiğinde ekran yenilenir.
-    for(const [key,row] of remote) if(cloudSyncKeys.has(key)) cloud.remoteVersions.set(key,row.updated_at||'');
+  }
+  return data;
+}
 
-    const refreshFromRemote = (row) => {
-      if(!row || !cloudSyncKeys.has(row.key) || row.updated_by===cloud.userId) return false;
-      const ver=row.updated_at||'';
-      if(ver && cloud.remoteVersions.get(row.key)===ver) return false;
-      cloud.remoteVersions.set(row.key,ver);
-      applyCloudValue(row.key,row.payload);
-      return true;
+async function readPhotoBackup(){
+  try {
+    if (typeof getAllPhotoDB !== 'function') return [];
+    const rows = await getAllPhotoDB();
+    return rows.map(([key,value])=>({key, value}));
+  } catch(_) { return []; }
+}
+
+async function createLocalBackup(reason='auto'){
+  try {
+    const payload = {
+      format: 'PRONTO-LOCAL-BACKUP',
+      version: PRONTO_LOCAL_ENGINE_VERSION,
+      createdAt: prontoNow(),
+      reason,
+      deviceId: prontoLocal.deviceId,
+      localTheme: localStorage.getItem(PRONTO_LOCAL_THEME_KEY) || 'light',
+      localData: readAllLocalData(),
+      photos: await readPhotoBackup()
     };
-    const scheduleRemoteRender = () => {
-      // Kullanıcı form doldururken formu yeniden çizip girdiği alanları silme.
-      if(!state?.view || state.view==='teklifForm') return;
-      clearTimeout(cloud.renderTimer);
-      cloud.renderTimer=setTimeout(()=>{ try { go(state.view,state.params); } catch(_){} },30);
-    };
-
-    // Realtime ana kanal. Supabase dokümantasyonundaki postgres_changes akışını kullanır.
-    cloud.channel=cloud.client.channel('pronto-v24-state').on('postgres_changes',{event:'*',schema:'public',table:'pronto_v24_state'},payload=>{
-      if(refreshFromRemote(payload.new||payload.old)) scheduleRemoteRender();
-    }).subscribe();
-
-    // Realtime bağlantısı tarayıcı/ağ tarafından kesilirse sayfa yenilemeye gerek kalmaması için
-    // Realtime kesilirse hafif bir senkronizasyon yedeği kullanılır. Değişiklik bulunduğunda ekran otomatik güncellenir.
-    const pollRemote = async () => {
-      if(!cloud.ready || !cloud.client || cloud.applying) return;
-      try {
-        const {data,error}=await cloud.client.from('pronto_v24_state').select('key,payload,updated_by,updated_at');
-        if(error) return;
-        let changed=false;
-        for(const row of (data||[])) if(refreshFromRemote(row)) changed=true;
-        if(changed) scheduleRemoteRender();
-      } catch(_) {}
-    };
-    clearInterval(cloud.pollTimer);
-    pollRemote();
-    cloud.pollTimer=setInterval(pollRemote,5000);
-
-    cloud.error=null;
-    return true;
-  } catch(error) {
-    cloud.error=error?.message||String(error);
-    console.warn('PRONTO Supabase bağlantısı kullanılamıyor:',cloud.error);
-    return false;
+    const id = 'BKP-' + Date.now() + '-' + Math.random().toString(36).slice(2,7);
+    await idbPut(PRONTO_BACKUP_STORE, {id, createdAt:payload.createdAt, reason, payload});
+    const all = await idbGetAll(PRONTO_BACKUP_STORE);
+    all.sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));
+    for(const old of all.slice(prontoLocal.maxBackups)) await idbDelete(PRONTO_BACKUP_STORE, old.id);
+    return payload;
+  } catch(err) {
+    console.warn('PRONTO yerel yedek:', err);
+    return null;
   }
 }
+
+function scheduleLocalBackup(reason='auto'){
+  clearTimeout(prontoLocal.backupTimer);
+  prontoLocal.backupTimer=setTimeout(()=>createLocalBackup(reason),1200);
+}
+
+function downloadLocalBackup(payload){
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`PRONTO-YEDEK-${new Date().toISOString().replace(/[:.]/g,'-')}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+
+async function exportManualBackup(){
+  const p=await createLocalBackup('manual');
+  if(!p) { toast('Yedek oluşturulamadı','err'); return; }
+  downloadLocalBackup(p);
+  toast('Yedek dosyası hazırlandı');
+}
+
+function validateBackup(p){
+  return !!(p && p.format==='PRONTO-LOCAL-BACKUP' && p.localData && typeof p.localData==='object');
+}
+
+async function restoreLocalBackup(payload){
+  if(!validateBackup(payload)) throw new Error('Geçersiz PRONTO yedek dosyası');
+  await createLocalBackup('before-restore');
+  if (payload.localTheme === 'dark' || payload.localTheme === 'light') {
+    localStorage.setItem(PRONTO_LOCAL_THEME_KEY, payload.localTheme);
+  }
+  for(const k of Object.keys(payload.localData)){
+    if(!k.startsWith('pt_')) continue;
+    let v=payload.localData[k];
+    if (k === 'pt_settings' && v && typeof v === 'object') {
+      v = deep(v);
+      delete v.theme;
+    }
+    localStorage.setItem(k, typeof v==='string' ? v : JSON.stringify(v));
+  }
+  if(Array.isArray(payload.photos) && typeof putPhotoDB==='function'){
+    for(const p of payload.photos) if(p?.key) await putPhotoDB(p.key,p.value);
+  }
+  location.reload();
+}
+
+function importBackupFile(){
+  const input=document.createElement('input');
+  input.type='file'; input.accept='.json,application/json';
+  input.onchange=()=>{
+    const f=input.files?.[0]; if(!f) return;
+    const reader=new FileReader();
+    reader.onload=async()=>{
+      try{
+        const payload=JSON.parse(reader.result);
+        if(!validateBackup(payload)) throw new Error('Bu dosya PRONTO yedeği değil');
+        const ok=await confirmBox({
+          title:'Yedeği geri yükle',
+          danger:true,
+          ok:'Geri yükle',
+          body:html`<p>Mevcut cihaz verilerinin üzerine yedekteki veriler yazılacak.</p><p class="muted sm">Geri dönüş için önce otomatik güvenlik yedeği alınacaktır.</p>`
+        });
+        if(!ok) return;
+        await restoreLocalBackup(payload);
+      }catch(err){ toast(err.message||'Yedek okunamadı','err'); }
+    };
+    reader.readAsText(f);
+  };
+  input.click();
+}
+
+function nextLocalRevision(key){
+  const n=(Number(prontoLocal.revisionMemory[key])||0)+1;
+  prontoLocal.revisionMemory[key]=n;
+  return n;
+}
+
+async function recordLocalMutation(key,value){
+  if(!prontoLocal.ready || prontoLocal.applying) return;
+  const revision=nextLocalRevision(key);
+  const mutation={
+    id:'MUT-'+Date.now()+'-'+cryptoRandomId().slice(0,8),
+    key,
+    revision,
+    baseRevision:revision-1,
+    deviceId:prontoLocal.deviceId,
+    createdAt:prontoNow(),
+    status:'pending',
+    value
+  };
+  prontoLocal.mutationMemory.push(mutation);
+  if(prontoLocal.mutationMemory.length>prontoLocal.maxMutations)
+    prontoLocal.mutationMemory=prontoLocal.mutationMemory.slice(-prontoLocal.maxMutations);
+  try { await idbPut(PRONTO_MUTATION_STORE, mutation); } catch(_) {}
+}
+
+async function applyRemoteLocalChange(key,value,remoteRevision,remoteDeviceId,remoteMutationId){
+  const localRevision=Number(prontoLocal.revisionMemory[key])||0;
+  const remoteRev=Number(remoteRevision)||0;
+  if(remoteDeviceId===prontoLocal.deviceId) return {applied:false,reason:'self'};
+  if(remoteRev <= localRevision) return {applied:false,reason:'stale'};
+  const pending=prontoLocal.mutationMemory.filter(m=>m.key===key && m.status==='pending');
+  if(pending.length){
+    const conflict={
+      id:'CON-'+Date.now()+'-'+cryptoRandomId().slice(0,8),
+      key,
+      localRevision,
+      remoteRevision:remoteRev,
+      localValue:Store.get(key,null),
+      remoteValue:value,
+      localDeviceId:prontoLocal.deviceId,
+      remoteDeviceId:remoteDeviceId||'remote',
+      remoteMutationId:remoteMutationId||null,
+      createdAt:prontoNow(),
+      resolved:false
+    };
+    prontoLocal.conflictMemory.push(conflict);
+    try { await idbPut(PRONTO_META_STORE,{key:'conflict:'+conflict.id,value:conflict}); } catch(_) {}
+    return {applied:false,reason:'conflict',conflict};
+  }
+  prontoLocal.applying=true;
+  try {
+    localStorage.setItem('pt_'+key,JSON.stringify(value));
+    prontoLocal.revisionMemory[key]=remoteRev;
+    tableRegistry.get(key)?.invalidate?.(value);
+  } finally { prontoLocal.applying=false; }
+  return {applied:true,reason:'remote'};
+}
+
+async function initProntoLocalEngine(){
+  try{
+    await openProntoLocalDB();
+    const mutations=await idbGetAll(PRONTO_MUTATION_STORE);
+    prontoLocal.mutationMemory=mutations.filter(m=>m.status==='pending').slice(-prontoLocal.maxMutations);
+    for(const m of mutations){
+      prontoLocal.revisionMemory[m.key]=Math.max(Number(prontoLocal.revisionMemory[m.key])||0,Number(m.revision)||0);
+    }
+    const backups=await idbGetAll(PRONTO_BACKUP_STORE);
+    if(!backups.length) await createLocalBackup('first-run');
+    prontoLocal.ready=true;
+    clearInterval(prontoLocal.periodicTimer);
+    prontoLocal.periodicTimer=setInterval(()=>createLocalBackup('periodic'),10*60*1000);
+  }catch(err){ console.warn('PRONTO offline engine:',err); }
+}
+
+/* Future cloud adapter calls this; no network traffic is generated here. */
+window.PRONTOSync = Object.freeze({
+  get deviceId(){ return prontoLocal.deviceId; },
+  get pendingCount(){ return prontoLocal.mutationMemory.filter(m=>m.status==='pending').length; },
+  get conflictCount(){ return prontoLocal.conflictMemory.length; },
+  applyRemote: applyRemoteLocalChange,
+  getPending: ()=>prontoLocal.mutationMemory.filter(m=>m.status==='pending').map(x=>({...x})),
+  markSynced: async ids=>{
+    const set=new Set(ids||[]);
+    for(const m of prontoLocal.mutationMemory) if(set.has(m.id)) { m.status='synced'; try{await idbPut(PRONTO_MUTATION_STORE,m);}catch(_){} }
+    prontoLocal.mutationMemory=prontoLocal.mutationMemory.filter(m=>m.status==='pending');
+  }
+});
+initProntoLocalEngine();
+
 const Store = {
   get(k, d) { try { const v = localStorage.getItem('pt_' + k); return v ? JSON.parse(v) : d; } catch { return d; } },
-  set(k, v) { try { localStorage.setItem('pt_' + k, JSON.stringify(v)); queueCloudSync(k); return true; } catch { toast('Depolama alanı doldu. Fotoğrafları azaltın veya küçültün.', 'err'); return false; } },
+  set(k, v) {
+    try {
+      localStorage.setItem('pt_' + k, JSON.stringify(v));
+      queueCloudSync(k);
+      recordLocalMutation(k,v);
+      scheduleLocalBackup('change');
+      return true;
+    } catch {
+      toast('Depolama alanı doldu. Fotoğrafları azaltın veya küçültün.', 'err');
+      return false;
+    }
+  },
   applyRemote(k,v){ applyCloudValue(k,v); },
   seq(n) { const s = this.get('seq', {}); s[n] = (s[n] || 0) + 1; this.set('seq', s); return s[n]; }
 };
@@ -732,8 +1016,16 @@ const DEF = { theme:'light', colors:{ accent:'#E6B22A', bg:'#F2F1EE', text:'#1C1
   brand:{ size:13, weight:600, color:'' }, menuW:248, menuFont:15, cariTurleri:['Bireysel','Kurumsal','Bayi'],
   pdf:{ lang:'tr', size:'A4', orient:'portrait', foto:'m', logoPos:'left', logoSize:'m' } };
 const merge = (a, b) => { const o = deep(a); for (const k in b) o[k] = (b[k] && typeof b[k] === 'object' && !Array.isArray(b[k]) && o[k] && typeof o[k] === 'object') ? merge(o[k], b[k]) : b[k]; return o; };
+const PRONTO_LOCAL_THEME_KEY = 'pronto_theme_local_v110';
+const savedLocalTheme = localStorage.getItem(PRONTO_LOCAL_THEME_KEY);
 let S = merge(DEF, Store.get('settings', {}));
-const saveS = () => Store.set('settings', S);
+/* Tema cihaz bazlıdır: ortak ayarlara / gelecekteki senkronizasyona dahil edilmez. */
+S.theme = ['dark','light'].includes(savedLocalTheme) ? savedLocalTheme : (S.theme === 'dark' ? 'dark' : 'light');
+const saveS = () => {
+  const sharedSettings = deep(S);
+  delete sharedSettings.theme;
+  return Store.set('settings', sharedSettings);
+};
 
 /* ---------- hesaplama ---------- */
 function payMap() { const m = {}; for (const p of DB.odeme.all()) (m[p.teklifId] ||= []).push(p); return m; }
@@ -798,7 +1090,62 @@ const state = { view: 'teklifler', params: {}, deviceId: null, settingsOk: false
 const app = $('#app');
 
 /* ---------- toast / modal / onay / menü ---------- */
+
+function markUniversalValidation(message='') {
+  const msg=trLower(String(message||''));
+  const badEls=$$('.bad');
+  let marked=0;
+
+  const mark=(el)=>{
+    if(!el) return;
+    const root=el.closest('.field,.form-row,.row,.offer-person-row,.it,.card,.modal,.dialog,.ov') || el.parentElement;
+    if(root){
+      root.classList.add('validation-error');
+      marked++;
+    }
+  };
+
+  badEls.forEach(mark);
+
+  /* Find a matching label inside the currently active window when code did not add .bad. */
+  const active=[...$$('.ov'),...$$('.modal,.dialog')].filter(x=>{
+    const cs=getComputedStyle(x);
+    return cs.display!=='none' && cs.visibility!=='hidden';
+  }).slice(-1)[0];
+
+  if(active && !marked){
+    const words=[
+      ['müşteri','müşteri'],['personel','personel'],['kategori','kategori'],
+      ['model','model'],['ürün','ürün'],['ürün adı','ürün'],['isim','isim'],
+      ['ad soyad','ad soyad'],['telefon','telefon'],['e-posta','e-posta'],
+      ['eposta','e-posta'],['ülke','ülke'],['şehir','şehir'],['adres','adres'],
+      ['tarih','tarih'],['teslim','teslim'],['döviz','döviz'],['kdv','kdv'],
+      ['fiyat','fiyat'],['adet','adet'],['ölçü','ölçü'],['renk','renk'],
+      ['nakliye','nakliye'],['montaj','montaj'],['pin','pin'],['açıklama','açıklama'],
+      ['ödeme','ödeme'],['yöntem','yöntem']
+    ];
+    let key=null;
+    for(const [needle,label] of words){ if(msg.includes(needle)){key=label;break;} }
+    const labels=$$('label',active);
+    const target=key
+      ? labels.find(l=>trLower(l.textContent).includes(key))
+      : labels[0];
+    if(target){
+      (target.closest('.field,.form-row,.row,.offer-person-row,.it')||target).classList.add('validation-error');
+      marked++;
+    }
+  }
+  if(marked){
+    const first=active?.querySelector('.validation-error') || document.querySelector('.validation-error');
+    first?.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }
+  return marked>0;
+}
+
 function toast(msg, type = 'ok') {
+  if(type === 'err') {
+    if(markUniversalValidation(msg)) return;
+  }
   const t = document.createElement('div'); t.className = 'toast ' + type; t.textContent = msg;
   $('#toasts').appendChild(t); setTimeout(() => t.remove(), 3200);
 }
@@ -942,20 +1289,18 @@ function applyTheme() {
   }
   st.setProperty('--menu-w', S.menuW + 'px'); st.setProperty('--menu-font', S.menuFont + 'px'); st.setProperty('--logo-size', S.logoSize + 'px'); st.setProperty('--brand-size', S.brand.size + 'px'); st.setProperty('--brand-weight', S.brand.weight); st.setProperty('--brand-color', S.brand.color || (t === 'dark' ? '#9A9C9F' : '#6B6B70'));
 }
-matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => S.theme === 'system' && applyTheme());
+/* Tema cihaz tercihi olarak sabittir; işletim sistemi değişikliği PRONTO temasını değiştirmez. */
 
 /* ---------- kabuk ---------- */
 const NAV = [['teklifler','Teklifler','doc'],['musteriler','Müşteriler','users'],['personeller','Personeller','user'],['urunler','Ürünler','box'],['raporlar','Raporlar','chart']];
 function renderShell() {
   mount(app, html`<aside class="side" id="side" aria-label="Ana menü">
-    <div class="side-top"><button class="ham" data-act="toggleMenu" aria-label="Menüyü aç/kapat">${I('menu')}</button>
-      <div class="brand" id="brand" title="">${brandInner()}</div></div>
+    <div class="side-top"><div class="brand" id="brand" title="">${brandInner()}</div></div>
     <nav class="nav" id="nav">${NAV.map(([v, l, ic]) => html`<button class="nav-item" data-act="nav" data-v="${v}" data-tip="${l}">${I(ic)}<span class="lbl">${l}</span></button>`)}</nav>
     <div class="side-bot">
       <button class="nav-item" data-act="toggleTheme" data-tip="Karanlık Mod">${I('moon')}<span class="lbl">Karanlık Mod</span><span class="tgl ${document.documentElement.dataset.theme === 'dark' ? 'on' : ''}" id="tgl"></span></button>
       <button class="nav-item" data-act="logout" data-tip="Çıkış">${I('out')}<span class="lbl">Çıkış</span></button>
-    </div></aside><div class="backdrop" data-act="closeMenu"></div><main class="main" id="main"></main>`);
-  bindBrand(); bindTips(); if (Store.get('menu_collapsed', false) && innerWidth >= 1100) $('#side').classList.add('collapsed');
+    </div></aside><main class="main" id="main"></main>`); bindBrand(); bindTips();
 }
 function brandInner() { const s = safeImg(S.logo); return html`${s ? html`<img src="${s}" alt="">` : html`<div class="mark">P</div>`}<div class="brand-text">PRONTO SİPARİŞ</div>`; }
 function markNav() { $$('#nav .nav-item').forEach(b => b.classList.toggle('active', navOf(state.view) === b.dataset.v)); }
@@ -971,30 +1316,34 @@ let tipEl, tipT;
 function bindTips() {
   tipEl ||= Object.assign(document.createElement('div'), { className: 'tip' }); document.body.appendChild(tipEl);
   $$('.side [data-tip]').forEach(el => {
-    el.addEventListener('mouseenter', () => { const side = $('#side'); const collapsed = side.classList.contains('collapsed') || (innerWidth < 1100 && !side.classList.contains('open')); if (!collapsed) return;
-      clearTimeout(tipT); const r = el.getBoundingClientRect(); mount(tipEl, html`${raw(el.querySelector('svg').outerHTML)}<span>${el.dataset.tip}</span>`);
-      tipEl.style.left = (r.right + 10) + 'px'; tipEl.style.top = (r.top + r.height / 2 - 16) + 'px'; tipEl.classList.add('show'); });
+    el.addEventListener('mouseenter', () => { return; });
     el.addEventListener('mouseleave', () => { tipT = setTimeout(() => tipEl.classList.remove('show'), 120); });
   });
 }
 function go(view, params = {}) {
   if (view !== 'ayarlar') state.settingsOk = false;
-  state.view = view; state.params = params; closePop(); closeMenu(); tipEl?.classList.remove('show');
+  state.view = view; state.params = params; closePop(); tipEl?.classList.remove('show');
   markNav(); const main = $('#main'); if (!main) return;
   (VIEWS[view] || VIEWS.teklifler)(main, params);
   const page = main.querySelector('.page');
   if (page) { page.classList.remove('v84-enter'); void page.offsetWidth; page.classList.add('v84-enter'); }
 }
-function closeMenu() { $('#side')?.classList.remove('open'); }
 function openSettings() { if (state.view === 'ayarlar') return; pinPad({ title: 'Ayarlar PIN\'i', sub: 'Ayarları açmak için PIN girin', lockKind: 'settings', submit: async p => { const r = await verifyPin('settings', p); if (r.ok) { state.settingsOk = true; go('ayarlar', { sec: 'genel' }); } return r; } }); }
 
 /* ---------- global olay yönetimi ---------- */
 const A = {};
 document.addEventListener('click', e => { const el = e.target.closest('[data-act]'); if (!el || el.closest('.pin-ov')) return; const fn = A[el.dataset.act]; if (fn) { fn(el, e); } });
 A.nav = el => go(el.dataset.v);
-A.toggleMenu = () => { const s = $('#side'); if (innerWidth >= 1100) { s.classList.toggle('collapsed'); Store.set('menu_collapsed', s.classList.contains('collapsed')); } else s.classList.toggle('open'); tipEl?.classList.remove('show'); };
-A.closeMenu = closeMenu;
-A.toggleTheme = () => { const cur = document.documentElement.dataset.theme; S.theme = cur === 'dark' ? 'light' : 'dark'; saveS(); applyTheme(); $('#tgl').classList.toggle('on', S.theme === 'dark'); };
+A.localBackup = async () => { await exportManualBackup(); };
+A.localRestore = () => { importBackupFile(); };
+
+A.toggleTheme = () => {
+  const cur = document.documentElement.dataset.theme;
+  S.theme = cur === 'dark' ? 'light' : 'dark';
+  localStorage.setItem(PRONTO_LOCAL_THEME_KEY, S.theme);
+  applyTheme();
+  $('#tgl')?.classList.toggle('on', S.theme === 'dark');
+};
 A.logout = async () => {
   if (!await confirmBox({ title: 'Çıkış', body: html`<p>Çıkış yaptığınızda bu cihazın tanınması kaldırılır. Bir sonraki girişte PIN istenecek.</p>`, ok: 'Çıkış Yap' })) return;
   const s = getSec(); s.devices = s.devices.filter(d => d.id !== state.deviceId); saveSec(s); localStorage.removeItem('pt_device_token'); state.deviceId = null; loginFlow();
@@ -1205,7 +1554,7 @@ VIEWS.teklifForm = (main, { id }) => {
       </div>
     </div></div></div>`);
   drawFormCari(); drawFormPers(); drawPickFilters(); drawPick(); drawItems(); drawTots();
-  main.querySelector('.page').addEventListener('input', formInput); main.querySelector('.page').addEventListener('change', formInput);
+  main.querySelector('.page').addEventListener('input', e => { clearValidationOnEdit(e); formInput(e); }); main.querySelector('.page').addEventListener('change', e => { clearValidationOnEdit(e); formInput(e); });
   const restorePickList = (id, listId) => { const el = $('#' + id); if (el && !el.getAttribute('list')) el.setAttribute('list', listId); };
   $('#pkat').addEventListener('focus', () => restorePickList('pkat', 'pkatList'));
   $('#pmod').addEventListener('focus', () => restorePickList('pmod', 'pmodList'));
@@ -1260,6 +1609,17 @@ VIEWS.teklifForm = (main, { id }) => {
   bindDrag();
 };
 function drawIskSeg() { return; }
+
+function clearValidationOnEdit(e) {
+  const el = e.target;
+  const field = el.closest('.field') || el.closest('.offer-person-row') || el.closest('.it') || el.closest('.form-row') || el.closest('.row');
+  if (field) {
+    field.classList.remove('validation-error');
+    $$('.validation-error', field).forEach(x=>x.classList.remove('validation-error'));
+  }
+  const card = el.closest('#items')?.closest('.card');
+  if (card && state.draft?.items?.length) card.classList.remove('validation-error');
+}
 function formInput(e) {
   const d = state.draft, el = e.target;
   if (el.dataset.d) {
@@ -1417,6 +1777,68 @@ A.formBack = async () => {
   d.id ? go('teklifDetay', { id: d.id }) : go('teklifler');
 };
 const stripDraft = d => { const o = { ...d }; delete o._orig; return o; };
+
+function clearValidationErrors(root = document) {
+  $$('.validation-error', root).forEach(el => el.classList.remove('validation-error'));
+}
+
+function markValidationErrors(d, errs) {
+  clearValidationErrors(document);
+  const bad = new Set(errs);
+
+  const mark = (selector) => {
+    const el = document.querySelector(selector);
+    if (!el) return;
+    const field = el.closest('.field') || el.closest('.offer-person-row') || el;
+    field.classList.add('validation-error');
+    return field;
+  };
+
+  if (!CURS.includes(d.doviz)) mark('[data-d="doviz"]');
+  if (!d.tarih) mark('[data-d="tarih"]');
+  if (!d.teslim || (d.tarih && d.teslim < d.tarih)) mark('[data-d="teslim"]');
+
+  if (!['dahil','haric'].includes(d.nakliye)) mark('[data-d="nakliye"]')?.closest('.field')?.classList.add('validation-error');
+  if (!['dahil','haric'].includes(d.montaj)) mark('[data-d="montaj"]')?.closest('.field')?.classList.add('validation-error');
+  if (!['fabrika','adres'].includes(d.teslimYeri)) mark('[data-d="teslimYeri"]')?.closest('.field')?.classList.add('validation-error');
+
+  if (!d.id && !DB.cari.find(d.cariId)) document.querySelector('#fCari')?.closest('.offer-person-row')?.classList.add('validation-error');
+  if (!d.id && !DB.personel.find(d.personelId)) document.querySelector('#fPers')?.closest('.offer-person-row')?.classList.add('validation-error');
+
+  if (!d.items.length) {
+    document.querySelector('#items')?.closest('.card')?.classList.add('validation-error');
+  }
+
+  d.items.forEach((it, i) => {
+    const itEl = document.querySelector(`#items .it[data-idx="${i}"]`);
+    if (!itEl) return;
+    const hasBadQty = !(it.adet >= 1);
+    const hasBadPrice = !(it.fiyat >= 0);
+    const hasBadSize = !clean(it.olcu, 80);
+    const hasBadColor = !clean(it.renk, 80);
+    const isMasa = trLower([it.kategori, it.model, it.modul].join(' ')).includes('masa');
+    const yon = trLower(it.yon);
+    const normalizedYon = yon === 'sağ' ? 'sag' : yon === 'sol' ? 'sol' : yon === 'çift' ? 'cift' : yon === 'yok' ? 'yok' : it.yon;
+    const hasBadDirection = isMasa && !['sag','sol','cift','yok'].includes(normalizedYon);
+
+    if (hasBadQty || hasBadPrice || hasBadSize || hasBadColor || hasBadDirection) {
+      itEl.classList.add('validation-error');
+    }
+    if (hasBadSize) itEl.querySelector('[data-if="olcu"]')?.closest('.field')?.classList.add('validation-error');
+    if (hasBadColor) itEl.querySelector('[data-if="renk"]')?.closest('.field')?.classList.add('validation-error');
+    if (hasBadDirection) itEl.querySelector('[data-if="yon"]')?.closest('.field')?.classList.add('validation-error');
+    if (hasBadQty) itEl.querySelector('[data-if="adet"]')?.closest('.field')?.classList.add('validation-error');
+    if (hasBadPrice) itEl.querySelector('[data-if="fiyat"]')?.closest('.field')?.classList.add('validation-error');
+  });
+
+  if (!(d.kdv >= 0 && d.kdv <= 100)) mark('[data-d="kdv"]');
+  if (!(d.pesinat >= 0)) mark('[data-d="pesinat"]');
+  if (d.pesinat > 0 && !d.pesinatTarih) mark('[data-d="pesinatTarih"]');
+
+  const first = document.querySelector('.validation-error');
+  first?.scrollIntoView({behavior:'smooth', block:'center'});
+}
+
 A.saveTeklif = async () => {
   const d = state.draft, errs = [];
   if (!CURS.includes(d.doviz)) errs.push('Döviz seçin.');
@@ -1435,7 +1857,8 @@ A.saveTeklif = async () => {
   const c = calc(d, []);
   if (d.pesinat > c.genel) errs.push('Peşinat genel toplamdan büyük olamaz.'); if (c.isk > c.ana) errs.push('İskonto ana paradan büyük olamaz.');
   if (d.iskontoDeger < 0 || d.iskontoTutar < 0) errs.push('İskonto değeri negatif olamaz.');
-  if (errs.length) { modal({ title: 'Eksik veya hatalı bilgi', size: 'sm', body: html`<ul style="margin:0;padding-left:18px">${errs.slice(0, 8).map(e => html`<li>${e}</li>`)}</ul>` }); return; }
+  if (errs.length) { markValidationErrors(d, errs); return; }
+  clearValidationErrors(document);
   if (d.id && !await confirmBox({ title: 'Kaydet', body: html`<p>Değişiklikleri kaydetmek istiyor musunuz?</p>`, ok: 'Kaydet' })) return;
   const t = stripDraft(d);
   if (!t.id) {
@@ -1472,7 +1895,7 @@ VIEWS.teklifDetay = (main, { id, tab = 'urunler' }) => {
   const c = calc(t, pays), cs = t.cariSnap, pct = c.genel ? Math.min(100, c.pes / c.genel * 100) : 0;
   mount(main, html`<div class="page detail"><div class="ph"><div class="ph-l"><button class="btn icon" data-act="nav" data-v="teklifler" aria-label="Geri">${I('back')}</button>
       <div><h1 style="display:flex;gap:10px;align-items:center">Teklif ${t.no} ${stTag(t.durum)}</h1><div class="muted sm">${cs.unvan}</div></div></div>
-    <div class="ph-act"><button class="btn" data-act="editTeklif" data-id="${t.id}">${I('edit')} Düzenle</button><button class="btn" data-act="pdf" data-id="${t.id}">${I('pdf')} PDF</button><button class="btn" data-act="printTeklif" data-id="${t.id}">${I('print')} Yazdır</button><button class="btn icon" data-act="rowMenu" data-id="${t.id}" aria-label="Diğer">${I('dots')}</button></div></div>
+    <div class="ph-act"><button class="btn" data-act="editTeklif" data-id="${t.id}">${I('edit')} Düzenle</button><button class="btn" data-act="pdf" data-id="${t.id}">${I('pdf')} PDF</button><button class="btn" data-act="pdf" data-id="${t.id}">${I('print')} Yazdır</button><button class="btn icon" data-act="rowMenu" data-id="${t.id}" aria-label="Diğer">${I('dots')}</button></div></div>
     <div class="dgrid">
       <div class="card"><div class="card-h"><h3>Müşteri</h3></div><dl class="kv"><dt>Ünvan</dt><dd>${cs.unvan}</dd><dt>Telefon</dt><dd>${cs.gsm || '—'}</dd><dt>E-posta</dt><dd>${cs.eposta || '—'}</dd><dt>Adres</dt><dd>${[cs.adres, cs.ilce, cs.sehir, cs.ulke].filter(Boolean).join(', ')}</dd></dl></div>
       <div class="card"><div class="card-h"><h3>Teklif</h3></div><dl class="kv"><dt>Teklif Tarihi</dt><dd>${fmtDate(t.tarih)}</dd><dt>Teslim Tarihi</dt><dd>${fmtDate(t.teslim)}</dd><dt>Döviz</dt><dd>${t.doviz}</dd><dt>Personel</dt><dd>${t.personelAd}</dd>
@@ -1501,11 +1924,6 @@ VIEWS.teklifDetay = (main, { id, tab = 'urunler' }) => {
 A.dTab = el => go('teklifDetay', { id: el.dataset.id, tab: el.dataset.t });
 A.editTeklif = el => go('teklifForm', { id: el.dataset.id });
 A.pdf = el => pdfPreview(el.dataset.id);
-A.printTeklif = el => {
-  const t = DB.teklif.find(el.dataset.id); if (!t) return;
-  const o = { ...S.pdf, ...(Store.get('pdf_last', null) || {}) };
-  printHTML(pdfDoc(t, o), pageCss(o.size, o.orient, (PL[o.lang] || PL.tr).sayfa));
-};
 A.totDetail = el => { const t = DB.teklif.find(el.dataset.id); const c = calc(t, payMap()[t.id]); modal({ title: `Teklif ${t.no} toplamlar`, size: 'sm', body: totsHTML(c, t) }); };
 function kurText(pd, td, kur) { return pd === 'TRY' ? `1 ${td} = ${NF.format(kur)} TRY` : `1 ${pd} = ${NF.format(kur)} ${td}`; }
 function convert(tutar, pd, td, kur) { if (pd === td) return r2(tutar); return pd === 'TRY' ? r2(tutar / kur) : r2(tutar * kur); }
@@ -1990,7 +2408,16 @@ A.setSec = el => go('ayarlar', { sec: el.dataset.k });
 function setGenel(b) {
   const f = S.firma;
   const rng = (k, l, min, max, val, unit = 'px') => html`<div class="field"><label>${l}</label><div class="rng"><input type="range" min="${min}" max="${max}" value="${val}" data-r="${k}"><span class="sm" data-rv="${k}">${val}${unit}</span></div></div>`;
-  mount(b, html`<div class="card"><div class="card-h"><h3>Sistem</h3></div><div class="grid g3">
+  mount(b, html`<div class="card">
+      <div class="card-h"><h3>Yerel veri güvenliği</h3><span class="tag">OFFLINE-FIRST</span></div>
+      <p class="muted sm" style="margin-top:0">Veriler cihazda çalışmaya devam eder. Değişiklikler yerel işlem kuyruğuna alınır; ileride Supabase bağlandığında bu kuyruk senkronizasyon için kullanılabilir.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <button class="btn" data-act="localBackup">💾 Yedek Al</button>
+        <button class="btn" data-act="localRestore">↩ Yedekten Geri Yükle</button>
+        <span class="muted sm" data-local-status>Otomatik yedekleme aktif</span>
+      </div>
+    </div>
+    <div class="card"><div class="card-h"><h3>Sistem</h3></div><div class="grid g3">
       <div class="field"><label>Sistem adı</label><input class="inp" value="PRONTO SİPARİŞ" disabled></div>
       <div class="field"><label>Tarih / saat formatı</label><input class="inp" value="${fmtDT(Date.now())}" disabled></div>
       <div class="field"><label>Dil</label><input class="inp" value="Türkçe" disabled></div>
@@ -2000,7 +2427,7 @@ function setGenel(b) {
     <div class="card"><div class="card-h"><h3>Firma bilgileri (PDF alt bilgisi)</h3></div><div class="grid g2">
       ${[['ad', 'Firma Adı'], ['tel', 'Telefon'], ['adres', 'Adres'], ['eposta', 'E-posta']].map(([k, l]) => html`<div class="field"><label>${l}</label><input class="inp" data-fi="${k}" value="${f[k] || ''}" maxlength="${k === 'adres' ? 200 : 100}"></div>`)}</div></div>
     <div class="card"><div class="card-h"><h3>Tema ve renkler</h3></div>
-      <div class="field"><label>Tema</label><div class="seg" data-theme-seg>${[['dark', 'Dark'], ['light', 'Light'], ['system', 'System']].map(([k, l]) => html`<button type="button" data-v="${k}" class="${S.theme === k ? 'on' : ''}">${l}</button>`)}</div></div>
+      <div class="field"><label>Tema</label><div class="seg" data-theme-seg>${[['dark', 'Dark'], ['light', 'Light']].map(([k, l]) => html`<button type="button" data-v="${k}" class="${S.theme === k ? 'on' : ''}">${l}</button>`)}</div></div>
       <div class="grid g4" style="margin-top:12px">${[['accent', 'Primary / Accent'], ['button', 'Buton'], ['bg', 'Arka plan'], ['text', 'Yazı']].map(([k, l]) => html`<div class="field"><label>${l}</label><div style="display:flex;gap:6px"><input type="color" class="clr" data-cl="${k}" value="${S.colors[k] || (k === 'bg' ? '#0e1116' : k === 'text' ? '#e7e4dc' : '#c9a24a')}"><button type="button" class="btn sm" data-clr0="${k}">Sıfırla</button></div></div>`)}</div></div>
     <div class="card"><div class="card-h"><h3>Logo ve menü</h3></div>
       <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px">${safeImg(S.logo) ? html`<img src="${safeImg(S.logo)}" alt="" style="height:44px">` : html`<div class="mark" style="height:44px;width:44px">P</div>`}<button class="btn sm" data-logo>${I('img')} Logo yükle</button>${S.logo ? html`<button class="btn sm danger" data-logo0>Kaldır</button>` : ''}</div>
@@ -2024,7 +2451,14 @@ function setGenel(b) {
     if ('bc' in t.dataset) { S.brand.color = t.value; live(); }
   });
   b.addEventListener('click', async e => {
-    const th = e.target.closest('[data-theme-seg] button'); if (th) { S.theme = th.dataset.v; live(); $$('[data-theme-seg] button', b).forEach(x => x.classList.toggle('on', x === th)); $('#tgl')?.classList.toggle('on', document.documentElement.dataset.theme === 'dark'); }
+    const th = e.target.closest('[data-theme-seg] button'); if (th) {
+      /* Tema sadece bu PC'ye aittir; ortak Store'a yazılmaz. */
+      S.theme = th.dataset.v === 'dark' ? 'dark' : 'light';
+      localStorage.setItem(PRONTO_LOCAL_THEME_KEY, S.theme);
+      live();
+      $$('[data-theme-seg] button', b).forEach(x => x.classList.toggle('on', x === th));
+      $('#tgl')?.classList.toggle('on', document.documentElement.dataset.theme === 'dark');
+    }
     const c0 = e.target.closest('[data-clr0]'); if (c0) { S.colors[c0.dataset.clr0] = c0.dataset.clr0 === 'accent' ? DEF.colors.accent : ''; live(); go('ayarlar', { sec: 'genel' }); }
     if (e.target.closest('[data-bc0]')) { S.brand.color = ''; live(); go('ayarlar', { sec: 'genel' }); }
     if (e.target.closest('[data-logo]')) { try { const f = await pickFile(); if (!f) return; S.logo = await readImage(f, { max: 400, type: 'image/png' }); live(); refreshBrand(); go('ayarlar', { sec: 'genel' }); toast('Logo güncellendi'); } catch (er) { toast(er.message, 'err'); } }
@@ -2165,7 +2599,6 @@ async function boot() {
   }
   if (await checkDevice()) startApp(); else loginFlow();
 }
-window.addEventListener('resize', debounce(() => { if (innerWidth >= 1100) closeMenu(); }, 150));
 // Uygulamadaki tüm metin alanlarında küçük harfi anında büyük harfe çevir.
 document.addEventListener('input', e => {
   const el = e.target;
@@ -2177,6 +2610,19 @@ document.addEventListener('input', e => {
   if (upper !== el.value) { el.value = upper; if (pos != null) { try { el.setSelectionRange(pos, pos); } catch (_) {} } }
 }, true);
 boot();
+
+const prontoValidationObserver = new MutationObserver(muts=>{
+  for(const m of muts){
+    if(m.type!=='attributes' || m.attributeName!=='class') continue;
+    const el=m.target;
+    if(el.classList?.contains('bad') && !el.classList.contains('validation-error')){
+      const root=el.closest('.field,.form-row,.row,.offer-person-row,.it') || el.parentElement;
+      root?.classList.add('validation-error');
+    }
+  }
+});
+try{ prontoValidationObserver.observe(document.body,{subtree:true,attributes:true,attributeFilter:['class']}); }catch(_){}
+
 </script>
 </body>
 </html>

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; connect-src 'self'">
 <title>PRONTO SİPARİŞ</title>
-<meta name="pronto-version" content="V110">
+<meta name="pronto-version" content="V111">
 <meta name="pronto-local-engine" content="offline-first-backup-conflict">
 <meta name="pronto-sidebar" content="fixed-no-hamburger">
 <meta name="pronto-theme" content="per-device-local-only">
@@ -30,56 +30,19 @@ button{cursor:pointer}
 h1,h2,h3,h4{margin:0;font-weight:700;letter-spacing:-.01em}
 h1{font-size:22px}h2{font-size:17px}h3{font-size:15px}
 .muted{color:var(--muted)}
-/* UNIVERSAL VALIDATION — every form/window: red text + red dot only. */
-.validation-error > label,
-.validation-error label,
-.field.validation-error > label,
-.field.validation-error label,
-.offer-person-row.validation-error .offer-person-label,
-.validation-error .it-title {
-  color:#e5484d !important;
-}
-.validation-error > label::after,
-.validation-error label::after,
-.field.validation-error > label::after,
-.field.validation-error label::after,
-.offer-person-row.validation-error .offer-person-label::after,
-.validation-error .it-title::after {
-  content:"";
-  display:inline-block;
-  width:6px;
-  height:6px;
-  margin-left:7px;
-  vertical-align:middle;
-  border-radius:50%;
-  background:#e5484d;
-}
-
-/* PRONTO validation: subtle red label + red dot, never a field frame. */
+/* UNIVERSAL VALIDATION — red label + red dot only; never a field frame. */
 .validation-error > label,
 .field.validation-error > label,
 .offer-person-row.validation-error .offer-person-label,
-.it.validation-error .it-title {
+.it.validation-error .it-title,
+.validation-error .field > label{
   color:#e5484d !important;
 }
 .validation-error > label::after,
 .field.validation-error > label::after,
 .offer-person-row.validation-error .offer-person-label::after,
-.it.validation-error .it-title::after {
-  content:"";
-  display:inline-block;
-  width:6px;
-  height:6px;
-  margin-left:7px;
-  vertical-align:middle;
-  border-radius:50%;
-  background:#e5484d;
-
-}
-.validation-error .field > label {
-  color:#e5484d !important;
-}
-.validation-error .field > label::after {
+.it.validation-error .it-title::after,
+.validation-error .field > label::after{
   content:"";
   display:inline-block;
   width:6px;
@@ -89,14 +52,6 @@ h1{font-size:22px}h2{font-size:17px}h3{font-size:15px}
   border-radius:50%;
   background:#e5484d;
 }
-
-.validation-error,
-.field.validation-error,
-.offer-person-row.validation-error,
-.it.validation-error,
-.validation-error .radio-row,
-
-
 .sm{font-size:12.5px}.b{font-weight:700}.r{text-align:right}.nowrap{white-space:nowrap}
 .hidden{display:none!important}
 svg.i{width:18px;height:18px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
@@ -127,7 +82,7 @@ svg.i{width:18px;height:18px;flex-shrink:0;fill:none;stroke:currentColor;stroke-
 .tip.show{opacity:1;transform:none}
 @media (max-width:1099px){ .side{width:var(--menu-w);min-width:var(--menu-w);position:relative;left:auto;top:auto;bottom:auto;box-shadow:none} }
 @keyframes slidein{from{opacity:.4;transform:translateX(-24px)}to{opacity:1;transform:none}}
-@media (max-width:560px){.side:not(.open){width:56px}.app{padding-left:56px}}
+
 
 .main{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;position:relative}
 .page{flex:1;overflow:auto;padding:24px 28px 40px}
@@ -641,53 +596,12 @@ const ULKELER = ['Türkiye','ABD','Afganistan','Almanya','Arnavutluk','Arjantin'
 const DURUMLAR = ['Beklemede','Üretimde','Sevkiyata Hazır','Teslim Edildi','İptal'];
 const stTag = d => html`<span class="st st-${String(d).split(' ')[0]}">${d}</span>`;
 
-/* ---------- veri katmanı + Supabase Realtime ---------- */
-const PRONTO_SUPABASE_URL = '';
-const PRONTO_SUPABASE_KEY = '';
-const cloudSyncKeys = new Set(['cariler','personeller','urunler','teklifler','odemeler','odeme_yontemleri','settings','seq','security_pins']);
-const cloud = { client:null, userId:null, ready:false, applying:false, timer:null, pending:new Set(), channel:null, renderTimer:null, pollTimer:null, error:null, remoteVersions:new Map() };
-const tableRegistry = new Map();
-function queueCloudSync(key) { /* Supabase deliberately disabled in V110. Local mutation queue handles future sync. */ }
-async function flushCloudSync() { return false; }
-function applyCloudValue(key,value) {
-  cloud.applying=true;
-  try {
-    if (key === 'security_pins') {
-      const cur = Store.get('security', null);
-      const base = cur && typeof cur === 'object' ? cur : { lock:{login:{fails:0,until:0},settings:{fails:0,until:0}}, devices:[] };
-      if (value?.login?.salt && value?.login?.hash) base.login = value.login;
-      if (value?.settings?.salt && value?.settings?.hash) base.settings = value.settings;
-      if (!base.lock) base.lock={login:{fails:0,until:0},settings:{fails:0,until:0}};
-      if (!base.lock.login) base.lock.login={fails:0,until:0};
-      if (!base.lock.settings) base.lock.settings={fails:0,until:0};
-      if (!Array.isArray(base.devices)) base.devices=[];
-      localStorage.setItem('pt_security',JSON.stringify(base));
-      return;
-    }
-    if (key === 'settings') {
-      const localTheme = S?.theme || (localStorage.getItem(PRONTO_LOCAL_THEME_KEY) || 'light');
-      const shared = deep(value || {});
-      delete shared.theme;
-      localStorage.setItem('pt_settings',JSON.stringify(shared));
-      if (typeof S === 'object' && S) S = merge(DEF, shared);
-      S.theme = ['dark','light'].includes(localTheme) ? localTheme : 'light';
-      applyTheme();
-    } else {
-      localStorage.setItem('pt_'+key,JSON.stringify(value));
-      tableRegistry.get(key)?.invalidate?.(value);
-    }
-  } finally { cloud.applying=false; }
-}
-async function initCloudSync() {
-  cloud.ready=false;
-  cloud.error=null;
-  return false;
-}
+/* ---------- veri katmanı ---------- */
+/* V111: yerel/offline-first çekirdek. Merkezi Supabase + Realtime daha sonra ayrı katman olarak eklenecek. */
 
-/* ---------- PRONTO V110: Offline-first / Backup / Conflict Engine ---------- */
-const PRONTO_LOCAL_ENGINE_VERSION = 'V110';
-const PRONTO_DEVICE_ID_KEY = 'pronto_device_id_v110';
-const PRONTO_LOCAL_DB = 'pronto_local_engine_v110';
+const PRONTO_LOCAL_ENGINE_VERSION = 'V111';
+const PRONTO_DEVICE_ID_KEY = 'pronto_device_id_v111';
+const PRONTO_LOCAL_DB = 'pronto_local_engine_v111';
 const PRONTO_LOCAL_DB_VERSION = 1;
 const PRONTO_BACKUP_STORE = 'backups';
 const PRONTO_MUTATION_STORE = 'mutations';
@@ -975,7 +889,6 @@ const Store = {
   set(k, v) {
     try {
       localStorage.setItem('pt_' + k, JSON.stringify(v));
-      queueCloudSync(k);
       recordLocalMutation(k,v);
       scheduleLocalBackup('change');
       return true;
@@ -984,7 +897,6 @@ const Store = {
       return false;
     }
   },
-  applyRemote(k,v){ applyCloudValue(k,v); },
   seq(n) { const s = this.get('seq', {}); s[n] = (s[n] || 0) + 1; this.set('seq', s); return s[n]; }
 };
 function Table(name) {
@@ -1053,9 +965,6 @@ async function hashPin(pin, salt) {
 const getSec = () => Store.get('security', null);
 const saveSec = s => {
   const ok = Store.set('security', s);
-  if (ok && !cloud.applying && s?.login?.salt && s?.login?.hash && s?.settings?.salt && s?.settings?.hash) {
-    Store.set('security_pins', { login:s.login, settings:s.settings });
-  }
   return ok;
 };
 async function verifyPin(kind, pin) {
@@ -2562,15 +2471,6 @@ function setCop(b) {
    AÇILIŞ: kurulum → giriş → uygulama
    ===================================================================== */
 function blankShell() { mount(app, html`<div style="flex:1"></div>`); }
-async function setupFlow() {
-  blankShell();
-  let lp, sp;
-  for (;;) { const a = await askPin({ title: 'Giriş PIN\'i belirleyin', sub: 'Uygulamayı açarken kullanılacak 4 haneli PIN' }); const b = await askPin({ title: 'Giriş PIN\'i', sub: 'Onaylamak için tekrar girin' }); if (a === b) { lp = a; break; } toast('PIN\'ler eşleşmedi, tekrar deneyin', 'err'); }
-  for (;;) { const a = await askPin({ title: 'Ayarlar PIN\'i belirleyin', sub: 'Giriş PIN\'inden farklı olmalı' }); if (a === lp) { toast('Ayarlar PIN\'i, Giriş PIN\'i ile aynı olamaz', 'err'); continue; } const b = await askPin({ title: 'Ayarlar PIN\'i', sub: 'Onaylamak için tekrar girin' }); if (a === b) { sp = a; break; } toast('PIN\'ler eşleşmedi, tekrar deneyin', 'err'); }
-  const s1 = randHex(16), s2 = randHex(16);
-  saveSec({ login: { salt: s1, hash: await hashPin(lp, s1) }, settings: { salt: s2, hash: await hashPin(sp, s2) }, lock: { login: { fails: 0, until: 0 }, settings: { fails: 0, until: 0 } }, devices: [] });
-  await registerDevice(); seed(); startApp(); toast('PIN\'ler kaydedildi. Hoş geldiniz.');
-}
 function loginFlow() {
   document.querySelectorAll('.ov').forEach(o => o.remove()); closePop(); blankShell();
   pinPad({ title: 'PRONTO SİPARİŞ', sub: 'Giriş PIN\'inizi girin', lockKind: 'login', cancellable: false, submit: async p => { const r = await verifyPin('login', p); if (r.ok) { await registerDevice(); startApp(); } return r; } });
@@ -2582,20 +2482,21 @@ function seed() {
 }
 async function boot() {
   applyTheme();
-  const cloudOk = await initCloudSync();
   await initPhotoStore();
-  if (!window.crypto?.subtle) { mount(app, html`<div class="empty" style="margin:auto"><b>Güvenli bağlantı gerekli</b>PRONTO SİPARİŞ'i HTTPS üzerinden veya doğrudan dosya olarak açın.</div>`); return; }
+  if (!window.crypto?.subtle) {
+    mount(app, html`<div class="empty" style="margin:auto"><b>Güvenli bağlantı gerekli</b>PRONTO SİPARİŞ'i HTTPS üzerinden veya doğrudan dosya olarak açın.</div>`);
+    return;
+  }
   purgeBin();
   const sec=getSec();
-  // Yeni cihazda PIN kurulumu ASLA tekrar başlatılmaz. Önce ortak PIN buluttan alınmalıdır.
+  // Yeni cihazda yerel PIN kurulumu yoktur. Merkezi PIN sistemi bağlandığında bu giriş katmanı sunucudan beslenecektir.
   if (!sec) {
-    if (!cloudOk) {
-      blankShell();
-      mount(app, html`<div style="margin:auto;max-width:560px;padding:28px;text-align:center"><div style="font-size:22px;font-weight:800;margin-bottom:10px">Ortak Giriş PIN'i alınamadı</div><div style="color:#666;line-height:1.6">Bu bilgisayar yeni bir cihaz. Mevcut PRONTO V24 Giriş PIN'i Supabase'den alınamadığı için yeni PIN belirleme ekranı açılmadı.<br><br><b>Yeni PIN oluşturulmayacak.</b><br>İnternet bağlantısını ve Supabase anonim giriş ayarını kontrol edip sayfayı yenileyin.</div><button class="btn primary" style="margin-top:18px" onclick="location.reload()">Tekrar Dene</button></div>`);
-      return;
-    }
-    // Cloud bağlantısı başarılıysa fakat ortak PIN yoksa bu yalnızca gerçek ilk kurulumdur.
-    return setupFlow();
+    blankShell();
+    mount(app, html`<div style="margin:auto;max-width:560px;padding:28px;text-align:center">
+      <div style="font-size:22px;font-weight:800;margin-bottom:10px">PRONTO SİPARİŞ</div>
+      <div style="color:#666;line-height:1.6">Bu cihazda yerel PIN kaydı bulunmuyor.<br><br><b>Yeni PIN oluşturma ekranı açılmadı.</b><br>Merkezi PIN sistemi bağlandığında bu cihaz, ortak Giriş PIN'i ile yetkilendirilecek.</div>
+    </div>`);
+    return;
   }
   if (await checkDevice()) startApp(); else loginFlow();
 }

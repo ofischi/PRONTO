@@ -1,0 +1,56 @@
+name: Siteyi yayinla ve bildir
+
+on:
+  push:
+    branches: [main]
+    paths: ['index.html', 'config.js']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.d.outputs.page_url }}
+    env:
+      SB_URL: ${{ secrets.SUPABASE_URL }}
+      SB_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Yayin klasoru + surum damgasi
+        run: |
+          mkdir _site
+          cp index.html config.js _site/
+          V="${GITHUB_SHA::7}"
+          sed -i "s/const BUILD = '__BUILD__'/const BUILD = '$V'/" _site/index.html
+          grep -q "const BUILD = '$V'" _site/index.html
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: d
+        uses: actions/deploy-pages@v4
+
+      - name: Acik programlara bildirim
+        if: ${{ env.SB_URL != '' && env.SB_KEY != '' }}
+        run: |
+          V="${GITHUB_SHA::7}"
+          H=(-H "apikey: $SB_KEY" -H "Content-Type: application/json")
+          [[ "$SB_KEY" == eyJ* ]] && H+=(-H "Authorization: Bearer $SB_KEY")
+          ROW=$(curl -sSf "${H[@]}" -H "Prefer: resolution=merge-duplicates,return=representation" \
+            "$SB_URL/rest/v1/pt_rows?on_conflict=tbl,id&select=tbl,id,data,deleted,updated_at" \
+            -d "[{\"tbl\":\"meta\",\"id\":\"app_version\",\"data\":{\"sha\":\"$V\"},\"deleted\":false}]")
+          MSG=$(jq -c '{messages:[{topic:"pronto",event:"rows",private:true,payload:{rows:.}}]}' <<<"$ROW")
+          curl -sSf "${H[@]}" "$SB_URL/realtime/v1/api/broadcast" -d "$MSG"
+          echo "Bildirim gonderildi: $V"

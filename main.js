@@ -5,6 +5,8 @@ const { app, BrowserWindow, dialog, shell } = require('electron');
 const { autoUpdater } = require('electron-updater');
 
 const URL_APP = 'https://ofischi.github.io/PRONTO/';
+// Açılışta her zaman sunucudaki güncel sürümü iste (10 dk önbellek beklenmez)
+const NO_CACHE = { extraHeaders: 'pragma: no-cache\ncache-control: no-cache\n' };
 if (!app.requestSingleInstanceLock()) app.quit();
 
 let win;
@@ -27,7 +29,15 @@ function createWindow() {
       '<div style="text-align:center"><h2>İnternet bağlantısı yok</h2><p>Bağlantı gelince yeniden deneyin.</p>' +
       '<button onclick="location.href=\'' + URL_APP + '\'" style="padding:10px 20px;border:0;border-radius:10px;background:#E6B22A;font-weight:700;cursor:pointer">Tekrar Dene</button></div></body>'));
   });
-  win.loadURL(URL_APP);
+  // F5 veya Ctrl+R: önbelleği atlayarak yenile (GitHub'daki son sürüm hemen gelir)
+  win.webContents.on('before-input-event', (e, i) => {
+    if (i.type === 'keyDown' && (i.key === 'F5' || (i.control && i.key.toLowerCase() === 'r'))) {
+      e.preventDefault();
+      if (win.webContents.getURL().startsWith(URL_APP)) win.webContents.reloadIgnoringCache();
+      else win.loadURL(URL_APP, NO_CACHE);
+    }
+  });
+  win.loadURL(URL_APP, NO_CACHE);
 }
 
 autoUpdater.autoDownload = false;

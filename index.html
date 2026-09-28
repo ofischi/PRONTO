@@ -224,6 +224,15 @@ img.thumb{cursor:zoom-in}
 .pop button:hover{background:var(--hover)}
 .pop button.danger{color:var(--err)}
 .pop hr{border:0;border-top:1px solid var(--border);margin:4px 0}
+.sug{position:fixed;z-index:1000;display:none;overflow:auto;background:var(--surface-2);border:1px solid var(--border-2);border-radius:var(--r);box-shadow:var(--shadow);padding:6px;font-size:13px}
+.sug-h{display:flex;justify-content:space-between;align-items:center;padding:4px 8px 6px;color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.sug-h span{background:var(--hover);border-radius:99px;padding:1px 8px}
+.sug-l{display:flex;flex-direction:column;gap:1px}
+.sug-i{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 8px;border-radius:8px;cursor:pointer;font-weight:600}
+.sug-i:hover,.sug-i.on{background:var(--hover);color:var(--accent)}
+.sug-x{border:0;background:transparent;color:var(--muted);padding:2px;border-radius:6px;display:grid;place-items:center;opacity:.35;cursor:pointer}
+.sug-x svg{width:14px;height:14px}.sug-i:hover .sug-x{opacity:1}.sug-x:hover{color:var(--err);background:var(--hover)}
+.sug-e{padding:8px;color:var(--muted)}
 .plist{display:flex;flex-direction:column;gap:2px;max-height:50dvh;overflow:auto;margin-top:10px}
 .plist button{display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;padding:10px;border:0;border-radius:8px;background:transparent}
 .plist button:hover,.plist button.on{background:var(--hover)}
@@ -1302,7 +1311,7 @@ function formInput(e) {
     if (f === 'adet') { el.value = el.value.replace(/\D/g, ''); const v = Math.floor(num(el.value)); el.classList.toggle('bad', !(v >= 1)); it.adet = v >= 1 ? Math.min(v, 99999) : 0; }
     else if (f === 'fiyat') { el.value = el.value.replace(/[^0-9.,]/g, ''); const v = num(el.value); el.classList.toggle('bad', !(v >= 0)); it.fiyat = v >= 0 ? r2(v) : 0; }
     else if (f === 'aciklama') it.aciklama = cleanML(el.value, 1000);
-    else { it[f] = f === 'yon' ? el.value : clean(el.value, 80); if ((f === 'olcu' || f === 'renk') && e.type === 'change') saveModelVariant(it, f, it[f]); }
+    else { it[f] = f === 'yon' ? el.value : clean(el.value, 80); if ((f === 'olcu' || f === 'renk') && e.type === 'change') saveVariants([it]); }
     const lt = el.closest('.it')?.querySelector('.ltot'); if (lt) lt.textContent = money((it.fiyat || 0) * (it.adet || 0), d.doviz);
     drawTots();
   }
@@ -1353,21 +1362,95 @@ A.addItem = async el => {
   d.items.push(it); drawItems(); drawTots(); scrollToItem(it.uid);
   if (u.fiyat && u.doviz !== d.doviz) toast(`Liste fiyatı ${u.doviz}; teklif ${d.doviz}. Fiyatı elle girin.`, 'err');
 };
-/* Ölçü/renk önerileri: okurken YAZMAZ (eski sürüm her çizimde kayıt yapıyordu) */
-const variantKey = it => trLower([it.kategori, it.model].filter(Boolean).join('|'));
-function getModelVariants(it) { const v = mem('variant').get(variantKey(it)) || {}; return { olcu: v.olcu || [], renk: v.renk || [] }; }
-function saveModelVariant(it, field, value) {
-  const v = clean(value, 80).toLocaleUpperCase('tr-TR'); if (!v) return;
-  const key = variantKey(it), row = deep(mem('variant').get(key) || { olcu: [], renk: [] });
-  if (!Array.isArray(row[field])) row[field] = [];
-  if (row[field].some(x => trLower(x) === trLower(v))) return;
-  row[field] = [v, ...row[field].filter(x => !(v.startsWith(x) && v !== x))].slice(0, 100);
-  Sync.put('variant', key, row);
+/* Ölçü/renk hafızası — KATEGORİ bazında. Yeni bir değer yazılınca bir kez kaydedilir,
+   bilinen değer seçilince hiçbir şey yazılmaz (gereksiz trafik yok).
+   Eski sürümün "kategori|model" kayıtları okunur ve birleştirilir; hiçbiri silinmez. */
+const katKey = it => 'kat|' + trLower(clean(it.kategori, 60));
+const VF = ['olcu', 'renk'];
+function getKatVariants(it) {
+  const kat = trLower(clean(it.kategori, 60)); const own = mem('variant').get(katKey(it)) || {}; const hid = own.hid || {};
+  const out = {};
+  for (const f of VF) {
+    const seen = new Set(), list = [];
+    const add = x => { const v = clean(x, 80); const k = trLower(v); if (v && !seen.has(k) && !(hid[f] || []).includes(k)) { seen.add(k); list.push(v); } };
+    (own[f] || []).forEach(add);
+    if (kat) for (const [key, row] of mem('variant')) if (!key.startsWith('kat|') && (key === kat || key.startsWith(kat + '|'))) (row?.[f] || []).forEach(add);
+    out[f] = list.slice(0, 300);
+  }
+  return out;
 }
+function saveVariants(items) {
+  const rows = new Map();
+  for (const it of items) {
+    if (!clean(it.kategori, 60)) continue;
+    const key = katKey(it);
+    for (const f of VF) {
+      const v = clean(it[f], 80).toLocaleUpperCase('tr-TR'); if (!v) continue;
+      const cur = rows.get(key) || { key, row: null, dirty: false, known: getKatVariants(it) };
+      rows.set(key, cur);
+      const k = trLower(v), hidden = (mem('variant').get(key)?.hid?.[f] || []).includes(k);
+      if (!hidden && cur.known[f].some(x => trLower(x) === k)) continue;
+      cur.row ||= deep(mem('variant').get(key) || {}); cur.row.hid ||= {};
+      cur.row[f] = [v, ...(cur.row[f] || []).filter(x => trLower(x) !== k)].slice(0, 300);
+      cur.row.hid[f] = (cur.row.hid[f] || []).filter(x => x !== k);
+      cur.known[f].unshift(v); cur.dirty = true;
+    }
+  }
+  for (const { key, row, dirty } of rows.values()) if (dirty) { row.kategori = clean(key.slice(4), 60); Sync.put('variant', key, row); }
+}
+function removeVariant(it, f, value) {
+  const key = katKey(it), row = deep(mem('variant').get(key) || {}), k = trLower(value);
+  row.hid ||= {}; row[f] = (row[f] || []).filter(x => trLower(x) !== k);
+  if (!(row.hid[f] || []).includes(k)) row.hid[f] = [...(row.hid[f] || []), k].slice(-500);
+  row.kategori = clean(it.kategori, 60); Sync.put('variant', key, row);
+}
+/* Öneri listesi: kutuya tıklayınca / yazınca altında açılır, tıklayınca seçer, × ile listeden çıkarır */
+const Sug = {
+  el: null, inp: null, idx: -1, list: [],
+  open(inp) {
+    const it = state.draft?.items?.[+inp.dataset.i]; if (!it) return;
+    this.inp = inp; const f = inp.dataset.if, q = trLower(inp.value.trim());
+    const all = getKatVariants(it)[f];
+    this.list = (q ? [...all.filter(x => trLower(x).startsWith(q)), ...all.filter(x => !trLower(x).startsWith(q) && trLower(x).includes(q))] : all).slice(0, 60);
+    if (!this.el) {
+      this.el = document.createElement('div'); this.el.className = 'sug'; document.body.appendChild(this.el);
+      this.el.addEventListener('mousedown', e => e.preventDefault());
+      this.el.addEventListener('click', e => {
+        const x = e.target.closest('[data-rm]'); const b = e.target.closest('[data-sv]');
+        if (x) { const i = this.inp, it2 = state.draft.items[+i.dataset.i]; removeVariant(it2, i.dataset.if, this.list[+x.dataset.rm]); toast('Listeden çıkarıldı'); this.open(i); return; }
+        if (b) this.pick(+b.dataset.sv);
+      });
+    }
+    const label = f === 'olcu' ? 'ölçü' : 'renk', kat = clean(it.kategori, 60);
+    mount(this.el, html`<div class="sug-h">${kat ? `${kat} · kayıtlı ${label}ler` : `Kayıtlı ${label}ler`}<span>${all.length}</span></div>
+      ${this.list.length ? html`<div class="sug-l">${this.list.map((v, i) => html`<div class="sug-i ${i === this.idx ? 'on' : ''}" data-sv="${i}"><span>${v}</span><button type="button" class="sug-x" data-rm="${i}" title="Listeden çıkar" aria-label="Listeden çıkar">${I('x')}</button></div>`)}</div>`
+        : html`<div class="sug-e">${all.length ? 'Eşleşen yok — yazdığınız yeni değer kaydedilecek.' : `Bu kategoride henüz kayıtlı ${label} yok. Yazdığınız otomatik kaydedilir.`}</div>`}`);
+    const r = inp.getBoundingClientRect(), h = Math.min(320, window.innerHeight - r.bottom - 12);
+    Object.assign(this.el.style, { display: 'block', left: r.left + 'px', width: Math.max(r.width, 240) + 'px' });
+    if (h < 160) Object.assign(this.el.style, { top: 'auto', bottom: (window.innerHeight - r.top + 4) + 'px', maxHeight: Math.min(320, r.top - 12) + 'px' });
+    else Object.assign(this.el.style, { bottom: 'auto', top: (r.bottom + 4) + 'px', maxHeight: h + 'px' });
+  },
+  pick(i) {
+    const v = this.list[i], inp = this.inp; if (v == null || !inp) return;
+    inp.value = v; inp.dispatchEvent(new Event('input', { bubbles: true })); this.close(); inp.blur();
+  },
+  key(e) {
+    if (!this.el || this.el.style.display !== 'block') return;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); const n = this.list.length; if (!n) return; this.idx = (this.idx + (e.key === 'ArrowDown' ? 1 : -1) + n) % n; this.open(this.inp); this.el.querySelector('.sug-i.on')?.scrollIntoView({ block: 'nearest' }); }
+    else if (e.key === 'Enter' && this.idx >= 0) { e.preventDefault(); this.pick(this.idx); }
+    else if (e.key === 'Escape') { e.stopPropagation(); this.close(); }
+  },
+  close() { if (this.el) this.el.style.display = 'none'; this.idx = -1; }
+};
+document.addEventListener('focusin', e => { const t = e.target; if (t.matches?.('[data-if="olcu"],[data-if="renk"]')) { Sug.idx = -1; Sug.open(t); } });
+document.addEventListener('focusout', e => { if (e.target === Sug.inp) Sug.close(); });
+document.addEventListener('input', e => { if (e.target === Sug.inp && e.target === document.activeElement) { Sug.idx = -1; Sug.open(e.target); } });
+document.addEventListener('keydown', e => { if (e.target === Sug.inp) Sug.key(e); }, true);
+window.addEventListener('scroll', () => Sug.close(), true); window.addEventListener('resize', () => Sug.close());
 function offerFotoGet(it) { return (it.fotoCustom && it.foto) || (it.fotoRef && photoGet(it.fotoRef)) || modelFoto.get(it.kategori, it.model, it.modul); }
 function drawItems() {
   const d = state.draft; $('#icnt').textContent = d.items.length ? `(${d.items.length})` : '';
-  mount($('#items'), d.items.length ? html`<div class="items-scroll">${d.items.map((it, i) => { const f = safeImg(offerFotoGet(it)), vr = getModelVariants(it); return html`<div class="it" data-idx="${i}" data-uid="${it.uid}">
+  mount($('#items'), d.items.length ? html`<div class="items-scroll">${d.items.map((it, i) => { const f = safeImg(offerFotoGet(it)), vr = null; return html`<div class="it" data-idx="${i}" data-uid="${it.uid}">
     <div class="it-h"><span class="grip" draggable="true" title="Sürükleyerek sırala">${I('grip')}</span>
       <span class="ttl">${itemTitle(it)}</span>
       <button class="btn ghost icon sm" data-act="mvItem" data-i="${i}" data-d="-1" ${i === 0 ? 'disabled' : ''} aria-label="Yukarı">${I('up')}</button>
@@ -1381,8 +1464,8 @@ function drawItems() {
       <div class="it-info">
         <div class="it-g">
           ${[['kategori', 'Kategori'], ['model', 'Model'], ['modul', 'Modül']].map(([k, l]) => html`<div class="field"><label>${l}</label><div class="inp readonly-field">${it[k] || '—'}</div></div>`)}
-          <div class="field"><label>ÖLÇÜ <span class="req">*</span></label><input class="inp" data-if="olcu" data-i="${i}" value="${it.olcu || ''}" maxlength="80" list="olcuList${i}"><datalist id="olcuList${i}">${vr.olcu.map(v => html`<option value="${v}">`)}</datalist></div>
-          <div class="field"><label>RENK <span class="req">*</span></label><input class="inp" data-if="renk" data-i="${i}" value="${it.renk || ''}" maxlength="80" list="renkList${i}"><datalist id="renkList${i}">${vr.renk.map(v => html`<option value="${v}">`)}</datalist></div>
+          <div class="field"><label>ÖLÇÜ <span class="req">*</span></label><input class="inp" data-if="olcu" data-i="${i}" value="${it.olcu || ''}" maxlength="80" autocomplete="off" placeholder="Seçin…"></div>
+          <div class="field"><label>RENK <span class="req">*</span></label><input class="inp" data-if="renk" data-i="${i}" value="${it.renk || ''}" maxlength="80" autocomplete="off" placeholder="Seçin…"></div>
           <div class="field"><label>YÖN <span class="req">*</span></label><select class="inp" data-if="yon" data-i="${i}"><option value="">SEÇİN</option>${[['sag','SAĞ'],['sol','SOL'],['cift','ÇİFT'],['yok','YOK']].map(([v,l]) => html`<option value="${v}" ${it.yon === v || trLower(it.yon) === trLower(l) ? 'selected' : ''}>${l}</option>`)}</select></div>
         </div>
         <div class="it-g2"><div class="field"><label>Adet</label><input class="inp" inputmode="numeric" data-if="adet" data-i="${i}" value="${it.adet || ''}"></div>
@@ -1474,7 +1557,7 @@ A.saveTeklif = async el => {
   });
   t.iskontoTip = 'tutar'; t.iskontoDeger = 0; t.iskontoTutar = r2(Math.max(0, +t.iskontoTutar || 0)); t.pesinat = r2(+t.pesinat || 0); t.pesinatTarih = t.pesinat > 0 ? (t.pesinatTarih || '') : '';
   t.updated = Date.now();
-  DB.teklif.upsert(t);
+  DB.teklif.upsert(t); saveVariants(t.items);
   logAct(d.id ? `Teklif ${t.no} düzenlendi` : `Teklif ${t.no} oluşturuldu`);
   toast(d.id ? 'Değişiklikler kaydedildi' : `Teklif ${t.no} kaydedildi`); go('teklifDetay', { id: t.id });
 };
@@ -1748,43 +1831,125 @@ function pdfSettings(cur, onApply) {
 /* =====================================================================
    MÜŞTERİLER / CARİ
    ===================================================================== */
+/* ---- Türkiye adres listesi (il / ilçe / mahalle / posta kodu)
+   Kaynak: PTT resmî listesi; GitHub 6 ayda bir yeniler. Veri Supabase'den değil sitenin
+   kendisinden gelir. Bir ilin dosyası yalnızca o il seçildiğinde indirilir ve cihazda
+   6 ay saklanır — bu sürede o il için hiç istek yapılmaz. */
+const ADRES_TTL = 182 * 864e5;
+const trSlug = s => trLower(s).replace(/[çğıöşüâîû]/g, c => ({ ç: 'c', ğ: 'g', ı: 'i', ö: 'o', ş: 's', ü: 'u', â: 'a', î: 'i', û: 'u' }[c])).replace(/[^a-z0-9]/g, '');
+const Adres = {
+  mem: new Map(), dbp: null,
+  db() {
+    return this.dbp ||= new Promise((ok, no) => { const q = indexedDB.open('pronto_adres', 1); q.onupgradeneeded = () => q.result.createObjectStore('il'); q.onsuccess = () => ok(q.result); q.onerror = () => no(q.error); });
+  },
+  async get(k) { try { const db = await this.db(); return await new Promise(ok => { const r = db.transaction('il').objectStore('il').get(k); r.onsuccess = () => ok(r.result || null); r.onerror = () => ok(null); }); } catch { return null; } },
+  async set(k, v) { try { const db = await this.db(); db.transaction('il', 'readwrite').objectStore('il').put(v, k); } catch { /* önbellek yoksa her seferinde indirilir */ } },
+  valid(d) { return d && Array.isArray(d.ilceler) && d.ilceler.every(x => Array.isArray(x) && typeof x[0] === 'string' && Array.isArray(x[1])); },
+  async il(name) {
+    if (!ILLER.includes(name)) return null;
+    const k = trSlug(name);
+    if (this.mem.has(k)) return this.mem.get(k);
+    let rec = await this.get(k);
+    if (!rec || !this.valid(rec.d) || Date.now() - rec.t > ADRES_TTL) {
+      try {
+        const r = await fetch(`adres/${k}.json`);
+        if (!r.ok) throw new Error(r.status);
+        const d = await r.json(); if (!this.valid(d)) throw new Error('biçim');
+        rec = { t: Date.now(), d }; this.set(k, rec);
+      } catch (e) { if (!rec) return null; }   // çevrimdışı: eski liste kullanılır
+    }
+    const ilceler = rec.d.ilceler.map(([ad, mah]) => ({ ad: clean(ad, 60), mah: mah.filter(Array.isArray).map(([m, pk]) => ({ ad: clean(m, 80), pk: /^\d{5}$/.test(pk) ? pk : '' })) }));
+    const out = { v: clean(rec.d.v, 10), ilceler };
+    this.mem.set(k, out); return out;
+  }
+};
+function textAsk(title, value, onOk, max = 80) {
+  modal({ title, size: 'sm', body: html`<div class="field"><label>Ad</label><input class="inp" data-n value="${value || ''}" maxlength="${max}" autofocus></div>`,
+    foot: html`<button class="btn" data-x>Vazgeç</button><button class="btn primary" data-s>Tamam</button>`,
+    onMount: m => { const go = () => { const n = clean(m.$('[data-n]').value, max).toLocaleUpperCase('tr-TR'); if (!n) return toast('Bir değer girin', 'err'); m.close(); onOk(n); };
+      m.$('[data-n]').addEventListener('keydown', e => { if (e.key === 'Enter') go(); }); m.el.addEventListener('click', e => { if (e.target.closest('[data-s]')) go(); }); } });
+}
+const trAdresMetni = v => [v.mahalle, v.sokak, v.binaNo && `No:${v.binaNo}`, v.daireNo && `D:${v.daireNo}`, v.adresEk, v.pk].filter(Boolean).join(' ');
+
 function cariForm(c, onSaved) {
   const v = c ? { ...c } : { tur: '', unvan: '', ulke: 'Türkiye', sehir: '', ilce: '', adres: '', gsm: '', doviz: S.doviz, vkn: '', vd: '', sabit: '', yetkili: '', eposta: '' };
-  const pick = (k, l) => html`<div class="field"><label>${l} <span class="req" data-rq="${k}">*</span></label><button type="button" class="btn pickbtn" data-pk="${k}"><span></span>${I('down')}</button></div>`;
-  const inp = (k, l, req, extra = '') => html`<div class="field ${k === 'adres' ? 'span2' : ''}"><label>${l} ${req ? html`<span class="req">*</span>` : ''}</label><input class="inp" data-c="${k}" value="${v[k] || ''}" ${raw(extra)}><span class="err-t" data-e="${k}"></span></div>`;
+  for (const k of ['mahalle', 'sokak', 'binaNo', 'daireNo', 'pk', 'adresEk']) v[k] ??= '';
+  // Eski kayıt: yapılandırılmış adres yoksa serbest adres "ek bilgi"ye taşınır, hiçbir şey kaybolmaz
+  if (v.ulke === 'Türkiye' && v.adres && !v.mahalle && !v.adresEk) v.adresEk = v.adres;
+  const pick = (k, l, req = 1) => html`<div class="field" data-f="${k}"><label>${l} ${req ? html`<span class="req" data-rq="${k}">*</span>` : ''}</label><button type="button" class="btn pickbtn" data-pk="${k}"><span></span>${I('down')}</button><span class="err-t" data-e="${k}"></span></div>`;
+  const inp = (k, l, req, extra = '', cls = '') => html`<div class="field ${cls}" data-f="${k}"><label>${l} ${req ? html`<span class="req">*</span>` : ''}</label><input class="inp" data-c="${k}" value="${v[k] || ''}" ${raw(extra)}><span class="err-t" data-e="${k}"></span></div>`;
   modal({ title: c ? 'Cari düzenle' : 'Yeni cari', size: 'lg', body: html`<div class="grid g2">
       ${pick('tur', 'Cari Türü')}${inp('unvan', 'Cari Ünvanı', 1, 'maxlength="120" autofocus')}
-      ${pick('ulke', 'Ülke')}${pick('sehir', 'Şehir')}
-      ${inp('ilce', 'İlçe', 1, 'maxlength="60"')}${inp('gsm', 'GSM', 1, 'inputmode="tel" maxlength="20" placeholder="+90 5xx xxx xx xx"')}
-      ${inp('adres', 'Adres', 1, 'maxlength="250"')}
+      ${pick('ulke', 'Ülke')}${pick('sehir', 'İl')}
+      ${pick('ilce', 'İlçe')}${pick('mahalle', 'Mahalle / Köy')}
+      ${inp('sokak', 'Cadde / Sokak', 0, 'maxlength="80" placeholder="Örn. Atatürk Cd."', 'tr-f')}
+      <div class="field tr-f"><label>Bina No / Daire No</label><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><input class="inp" data-c="binaNo" value="${v.binaNo}" maxlength="10" placeholder="Bina"><input class="inp" data-c="daireNo" value="${v.daireNo}" maxlength="10" placeholder="Daire"></div></div>
+      ${inp('pk', 'Posta Kodu', 0, 'inputmode="numeric" maxlength="5"', 'tr-f')}${inp('adresEk', 'Adres ek bilgi (site, blok, kat…)', 0, 'maxlength="150"', 'tr-f')}
+      ${inp('adres', 'Adres', 1, 'maxlength="250"', 'span2 intl-f')}
+      <div class="muted sm span2 tr-f" data-adrinfo style="margin-top:-4px"></div>
+      ${inp('gsm', 'GSM', 1, 'inputmode="tel" maxlength="20" placeholder="+90 5xx xxx xx xx"')}
       <div class="field"><label>Çalışma Dövizi <span class="req">*</span></label><select class="inp" data-c="doviz">${CURS.map(x => html`<option ${v.doviz === x ? 'selected' : ''}>${x}</option>`)}</select></div>
       ${inp('vkn', 'TCKN / VKN', 0, 'inputmode="numeric" maxlength="11"')}${inp('vd', 'Vergi Dairesi', 0, 'maxlength="60"')}${inp('sabit', 'Sabit No', 0, 'inputmode="tel" maxlength="20"')}
       ${inp('yetkili', 'Yetkili Adı Soyadı', 0, 'maxlength="80"')}${inp('eposta', 'E-Posta', 0, 'inputmode="email" maxlength="120"')}</div>`,
     foot: html`<button class="btn" data-x>Vazgeç</button><button class="btn primary" data-save>${c ? 'Değişiklikleri Kaydet' : 'Cariyi Kaydet'}</button>`,
     onMount: m => {
       const tr = () => v.ulke === 'Türkiye';
+      let liste = null, yukleniyor = false;
+      const setIn = (k, val) => { v[k] = val; const i = m.$(`[data-c="${k}"]`); if (i) i.value = val; };
       const upd = () => {
+        const t = tr();
         m.$('[data-pk="tur"] span').textContent = v.tur || 'Seçin'; m.$('[data-pk="ulke"] span').textContent = v.ulke || 'Seçin';
-        m.$('[data-pk="sehir"] span').textContent = tr() ? (v.sehir || 'Seçin') : '—';
-        m.$('[data-pk="sehir"]').disabled = !tr(); m.$('[data-c="ilce"]').disabled = !tr();
-        m.$('[data-rq="sehir"]').classList.toggle('hidden', !tr()); m.$('[data-c="ilce"]').closest('.field').querySelector('.req').classList.toggle('hidden', !tr());
+        m.$('[data-pk="sehir"] span').textContent = v.sehir || 'Seçin';
+        m.$('[data-pk="ilce"] span').textContent = v.ilce || (v.sehir ? 'Seçin' : 'Önce il seçin');
+        m.$('[data-pk="mahalle"] span').textContent = v.mahalle || (v.ilce ? 'Seçin' : 'Önce ilçe seçin');
+        m.$('[data-pk="ilce"]').disabled = !v.sehir; m.$('[data-pk="mahalle"]').disabled = !v.ilce;
+        for (const k of ['sehir', 'ilce', 'mahalle']) m.$(`[data-f="${k}"]`).classList.toggle('hidden', !t);
+        $$('.tr-f', m.el).forEach(x => x.classList.toggle('hidden', !t)); $$('.intl-f', m.el).forEach(x => x.classList.toggle('hidden', t));
+        m.$('[data-adrinfo]').textContent = t && (v.mahalle || v.sokak) ? 'Adres: ' + trAdresMetni(v) : '';
       };
-      upd();
-      const setV = e => { const k = e.target.dataset.c; if (k) { v[k] = e.target.value; e.target.classList.remove('bad'); } };
+      const yukle = async () => {
+        if (!v.sehir || !tr()) { liste = null; return null; }
+        if (liste && liste.il === v.sehir) return liste;
+        yukleniyor = true; const d = await Adres.il(v.sehir); yukleniyor = false;
+        liste = d ? { il: v.sehir, ...d } : null;
+        if (!d) toast('Adres listesi indirilemedi; ilçe ve mahalleyi elle yazabilirsiniz.', 'err');
+        return liste;
+      };
+      upd(); if (tr() && v.sehir) yukle();
+      const setV = e => { const k = e.target.dataset.c; if (k) { v[k] = e.target.value; e.target.classList.remove('bad'); if (k === 'pk') { e.target.value = v.pk = e.target.value.replace(/\D/g, ''); } upd(); } };
       m.el.addEventListener('input', setV); m.el.addEventListener('change', setV);
-      m.el.addEventListener('click', e => {
+      m.el.addEventListener('click', async e => {
         const p = e.target.closest('[data-pk]'); if (!p) { if (e.target.closest('[data-save]')) save(); return; }
         const k = p.dataset.pk;
         if (k === 'tur') picker({ title: 'Cari türü', value: v.tur, options: S.cariTurleri.map(x => ({ v: x, l: x })), onPick: x => { v.tur = x; upd(); }, addLabel: 'Cari Türü Ekle', onAdd: () => cariTuruForm(null, x => { v.tur = x; upd(); }) });
-        if (k === 'ulke') picker({ title: 'Ülke', value: v.ulke, options: ULKELER.map(x => ({ v: x, l: x })), onPick: x => { v.ulke = x; if (x !== 'Türkiye') { v.sehir = ''; v.ilce = ''; m.$('[data-c="ilce"]').value = ''; } upd(); } });
-        if (k === 'sehir') picker({ title: 'Şehir', value: v.sehir, options: ILLER.map(x => ({ v: x, l: x })), onPick: x => { v.sehir = x; upd(); } });
+        if (k === 'ulke') picker({ title: 'Ülke', value: v.ulke, options: ULKELER.map(x => ({ v: x, l: x })), onPick: x => { v.ulke = x; if (x !== 'Türkiye') { v.sehir = v.ilce = v.mahalle = ''; } upd(); } });
+        if (k === 'sehir') picker({ title: 'İl', value: v.sehir, options: ILLER.map(x => ({ v: x, l: x })), onPick: x => { if (x !== v.sehir) { v.sehir = x; v.ilce = v.mahalle = ''; setIn('pk', ''); } upd(); yukle(); } });
+        if (k === 'ilce') {
+          if (yukleniyor) toast('Liste hazırlanıyor…'); const L = await yukle();
+          picker({ title: `${v.sehir} — İlçe`, value: v.ilce, options: (L?.ilceler || []).map(x => ({ v: x.ad, l: x.ad, sub: `${x.mah.length} mahalle / köy` })),
+            onPick: x => { if (x !== v.ilce) { v.ilce = x; v.mahalle = ''; setIn('pk', ''); } upd(); },
+            addLabel: 'Listede yok, elle yaz', onAdd: () => textAsk('İlçe', v.ilce, x => { v.ilce = x; v.mahalle = ''; upd(); }, 60) });
+        }
+        if (k === 'mahalle') {
+          const L = await yukle(), ic = L?.ilceler.find(x => trLower(x.ad) === trLower(v.ilce));
+          picker({ title: `${v.ilce} — Mahalle / Köy`, value: v.mahalle, options: (ic?.mah || []).map(x => ({ v: x.ad, l: x.ad, sub: x.pk ? `Posta kodu ${x.pk}` : '' })),
+            onPick: x => { v.mahalle = x; const pk = ic?.mah.find(y => y.ad === x)?.pk; if (pk) setIn('pk', pk); upd(); m.$('[data-c="sokak"]').focus(); },
+            addLabel: 'Listede yok, elle yaz', onAdd: () => textAsk('Mahalle / Köy', v.mahalle, x => { v.mahalle = x; upd(); }) });
+        }
       });
       const save = () => {
         const d = {}; for (const k in v) d[k] = typeof v[k] === 'string' ? clean(v[k], k === 'adres' ? 250 : 120) : v[k];
         const er = {};
         if (!d.tur) er.tur = 1; if (!d.unvan) er.unvan = 'Ünvan zorunlu'; if (!d.ulke) er.ulke = 1;
-        if (d.ulke === 'Türkiye') { if (!ILLER.includes(d.sehir)) er.sehir = 1; if (!d.ilce) er.ilce = 'İlçe zorunlu'; }
-        if (!d.adres) er.adres = 'Adres zorunlu';
+        if (d.ulke === 'Türkiye') {
+          if (!ILLER.includes(d.sehir)) er.sehir = 1; if (!d.ilce) er.ilce = 'İlçe zorunlu'; if (!d.mahalle) er.mahalle = 'Mahalle zorunlu';
+          if (d.pk && !/^\d{5}$/.test(d.pk)) er.pk = 'Posta kodu 5 haneli olmalı';
+          const UP = x => x.toLocaleUpperCase('tr-TR'); d.binaNo = UP(clean(d.binaNo, 10)); d.daireNo = UP(clean(d.daireNo, 10)); d.sokak = UP(clean(d.sokak, 80)); d.adresEk = UP(clean(d.adresEk, 150)); d.mahalle = UP(d.mahalle);
+          d.ilce = d.ilce.toLocaleUpperCase('tr-TR'); d.adres = trAdresMetni(d).slice(0, 250);
+        } else {
+          for (const k of ['sehir', 'ilce', 'mahalle', 'sokak', 'binaNo', 'daireNo', 'pk', 'adresEk']) d[k] = '';
+          if (!d.adres) er.adres = 'Adres zorunlu';
+        }
         if (!d.gsm) er.gsm = 'GSM zorunlu'; else if (!V.phone(d.gsm)) er.gsm = 'Geçerli bir telefon girin (10–15 hane)';
         if (d.sabit && !V.phone(d.sabit)) er.sabit = 'Geçerli bir telefon girin';
         if (d.eposta && !V.email(d.eposta)) er.eposta = 'Geçerli bir e-posta girin';
@@ -1816,7 +1981,7 @@ VIEWS.musteriler = main => {
 function drawCari() {
   if (!$('#tw')) return;
   const st = cariStats(), q = trLower(MQ.q);
-  const rows = DB.cari.all().filter(c => !q || trLower([c.unvan, c.tur, c.sehir, c.ilce, c.ulke, c.gsm, c.eposta, c.yetkili, c.vkn].join(' ')).includes(q)).sort((a, b) => a.unvan.localeCompare(b.unvan, 'tr'));
+  const rows = DB.cari.all().filter(c => !q || trLower([c.unvan, c.tur, c.sehir, c.ilce, c.mahalle, c.adres, c.ulke, c.gsm, c.eposta, c.yetkili, c.vkn].join(' ')).includes(q)).sort((a, b) => a.unvan.localeCompare(b.unvan, 'tr'));
   $('#cnt').textContent = `${rows.length} cari`;
   mount($('#tw'), rows.length ? html`<table class="tbl resp"><thead><tr>${['Cari Ünvanı', 'Tür', 'Şehir / Ülke', 'GSM', 'E-Posta', 'Döviz', 'Teklif', 'Toplam', ''].map(h => html`<th><div class="thi">${h}</div></th>`)}</tr></thead><tbody>
     ${rows.map(c => html`<tr data-act="openCari" data-id="${c.id}"><td class="b">${c.unvan}</td><td>${c.tur}</td><td>${c.sehir || c.ulke}</td><td>${c.gsm}</td><td>${c.eposta || '—'}</td><td>${c.doviz}</td><td>${st[c.id]?.n || 0}</td><td>${fmtMulti(st[c.id]?.top || {})}</td>

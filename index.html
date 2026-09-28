@@ -1729,14 +1729,22 @@ async function teklifPdfFile(t, o, { ask = true, reveal = false } = {}) {
   } finally { clear(); }
 }
 const curPdfOpts = () => ({ ...S.pdf, ...(Local.get('pdf_last', null) || {}) });
+// Masaüstü köprüsü yoksa (eski program veya tarayıcı) ne yapılacağını açıkça söyle
+function needDesktop(t, o) {
+  const exe = /Electron/i.test(navigator.userAgent);
+  modal({ title: 'Masaüstü programı güncellenmeli', size: 'sm', body: html`<p style="margin-top:0">${exe
+      ? 'PDF indirme ve PDF paylaşma, PRONTO Teklif programının yeni sürümüyle çalışır. Bu bilgisayarda eski sürüm açık.'
+      : 'PDF indirme ve PDF paylaşma, PRONTO Teklif masaüstü programında çalışır.'}</p>
+    <p class="muted sm">${exe ? 'Programı kapatıp açın; güncelleme sorusu gelince "İndir" ve "Yeniden Başlat" deyin.' : 'Tarayıcıda yazdırma penceresinden "PDF olarak kaydet" seçebilirsiniz.'}</p>`,
+    foot: html`<button class="btn" data-x>Kapat</button><button class="btn primary" data-p>Yazdırma penceresiyle kaydet</button>`,
+    onMount: m => m.el.addEventListener('click', e => { if (e.target.closest('[data-p]')) { m.close(); printTeklif(t, o); } }) });
+}
 async function downloadTeklifPdf(t, o = curPdfOpts()) {
-  if (!desktop()) {
-    toast('Yazdırma penceresinde hedef olarak "PDF olarak kaydet"i seçin.');
-    printHTML(pdfDoc(t, o), pageCss(o.size, o.orient, (PL[o.lang] || PL.tr).sayfa));
-    return;
-  }
-  try { const r = await teklifPdfFile(t, o, { ask: true }); if (r && r.ok) toast('PDF kaydedildi'); }
-  catch (e) { toast('PDF oluşturulamadı: ' + (e.message || e), 'err'); }
+  if (!desktop()) return needDesktop(t, o);
+  try {
+    const r = await teklifPdfFile(t, o, { ask: false, reveal: true });
+    if (r && r.ok) toast('PDF indirildi: İndirilenler › PRONTO Teklifler', 'ok', 5000); else throw new Error(r?.error || 'kaydedilemedi');
+  } catch (e) { toast('PDF oluşturulamadı: ' + (e.message || e), 'err'); }
 }
 function printTeklif(t, o = curPdfOpts()) { printHTML(pdfDoc(t, o), pageCss(o.size, o.orient, (PL[o.lang] || PL.tr).sayfa)); }
 function pdfPreview(id) {
@@ -1746,7 +1754,7 @@ function pdfPreview(id) {
     const box = $('.mdl', m.el); box.classList.add('lg');
     mount(box, html`<div class="pdf-h"><div class="meta">${logoSrc() ? html`<img src="${logoSrc()}" alt="">` : html`<div class="mark">P</div>`}<div style="min-width:0"><div class="b">Teklif ${t.no}</div><div class="muted sm" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.cariSnap.unvan} · ${fmtDate(t.tarih)}</div></div></div>
       <button class="btn icon sm" data-z="-1" aria-label="Uzaklaştır">${I('zout')}</button><button class="btn icon sm" data-z="1" aria-label="Yakınlaştır">${I('zin')}</button>
-      <button class="btn sm" data-set>${I('gear')} Ayarlar</button><button class="btn sm" data-print>${I('print')} Yazdır</button><button class="btn sm primary" data-share>${I('share')} Paylaş</button>
+      <button class="btn sm" data-set>${I('gear')} Ayarlar</button><button class="btn sm" data-dl>${I('pdf')} PDF</button><button class="btn sm" data-print>${I('print')} Yazdır</button><button class="btn sm primary" data-share>${I('share')} Paylaş</button>
       <button class="btn ghost icon sm" data-x aria-label="Kapat">${I('x')}</button></div><div class="pdf-stage" data-stage><div class="pdf-zoom" data-zoom></div></div>`);
     const render = () => { mount(m.$('[data-zoom]'), pdfDoc(t, o)); applyZoom(); };
     const applyZoom = () => { m.$('[data-zoom]').style.transform = `scale(${zoom})`; const d = m.$('.pdoc'); if (d) m.$('[data-zoom]').style.height = (d.offsetHeight * zoom) + 'px'; };
@@ -1757,6 +1765,7 @@ function pdfPreview(id) {
     stage.addEventListener('touchend', () => { pinch = null; });
     m.el.addEventListener('click', e => {
       const z = e.target.closest('[data-z]'); if (z) setZoom(zoom + +z.dataset.z * .15);
+      if (e.target.closest('[data-dl]')) { Local.set('pdf_last', o); downloadTeklifPdf(t, o); }
       if (e.target.closest('[data-print]')) { Local.set('pdf_last', o); printTeklif(t, o); }
       if (e.target.closest('[data-share]')) { Local.set('pdf_last', o); shareTeklif(t, o); }
       if (e.target.closest('[data-set]')) pdfSettings(o, no => { o = no; render(); });
@@ -1780,14 +1789,7 @@ function openOut(url) {
 function shareTeklif(t, o = curPdfOpts()) {
   const cs = t.cariSnap || {}, phone = waPhone(cs.gsm), mail = V.email(cs.eposta) && cs.eposta ? cs.eposta : '';
   const d = desktop(), canCopy = !!(d && typeof d.copyFile === 'function' && typeof d.openWhatsApp === 'function');
-  if (!d) {
-    const c = calc(t, payMap()[t.id]);
-    const text = `Merhaba, ${cs.unvan || ''} için hazırladığımız ${t.no} numaralı teklif.\nGenel Toplam: ${money(c.genel, t.doviz)}\n\n${S.firma.ad || ''}`;
-    return modal({ title: `Teklif ${t.no} — Paylaş`, size: 'sm', body: html`<p class="muted sm" style="margin-top:0">PDF dosyası olarak paylaşım masaüstü programında (PRONTO Teklif) çalışır. Tarayıcıda yalnızca metin paylaşılabilir.</p>
-      <div class="grid"><button class="btn primary" data-sh="wa">WhatsApp (metin)</button><button class="btn" data-sh="print">Yazdır / PDF olarak kaydet</button></div>`,
-      onMount: m => m.el.addEventListener('click', e => { const k = e.target.closest('[data-sh]')?.dataset.sh; if (!k) return; m.close();
-        if (k === 'wa') window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener'); else printTeklif(t, o); }) });
-  }
+  if (!d) return needDesktop(t, o);
   modal({ title: `Teklif ${t.no} — Paylaş`, size: 'sm', body: html`
     <p class="muted sm" style="margin-top:0">${canCopy ? html`PDF hazırlanıp <b>panoya kopyalanır</b>. Açılan sohbete <b>Ctrl+V</b> ile yapıştırıp gönderin.` : 'PDF hazırlanıp klasörde gösterilir; açılan sohbete sürükleyip bırakın.'}</p>
     <div class="grid">

@@ -397,11 +397,12 @@ table.pd-t{width:100%;border-collapse:collapse;font-size:9pt}
 .pd-foot .pg{white-space:nowrap}
 #print-root{display:none}
 @media print{
- html,body{height:auto;overflow:visible;background:#fff}
+ :root,:root[data-theme=dark]{color-scheme:light!important;background:#fff!important}
+ html,body{height:auto;overflow:visible;background:#fff!important}
  body::before{display:none}
  body>*:not(#print-root){display:none!important}
  #print-root{display:block}
- #print-root .pdoc{box-shadow:none;width:auto;min-height:0;padding:0}
+ #print-root .pdoc{box-shadow:none;width:auto;min-height:0;padding:0 1.5mm}
  #print-root .pd-foot{display:none}
  #print-root .rep{color:#000;font:10pt/1.4 var(--font)}
  #print-root .rep table{width:100%;border-collapse:collapse}
@@ -1697,16 +1698,21 @@ function pdfDoc(t, o) {
     <div class="pd-foot"><span>${[S.firma.ad, S.firma.tel, S.firma.adres, S.firma.eposta].filter(Boolean).join('  |  ')}</span><span class="pg">${L.sayfa} 1 / 1</span></div></div>`;
 }
 const cssStr = s => '"' + String(s).replace(/[\\"]/g, '\\$&').replace(/[\r\n]+/g, ' ') + '"';
-function pageCss(size, orient, sayfa = 'Sayfa') {
+function pageCss(size, orient, sayfa = 'Sayfa', footer = true) {
   const firma = [S.firma.ad, S.firma.tel, S.firma.adres, S.firma.eposta].filter(Boolean).join('  |  ');
   size = size === 'A3' ? 'A3' : 'A4'; orient = orient === 'landscape' ? 'landscape' : 'portrait';
-  return `@page{size:${size} ${orient};margin:12mm 12mm 18mm;@bottom-left{content:${cssStr(firma)};font:8pt Manrope,sans-serif;color:#4a4f5a}@bottom-right{content:${cssStr(sayfa + ' ')} counter(page) " / " counter(pages);font:8pt Manrope,sans-serif;color:#4a4f5a}}`;
+  // Kenar boşlukları her zaman beyaz (karanlık modda siyah basılmasın)
+  if (!footer) return `@page{size:${size} ${orient};margin:12mm 12mm 18mm;background:#fff}`;
+  return `@page{size:${size} ${orient};margin:12mm 12mm 18mm;background:#fff;@bottom-left{content:${cssStr(firma)};font:8pt Manrope,sans-serif;color:#4a4f5a}@bottom-right{content:${cssStr(sayfa + ' ')} counter(page) " / " counter(pages);font:8pt Manrope,sans-serif;color:#4a4f5a}}`;
 }
 function preparePrint(content, css) {
   const pr = $('#print-root'); mount(pr, content);
   let st = $('#print-page'); if (!st) { st = document.createElement('style'); st.id = 'print-page'; document.head.appendChild(st); }
   st.textContent = css;
-  return () => mount(pr, '');
+  // Basım sırasında açık tema: karanlık mod sayfa kenarlarına yansımasın
+  const root = document.documentElement, theme = root.getAttribute('data-theme');
+  if (theme === 'dark') root.setAttribute('data-theme', 'light');
+  return () => { mount(pr, ''); if (theme === 'dark') root.setAttribute('data-theme', theme); };
 }
 function printHTML(content, css) {
   const clear = preparePrint(content, css);
@@ -1721,10 +1727,12 @@ const teklifFileName = t => safeFileName(`Teklif ${t.no} - ${t.cariSnap?.unvan |
 async function teklifPdfFile(t, o, { ask = true, reveal = false } = {}) {
   const d = desktop();
   if (!d) return null;
-  const clear = preparePrint(pdfDoc(t, o), pageCss(o.size, o.orient, (PL[o.lang] || PL.tr).sayfa));
+  // Chrome 131+ sayfanın kendi alt bilgisini (@page) basar; daha eskisinde programın şablonu kullanılır — asla ikisi birden değil
+  const cssFoot = +((navigator.userAgent.match(/Chrome\/(\d+)/) || [])[1] || 0) >= 131;
+  const clear = preparePrint(pdfDoc(t, o), pageCss(o.size, o.orient, (PL[o.lang] || PL.tr).sayfa, cssFoot));
   try {
     await Promise.all($$('#print-root img').map(i => i.decode().catch(() => {})));
-    const footer = { left: [S.firma.ad, S.firma.tel, S.firma.adres, S.firma.eposta].filter(Boolean).join('  |  '), page: (PL[o.lang] || PL.tr).sayfa || 'Sayfa' };
+    const footer = cssFoot ? null : { left: [S.firma.ad, S.firma.tel, S.firma.adres, S.firma.eposta].filter(Boolean).join('  |  '), page: (PL[o.lang] || PL.tr).sayfa || 'Sayfa' };
     return await d.savePdf({ fileName: teklifFileName(t), pageSize: o.size === 'A3' ? 'A3' : 'A4', landscape: o.orient === 'landscape', ask, reveal, footer });
   } finally { clear(); }
 }
@@ -1742,8 +1750,9 @@ function needDesktop(t, o) {
 async function downloadTeklifPdf(t, o = curPdfOpts()) {
   if (!desktop()) return needDesktop(t, o);
   try {
-    const r = await teklifPdfFile(t, o, { ask: false, reveal: true });
-    if (r && r.ok) toast('PDF indirildi: İndirilenler › PRONTO Teklifler', 'ok', 5000); else throw new Error(r?.error || 'kaydedilemedi');
+    const r = await teklifPdfFile(t, o, { ask: true });   // kaydedilecek yer sorulur
+    if (r?.canceled) return;
+    if (r && r.ok) toast('PDF kaydedildi', 'ok', 4000); else throw new Error(r?.error || 'kaydedilemedi');
   } catch (e) { toast('PDF oluşturulamadı: ' + (e.message || e), 'err'); }
 }
 function printTeklif(t, o = curPdfOpts()) { printHTML(pdfDoc(t, o), pageCss(o.size, o.orient, (PL[o.lang] || PL.tr).sayfa)); }

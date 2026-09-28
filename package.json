@@ -1,6 +1,6 @@
 {
   "name": "pronto-teklif",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "PRONTO Teklif / Satış",
   "main": "main.js",
   "author": "Ofischi",
@@ -20,10 +20,21 @@
   "build": {
     "appId": "com.ofischi.pronto.teklif",
     "productName": "PRONTO Teklif",
-    "files": ["main.js", "package.json"],
+    "files": [
+      "main.js",
+      "preload.js",
+      "package.json"
+    ],
     "win": {
       "icon": "build/icon.ico",
-      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
       "artifactName": "PRONTO-Teklif-Kurulum-${version}.${ext}"
     },
     "nsis": {

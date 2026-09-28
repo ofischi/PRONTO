@@ -1155,7 +1155,10 @@ A.openTeklif = el => { LS.sel = el.dataset.id; go('teklifDetay', { id: el.datase
 A.rowMenu = (el, e) => { e.stopPropagation(); const id = el.dataset.id; popMenu(el, [
   { label: 'Hızlı Detay', icon: 'doc', run: () => quickTeklifDetail(id) },
   { label: 'Düzenle', icon: 'edit', run: () => go('teklifForm', { id }) },
-  { label: 'PDF / Yazdır', icon: 'pdf', run: () => pdfPreview(id) }, '-',
+  { label: 'Önizle', icon: 'doc', run: () => pdfPreview(id) },
+  { label: 'PDF İndir', icon: 'pdf', run: () => downloadTeklifPdf(DB.teklif.find(id)) },
+  { label: 'Yazdır', icon: 'print', run: () => printTeklif(DB.teklif.find(id)) },
+  { label: 'Paylaş', icon: 'share', run: () => shareTeklif(DB.teklif.find(id)) }, '-',
   { label: 'Sil', icon: 'trash', danger: true, run: () => deleteTeklif(id) }]); };
 const EMPTY_F = () => ({ cari: '', durum: '', personel: '', tarih: '', from: '', to: '' });
 A.listMore = el => popMenu(el, [
@@ -1486,28 +1489,34 @@ VIEWS.teklifDetay = (main, { id, tab = 'urunler' }) => {
   const t = DB.teklif.find(id); if (!t || t.deletedAt) return go('teklifler');
   const pays = (payMap()[t.id] || []).sort((a, b) => (b.tarih + b.created).localeCompare(a.tarih + a.created));
   const c = calc(t, pays), cs = t.cariSnap, pct = c.genel ? Math.min(100, c.pes / c.genel * 100) : 0;
+  /* Teklifte girilen peşinat da bir ödeme olarak listelenir (teklif kaydında durur, Düzenle ile değişir) */
+  const pesRow = t.pesinat > 0 ? { pesinat: true, tarih: t.pesinatTarih || t.tarih, tutar: t.pesinat, doviz: t.doviz, cevrilmis: t.pesinat, aciklama: 'Teklifte alınan peşinat' } : null;
+  const payRows = pesRow ? [...pays, pesRow] : pays, payCount = payRows.length;
   mount(main, html`<div class="page detail"><div class="ph"><div class="ph-l"><button class="btn icon" data-act="nav" data-v="teklifler" aria-label="Geri">${I('back')}</button>
       <div><h1 style="display:flex;gap:10px;align-items:center">Teklif ${t.no} ${stTag(t.durum)}</h1><div class="muted sm">${cs.unvan}</div></div></div>
-    <div class="ph-act"><button class="btn" data-act="editTeklif" data-id="${t.id}">${I('edit')} Düzenle</button><button class="btn" data-act="pdf" data-id="${t.id}">${I('pdf')} PDF / Yazdır</button><button class="btn icon" data-act="rowMenu" data-id="${t.id}" aria-label="Diğer">${I('dots')}</button></div></div>
+    <div class="ph-act"><button class="btn" data-act="editTeklif" data-id="${t.id}">${I('edit')} Düzenle</button><button class="btn" data-act="pdf" data-id="${t.id}">${I('pdf')} PDF İndir</button><button class="btn" data-act="printT" data-id="${t.id}">${I('print')} Yazdır</button><button class="btn" data-act="shareT" data-id="${t.id}">${I('share')} Paylaş</button><button class="btn icon" data-act="rowMenu" data-id="${t.id}" aria-label="Diğer">${I('dots')}</button></div></div>
     <div class="dgrid">
       <div class="card"><div class="card-h"><h3>Müşteri</h3></div><dl class="kv"><dt>Ünvan</dt><dd>${cs.unvan}</dd><dt>Telefon</dt><dd>${cs.gsm || '—'}</dd><dt>E-posta</dt><dd>${cs.eposta || '—'}</dd><dt>Adres</dt><dd>${[cs.adres, cs.ilce, cs.sehir, cs.ulke].filter(Boolean).join(', ')}</dd></dl></div>
       <div class="card"><div class="card-h"><h3>Teklif</h3></div><dl class="kv"><dt>Teklif Tarihi</dt><dd>${fmtDate(t.tarih)}</dd><dt>Teslim Tarihi</dt><dd>${fmtDate(t.teslim)}</dd><dt>Döviz</dt><dd>${t.doviz}</dd><dt>Personel</dt><dd>${t.personelAd}</dd>
         <dt>Montaj</dt><dd>${LBL[t.montaj]}</dd><dt>Nakliye</dt><dd>${LBL[t.nakliye]}</dd><dt>Teslim Yeri</dt><dd>${LBL[t.teslimYeri]}</dd></dl></div>
       <div class="card"><div class="card-h"><h3>Ödeme özeti</h3><button class="btn sm" data-act="addPay" data-id="${t.id}">${I('plus')} Ödeme</button></div>
-        <dl class="kv"><dt>Genel Toplam</dt><dd class="b">${money(c.genel, t.doviz)}</dd><dt>Alınan</dt><dd>${money(c.pes, t.doviz)}</dd><dt>Kalan</dt><dd>${money(c.kalan, t.doviz)}</dd><dt>Ödeme sayısı</dt><dd>${pays.length}</dd></dl>
+        <dl class="kv"><dt>Genel Toplam</dt><dd class="b">${money(c.genel, t.doviz)}</dd>
+          ${t.pesinat > 0 ? html`<dt>Peşinat${t.pesinatTarih ? ` (${fmtDate(t.pesinatTarih)})` : ''}</dt><dd>${money(t.pesinat, t.doviz)}</dd>` : ''}
+          ${pays.length ? html`<dt>Diğer ödemeler</dt><dd>${money(r2(c.pes - (+t.pesinat || 0)), t.doviz)}</dd>` : ''}
+          <dt>Toplam alınan</dt><dd>${money(c.pes, t.doviz)}</dd><dt>Kalan</dt><dd class="b">${money(c.kalan, t.doviz)}</dd><dt>Ödeme sayısı</dt><dd>${payCount}</dd></dl>
         <div class="prog"><i style="width:${pct.toFixed(1)}%"></i></div></div></div>
-    <div class="tabs" role="tablist"><button class="${tab === 'urunler' ? 'on' : ''}" data-act="dTab" data-id="${t.id}" data-t="urunler">Ürünler (${t.items.length})</button><button class="${tab === 'odemeler' ? 'on' : ''}" data-act="dTab" data-id="${t.id}" data-t="odemeler">Ödemeler (${pays.length})</button></div>
+    <div class="tabs" role="tablist"><button class="${tab === 'urunler' ? 'on' : ''}" data-act="dTab" data-id="${t.id}" data-t="urunler">Ürünler (${t.items.length})</button><button class="${tab === 'odemeler' ? 'on' : ''}" data-act="dTab" data-id="${t.id}" data-t="odemeler">Ödemeler (${payCount})</button></div>
     ${tab === 'urunler' ? html`<div class="tw"><table class="tbl static resp"><thead><tr>${['', 'Ürün', 'Ölçü', 'Renk', 'Yön', 'Adet', 'Birim Fiyat', 'Toplam', 'Açıklama'].map((h, i) => html`<th class="${i >= 5 && i <= 7 ? 'r' : ''}"><div class="thi">${h}</div></th>`)}</tr></thead><tbody>
         ${t.items.map(it => { const f = safeImg(offerFotoGet(it)); return html`<tr><td>${f ? html`<img class="thumb" src="${f}" alt="" data-act="img">` : html`<span class="thumb">Fotoğraf Yok</span>`}</td><td class="b">${itemTitle(it)}</td><td>${it.olcu || '—'}</td><td>${it.renk || '—'}</td><td>${it.yon || '—'}</td><td class="r">${it.adet}</td><td class="r">${money(it.fiyat, t.doviz)}</td><td class="r b">${money(it.fiyat * it.adet, t.doviz)}</td><td class="wrap" style="min-width:180px">${it.aciklama || ''}</td></tr>`; })}</tbody></table>
         <div class="cards">${t.items.map(it => { const f = safeImg(offerFotoGet(it)); return html`<div class="lcard" style="cursor:default"><div class="row" style="justify-content:flex-start">${f ? html`<img class="thumb" src="${f}" alt="" data-act="img">` : html`<span class="thumb">Fotoğraf Yok</span>`}<div style="min-width:0"><div class="ttl">${itemTitle(it)}</div><div class="muted sm">${[it.olcu, it.renk, it.yon].filter(Boolean).join(' · ')}</div></div></div>
           <div class="row sm"><span class="muted">${it.adet} × ${money(it.fiyat, t.doviz)}</span><span class="b">${money(it.fiyat * it.adet, t.doviz)}</span></div>${it.aciklama ? html`<div class="sm muted" style="white-space:pre-wrap">${it.aciklama}</div>` : ''}</div>`; })}</div></div>`
     : html`<div class="toolbar"><button class="btn primary" data-act="addPay" data-id="${t.id}">${I('plus')} Ödeme Ekle</button></div>
-      ${pays.length ? html`<div class="tw"><table class="tbl static resp"><thead><tr>${['Tarih', 'Tutar', 'Kur', `Karşılığı (${t.doviz})`, 'Yöntem', 'Açıklama', ''].map((h, i) => html`<th class="${i === 1 || i === 3 ? 'r' : ''}"><div class="thi">${h}</div></th>`)}</tr></thead><tbody>
-        ${pays.map(p => html`<tr><td>${fmtDate(p.tarih)}</td><td class="r">${money(p.tutar, p.doviz)}</td><td>${p.doviz !== t.doviz ? kurText(p.doviz, t.doviz, p.kur) : '—'}</td><td class="r b">${money(p.cevrilmis, t.doviz)}</td><td>${DB.yontem.find(p.yontemId)?.ad || '—'}</td><td class="wrap">${p.aciklama || ''}</td>
-          <td class="nowrap"><button class="btn ghost icon sm" data-act="editPay" data-id="${p.id}" aria-label="Düzenle">${I('edit')}</button><button class="btn ghost icon sm" data-act="delPay" data-id="${p.id}" aria-label="Sil">${I('trash')}</button></td></tr>`)}</tbody></table>
-        <div class="cards">${pays.map(p => html`<div class="lcard" style="cursor:default"><div class="row"><span class="b">${money(p.tutar, p.doviz)}</span><span class="muted sm">${fmtDate(p.tarih)}</span></div>
-          <div class="row sm"><span class="muted">${DB.yontem.find(p.yontemId)?.ad || '—'}${p.doviz !== t.doviz ? ' · ' + kurText(p.doviz, t.doviz, p.kur) : ''}</span><span>${money(p.cevrilmis, t.doviz)}</span></div>${p.aciklama ? html`<div class="sm muted">${p.aciklama}</div>` : ''}
-          <div class="row" style="justify-content:flex-end"><button class="btn sm" data-act="editPay" data-id="${p.id}">Düzenle</button><button class="btn sm danger" data-act="delPay" data-id="${p.id}">Sil</button></div></div>`)}</div></div>`
+      ${payRows.length ? html`<div class="tw"><table class="tbl static resp"><thead><tr>${['Tarih', 'Tutar', 'Kur', `Karşılığı (${t.doviz})`, 'Yöntem', 'Açıklama', ''].map((h, i) => html`<th class="${i === 1 || i === 3 ? 'r' : ''}"><div class="thi">${h}</div></th>`)}</tr></thead><tbody>
+        ${payRows.map(p => html`<tr><td>${fmtDate(p.tarih)}</td><td class="r">${money(p.tutar, p.doviz)}</td><td>${p.doviz !== t.doviz ? kurText(p.doviz, t.doviz, p.kur) : '—'}</td><td class="r b">${money(p.cevrilmis, t.doviz)}</td><td>${p.pesinat ? 'Peşinat' : (DB.yontem.find(p.yontemId)?.ad || '—')}</td><td class="wrap">${p.aciklama || ''}</td>
+          <td class="nowrap">${p.pesinat ? html`<button class="btn ghost icon sm" data-act="editTeklif" data-id="${t.id}" aria-label="Peşinatı düzenle" title="Peşinat teklif formundan düzenlenir">${I('edit')}</button>` : html`<button class="btn ghost icon sm" data-act="editPay" data-id="${p.id}" aria-label="Düzenle">${I('edit')}</button><button class="btn ghost icon sm" data-act="delPay" data-id="${p.id}" aria-label="Sil">${I('trash')}</button>`}</td></tr>`)}</tbody></table>
+        <div class="cards">${payRows.map(p => html`<div class="lcard" style="cursor:default"><div class="row"><span class="b">${money(p.tutar, p.doviz)}</span><span class="muted sm">${fmtDate(p.tarih)}</span></div>
+          <div class="row sm"><span class="muted">${p.pesinat ? 'Peşinat' : (DB.yontem.find(p.yontemId)?.ad || '—')}${p.doviz !== t.doviz ? ' · ' + kurText(p.doviz, t.doviz, p.kur) : ''}</span><span>${money(p.cevrilmis, t.doviz)}</span></div>${p.aciklama ? html`<div class="sm muted">${p.aciklama}</div>` : ''}
+          <div class="row" style="justify-content:flex-end">${p.pesinat ? html`<button class="btn sm" data-act="editTeklif" data-id="${t.id}">Düzenle</button>` : html`<button class="btn sm" data-act="editPay" data-id="${p.id}">Düzenle</button><button class="btn sm danger" data-act="delPay" data-id="${p.id}">Sil</button>`}</div></div>`)}</div></div>`
       : html`<div class="empty card"><b>Bu teklife henüz ödeme girilmedi</b>Peşinat veya ara ödeme almak için "Ödeme Ekle"yi kullanın.</div>`}`}
     <div class="totbar"><div class="c x"><span>Ana Para</span><span>${money(c.ana, t.doviz)}</span></div><div class="c x"><span>İskonto</span><span>${c.isk ? '-' + money(c.isk, t.doviz) : money(0, t.doviz)}</span></div>
       <div class="c x"><span>Ara Toplam</span><span>${money(c.ara, t.doviz)}</span></div><div class="c x"><span>KDV %${NF.format(t.kdv).replace(',00', '')}</span><span>${money(c.kdv, t.doviz)}</span></div>
@@ -1516,7 +1525,9 @@ VIEWS.teklifDetay = (main, { id, tab = 'urunler' }) => {
 };
 A.dTab = el => go('teklifDetay', { id: el.dataset.id, tab: el.dataset.t });
 A.editTeklif = el => go('teklifForm', { id: el.dataset.id });
-A.pdf = el => pdfPreview(el.dataset.id);
+A.pdf = el => downloadTeklifPdf(DB.teklif.find(el.dataset.id));
+A.printT = el => printTeklif(DB.teklif.find(el.dataset.id));
+A.shareT = el => shareTeklif(DB.teklif.find(el.dataset.id));
 A.totDetail = el => { const t = DB.teklif.find(el.dataset.id); modal({ title: `Teklif ${t.no} toplamlar`, size: 'sm', body: totsHTML(calc(t, payMap()[t.id]), t) }); };
 function kurText(pd, td, kur) { return pd === 'TRY' ? `1 ${td} = ${NF.format(kur)} TRY` : `1 ${pd} = ${NF.format(kur)} ${td}`; }
 function convert(tutar, pd, td, kur) { if (pd === td) return r2(tutar); return pd === 'TRY' ? r2(tutar / kur) : r2(tutar * kur); }
@@ -1596,7 +1607,7 @@ function pdfDoc(t, o) {
           <td><div class="nm">${itemTitle(it)}</div></td><td>${it.olcu || '—'}</td><td>${it.renk || '—'}</td><td>${it.yon || '—'}</td>
           <td class="r nowrap">${money(it.fiyat, t.doviz)}</td><td class="r">${it.adet}</td><td class="r nowrap"><b>${money(it.fiyat * it.adet, t.doviz)}</b></td></tr>
           ${it.aciklama ? html`<tr><td></td><td colspan="7" class="ds">${it.aciklama}</td></tr>` : ''}</tbody>`; })}</table>
-    <div class="pd-sum"><div class="pd-pay">${pays.length ? html`<b>${L.odemeler}</b><table>${pays.map(p => html`<tr><td>${fmtDate(p.tarih)}</td><td class="nowrap">${money(p.cevrilmis, t.doviz)}</td></tr>`)}</table>` : ''}</div>
+    <div class="pd-sum"><div class="pd-pay">${(pays.length || t.pesinat > 0) ? html`<b>${L.odemeler}</b><table>${t.pesinat > 0 ? html`<tr><td>${t.pesinatTarih ? fmtDate(t.pesinatTarih) : '—'}</td><td class="nowrap">${money(t.pesinat, t.doviz)}</td><td>${L.pes}</td></tr>` : ''}${pays.map(p => html`<tr><td>${fmtDate(p.tarih)}</td><td class="nowrap">${money(p.cevrilmis, t.doviz)}</td><td></td></tr>`)}</table>` : ''}</div>
       <div class="pd-tot"><div><span>${L.ana}</span><span>${money(c.ana, t.doviz)}</span></div><div><span>${L.isk}</span><span>${c.isk ? '-' + money(c.isk, t.doviz) : money(0, t.doviz)}</span></div>
         <div><span>${L.ara}</span><span>${money(c.ara, t.doviz)}</span></div><div><span>${L.kdv} %${NF.format(t.kdv).replace(',00', '')}</span><span>${money(c.kdv, t.doviz)}</span></div>
         <div class="g"><span>${L.genel}</span><span>${money(c.genel, t.doviz)}</span></div><div><span>${L.pes}</span><span>${money(c.pes, t.doviz)}</span></div><div><span>${L.kalan}</span><span>${money(c.kalan, t.doviz)}</span></div></div></div>
@@ -1608,14 +1619,43 @@ function pageCss(size, orient, sayfa = 'Sayfa') {
   size = size === 'A3' ? 'A3' : 'A4'; orient = orient === 'landscape' ? 'landscape' : 'portrait';
   return `@page{size:${size} ${orient};margin:12mm 12mm 18mm;@bottom-left{content:${cssStr(firma)};font:8pt Manrope,sans-serif;color:#4a4f5a}@bottom-right{content:${cssStr(sayfa + ' ')} counter(page) " / " counter(pages);font:8pt Manrope,sans-serif;color:#4a4f5a}}`;
 }
-function printHTML(content, css) {
+function preparePrint(content, css) {
   const pr = $('#print-root'); mount(pr, content);
   let st = $('#print-page'); if (!st) { st = document.createElement('style'); st.id = 'print-page'; document.head.appendChild(st); }
   st.textContent = css;
-  const done = () => { mount(pr, ''); window.removeEventListener('afterprint', done); };
+  return () => mount(pr, '');
+}
+function printHTML(content, css) {
+  const clear = preparePrint(content, css);
+  const done = () => { clear(); window.removeEventListener('afterprint', done); };
   window.addEventListener('afterprint', done);
   setTimeout(() => window.print(), 60);
 }
+/* Masaüstü programı: Chrome motoruyla gerçek PDF dosyası (yazı seçilebilir, Türkçe karakter sorunsuz) */
+const desktop = () => window.prontoDesktop && typeof window.prontoDesktop.savePdf === 'function' ? window.prontoDesktop : null;
+const safeFileName = s => clean(s, 120).replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim();
+const teklifFileName = t => safeFileName(`Teklif ${t.no} - ${t.cariSnap?.unvan || ''}`) + '.pdf';
+async function teklifPdfFile(t, o, { ask = true, reveal = false } = {}) {
+  const d = desktop();
+  if (!d) return null;
+  const clear = preparePrint(pdfDoc(t, o), pageCss(o.size, o.orient, (PL[o.lang] || PL.tr).sayfa));
+  try {
+    await Promise.all($$('#print-root img').map(i => i.decode().catch(() => {})));
+    const footer = { left: [S.firma.ad, S.firma.tel, S.firma.adres, S.firma.eposta].filter(Boolean).join('  |  '), page: (PL[o.lang] || PL.tr).sayfa || 'Sayfa' };
+    return await d.savePdf({ fileName: teklifFileName(t), pageSize: o.size === 'A3' ? 'A3' : 'A4', landscape: o.orient === 'landscape', ask, reveal, footer });
+  } finally { clear(); }
+}
+const curPdfOpts = () => ({ ...S.pdf, ...(Local.get('pdf_last', null) || {}) });
+async function downloadTeklifPdf(t, o = curPdfOpts()) {
+  if (!desktop()) {
+    toast('Yazdırma penceresinde hedef olarak "PDF olarak kaydet"i seçin.');
+    printHTML(pdfDoc(t, o), pageCss(o.size, o.orient, (PL[o.lang] || PL.tr).sayfa));
+    return;
+  }
+  try { const r = await teklifPdfFile(t, o, { ask: true }); if (r && r.ok) toast('PDF kaydedildi'); }
+  catch (e) { toast('PDF oluşturulamadı: ' + (e.message || e), 'err'); }
+}
+function printTeklif(t, o = curPdfOpts()) { printHTML(pdfDoc(t, o), pageCss(o.size, o.orient, (PL[o.lang] || PL.tr).sayfa)); }
 function pdfPreview(id) {
   const t = DB.teklif.find(id); if (!t) return;
   let o = { ...S.pdf, ...(Local.get('pdf_last', null) || {}) }, zoom = isMobile() ? .45 : .85;
@@ -1623,7 +1663,7 @@ function pdfPreview(id) {
     const box = $('.mdl', m.el); box.classList.add('lg');
     mount(box, html`<div class="pdf-h"><div class="meta">${logoSrc() ? html`<img src="${logoSrc()}" alt="">` : html`<div class="mark">P</div>`}<div style="min-width:0"><div class="b">Teklif ${t.no}</div><div class="muted sm" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.cariSnap.unvan} · ${fmtDate(t.tarih)}</div></div></div>
       <button class="btn icon sm" data-z="-1" aria-label="Uzaklaştır">${I('zout')}</button><button class="btn icon sm" data-z="1" aria-label="Yakınlaştır">${I('zin')}</button>
-      <button class="btn sm" data-set>${I('gear')} Ayarlar</button><button class="btn sm primary" data-print>${I('print')} PDF / Yazdır</button><button class="btn sm" data-share>${I('share')} Paylaş</button>
+      <button class="btn sm" data-set>${I('gear')} Ayarlar</button><button class="btn sm primary" data-dl>${I('pdf')} PDF İndir</button><button class="btn sm" data-print>${I('print')} Yazdır</button><button class="btn sm" data-share>${I('share')} Paylaş</button>
       <button class="btn ghost icon sm" data-x aria-label="Kapat">${I('x')}</button></div><div class="pdf-stage" data-stage><div class="pdf-zoom" data-zoom></div></div>`);
     const render = () => { mount(m.$('[data-zoom]'), pdfDoc(t, o)); applyZoom(); };
     const applyZoom = () => { m.$('[data-zoom]').style.transform = `scale(${zoom})`; const d = m.$('.pdoc'); if (d) m.$('[data-zoom]').style.height = (d.offsetHeight * zoom) + 'px'; };
@@ -1634,18 +1674,53 @@ function pdfPreview(id) {
     stage.addEventListener('touchend', () => { pinch = null; });
     m.el.addEventListener('click', e => {
       const z = e.target.closest('[data-z]'); if (z) setZoom(zoom + +z.dataset.z * .15);
-      if (e.target.closest('[data-print]')) { Local.set('pdf_last', o); printHTML(pdfDoc(t, o), pageCss(o.size, o.orient, (PL[o.lang] || PL.tr).sayfa)); }
-      if (e.target.closest('[data-share]')) shareTeklif(t);
+      if (e.target.closest('[data-dl]')) { Local.set('pdf_last', o); downloadTeklifPdf(t, o); }
+      if (e.target.closest('[data-print]')) { Local.set('pdf_last', o); printTeklif(t, o); }
+      if (e.target.closest('[data-share]')) { Local.set('pdf_last', o); shareTeklif(t, o); }
       if (e.target.closest('[data-set]')) pdfSettings(o, no => { o = no; render(); });
     });
     render();
   } });
 }
-async function shareTeklif(t) {
-  const c = calc(t, payMap()[t.id]);
-  const text = `${S.firma.ad} — Teklif ${t.no}\n${t.cariSnap.unvan}\nTarih: ${fmtDate(t.tarih)} · Teslim: ${fmtDate(t.teslim)}\nGenel Toplam: ${money(c.genel, t.doviz)}\nKalan: ${money(c.kalan, t.doviz)}`;
-  try { if (navigator.share) { await navigator.share({ title: `Teklif ${t.no}`, text }); return; } await navigator.clipboard.writeText(text); toast('Teklif özeti panoya kopyalandı. PDF için "PDF / Yazdır" → "PDF olarak kaydet" seçin.'); }
-  catch (e) { if (e.name !== 'AbortError') toast('Paylaşım yapılamadı', 'err'); }
+/* Paylaş: PDF hazırlanır ve klasörde gösterilir; WhatsApp / e-posta hazır metinle açılır */
+function waPhone(gsm) {
+  let d = String(gsm || '').replace(/\D/g, '');
+  if (d.startsWith('00')) d = d.slice(2);
+  if (d.length === 11 && d.startsWith('0')) d = '90' + d.slice(1);
+  if (d.length === 10 && d.startsWith('5')) d = '90' + d;
+  return d.length >= 10 && d.length <= 15 ? d : '';
+}
+function openOut(url) {
+  const d = desktop();
+  if (d && typeof d.openExternal === 'function') return d.openExternal(url);
+  window.open(url, '_blank', 'noopener');
+}
+function shareTeklif(t, o = curPdfOpts()) {
+  const c = calc(t, payMap()[t.id]), cs = t.cariSnap || {};
+  const text = `Merhaba, ${cs.unvan || ''} için hazırladığımız ${t.no} numaralı teklif ektedir.\nTarih: ${fmtDate(t.tarih)} · Teslim: ${fmtDate(t.teslim)}\nGenel Toplam: ${money(c.genel, t.doviz)}${c.pes ? `\nAlınan: ${money(c.pes, t.doviz)} · Kalan: ${money(c.kalan, t.doviz)}` : ''}\n\n${S.firma.ad || ''}${S.firma.tel ? ' · ' + S.firma.tel : ''}`;
+  const phone = waPhone(cs.gsm), mail = V.email(cs.eposta) && cs.eposta ? cs.eposta : '';
+  const hasDesk = !!desktop();
+  modal({ title: `Teklif ${t.no} — Paylaş`, size: 'sm', body: html`
+    <p class="muted sm" style="margin-top:0">${hasDesk ? 'PDF dosyası hazırlanıp klasörde gösterilir; açılan sohbete / e-postaya sürükleyip ekleyin.' : 'Mesaj hazır metinle açılır. PDF için önce "PDF İndir"i kullanın.'}</p>
+    <div class="grid">
+      <button class="btn primary" data-sh="wa">WhatsApp${phone ? html` <span class="muted" style="font-weight:500">(${cs.gsm})</span>` : ''}</button>
+      <button class="btn" data-sh="mail">E-posta${mail ? html` <span class="muted" style="font-weight:500">(${mail})</span>` : ''}</button>
+      ${hasDesk ? html`<button class="btn" data-sh="file">Sadece PDF'i klasörde göster</button>` : ''}
+      <button class="btn ghost" data-sh="copy">Metni kopyala</button>
+    </div>`,
+    onMount: m => m.el.addEventListener('click', async e => {
+      const b = e.target.closest('[data-sh]'); if (!b) return;
+      const k = b.dataset.sh; b.disabled = true;
+      try {
+        if (k === 'copy') { await navigator.clipboard.writeText(text); toast('Metin kopyalandı'); return; }
+        if (hasDesk) { const r = await teklifPdfFile(t, o, { ask: false, reveal: true }); if (!r || !r.ok) throw new Error('PDF kaydedilemedi'); }
+        if (k === 'wa') openOut(phone ? `https://wa.me/${phone}?text=${encodeURIComponent(text)}` : `https://wa.me/?text=${encodeURIComponent(text)}`);
+        if (k === 'mail') openOut(`mailto:${encodeURIComponent(mail)}?subject=${encodeURIComponent(`Teklif ${t.no} — ${S.firma.ad || ''}`)}&body=${encodeURIComponent(text)}`);
+        if (k === 'file') toast('PDF klasörde gösterildi');
+        m.close();
+      } catch (er) { toast('Paylaşım yapılamadı: ' + (er.message || er), 'err'); }
+      finally { b.disabled = false; }
+    }) });
 }
 function pdfSettings(cur, onApply) {
   const o = { ...cur };

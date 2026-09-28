@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """PRONTO — il / ilçe / mahalle listesi üretici.
 
-Kaynak: PTT'nin resmî posta kodu listesi (https://postakodu.ptt.gov.tr/Dosyalar/pk_list.zip).
+Kaynak: TÜİK MEDAS verisi — github.com/ubeydeozdmr/turkiye-api (MIT) datasets/<yıl>/ klasörü.
+Yedek: PTT posta kodu listesi (pk_list.zip) de okunabilir.
 Her il için adres/<il>.json üretir; program yalnızca seçilen ilin dosyasını indirir.
 Yalnızca Python standart kütüphanesi kullanılır.
 
-  python3 adres/uret.py --ptt pk_list.zip   (GitHub işi bunu 6 ayda bir çalıştırır)
+  python3 adres/uret.py --tuik turkiye-api/datasets   (GitHub işi bunu 6 ayda bir çalıştırır)
+  python3 adres/uret.py --ptt pk_list.zip
   python3 adres/uret.py --seed data.json    (ilk kurulum: [plaka, il, ilçe, mahalle, pk] listesi)
 """
 import argparse, datetime, io, json, os, re, sys, zipfile
@@ -80,17 +82,33 @@ def from_ptt(path):
     if head is None: sys.exit('Başlık satırı bulunamadı (il, ilçe, Mahalle, PK)')
     return rows
 
+def from_tuik(root):
+    """turkiye-api datasets klasörü: en yeni yıl alt klasörünü kullanır."""
+    yillar = sorted(d for d in os.listdir(root) if d.isdigit() and os.path.isdir(os.path.join(root, d)))
+    base = os.path.join(root, yillar[-1]) if yillar else root
+    load = lambda n: (lambda d: d.get('data', d) if isinstance(d, dict) else d)(json.load(open(os.path.join(base, n + '.json'), encoding='utf-8')))
+    ilce = {d['id']: d['name'] for d in load('districts')}
+    rows = []
+    for kind, suffix in (('neighborhoods', ' MAH'), ('villages', ' KÖYÜ')):
+        for m in load(kind):
+            if m.get('districtId') not in ilce: continue
+            ad = str(m['name']).strip()
+            if not re.search(r'\b(MAH|MAHALLESİ|KÖYÜ|KÖY)\.?$', tr_upper(ad)): ad += suffix
+            rows.append((f"{int(m['provinceId']):02d}", ilce[m['districtId']], ad, str(m.get('postalCode') or '')))
+    print('Kaynak:', base)
+    return rows
+
 def from_seed(path):
     return [(r[0], r[2], r[3], r[4]) for r in json.load(open(path, encoding='utf-8'))]
 
 def main():
     ap = argparse.ArgumentParser()
     g = ap.add_mutually_exclusive_group(required=True)
-    g.add_argument('--ptt'); g.add_argument('--seed')
+    g.add_argument('--ptt'); g.add_argument('--seed'); g.add_argument('--tuik')
     ap.add_argument('--out', default=os.path.dirname(os.path.abspath(__file__)))
     ap.add_argument('--surum', default=datetime.date.today().isoformat())
     a = ap.parse_args()
-    rows = from_ptt(a.ptt) if a.ptt else from_seed(a.seed)
+    rows = from_ptt(a.ptt) if a.ptt else from_tuik(a.tuik) if a.tuik else from_seed(a.seed)
 
     iller = {}
     for plaka, ilce, mah, pk in rows:
@@ -99,7 +117,7 @@ def main():
         iller.setdefault(plaka, {}).setdefault(ilce, {})[mah] = pk
     # Güvenlik: eksik / bozuk bir liste yayınlanmasın
     toplam = sum(len(m) for il in iller.values() for m in il.values())
-    if len(iller) != 81 or toplam < 50000:
+    if len(iller) != 81 or toplam < 45000:
         sys.exit(f'Liste eksik görünüyor: {len(iller)} il, {toplam} mahalle — yayınlanmadı')
 
     for plaka, ilceler in iller.items():

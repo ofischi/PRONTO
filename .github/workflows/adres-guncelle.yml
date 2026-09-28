@@ -1,0 +1,47 @@
+name: Adres listesini guncelle
+
+# 6 ayda bir (1 Ocak ve 1 Temmuz) PTT'nin resmî posta kodu listesini indirir,
+# il başına küçük dosyalar üretir; liste değiştiyse siteyi yeniden yayınlar.
+# Actions sekmesinden "Run workflow" ile elle de çalıştırılabilir.
+on:
+  schedule:
+    - cron: '17 3 1 1,7 *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: adres
+  cancel-in-progress: false
+
+jobs:
+  guncelle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: PTT listesini indir
+        run: |
+          curl -fsSL --retry 3 --retry-delay 20 -m 180 -A "Mozilla/5.0" \
+            -o pk_list.zip "https://postakodu.ptt.gov.tr/Dosyalar/pk_list.zip"
+          ls -la pk_list.zip
+
+      - name: Il dosyalarini uret
+        run: python3 adres/uret.py --ptt pk_list.zip --out adres
+
+      - name: Degistiyse kaydet ve siteyi yayinla
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Yalnızca sürüm tarihi değiştiyse (liste aynıysa) hiçbir şey yapma
+          if git diff --quiet -- adres ':(exclude)adres/surum.json' && ! git ls-files --others --exclude-standard adres | grep -q .; then
+            git checkout -- adres; echo "Liste degismemis."; exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add adres
+          git commit -m "Adres listesi guncellendi ($(date +%F))"
+          git push
+          gh workflow run deploy-pages.yml --ref "${GITHUB_REF_NAME}"

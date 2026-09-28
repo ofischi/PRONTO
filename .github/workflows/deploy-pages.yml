@@ -1,9 +1,12 @@
 name: Siteyi yayinla ve bildir
 
+# index.html, config.js veya adres listesi değişince siteyi yayınlar.
+# Sürüm damgası yalnızca index.html + config.js'ten hesaplanır: sadece adres listesi
+# değiştiğinde programlarda "yeni sürüm" bildirimi çıkmaz.
 on:
   push:
     branches: [main]
-    paths: ['index.html', 'config.js']
+    paths: ['index.html', 'config.js', 'adres/*.json']
   workflow_dispatch:
 
 permissions:
@@ -31,7 +34,9 @@ jobs:
         run: |
           mkdir _site
           cp index.html config.js _site/
-          V="${GITHUB_SHA::7}"
+          mkdir _site/adres && cp adres/*.json _site/adres/
+          V=$(cat index.html config.js | sha256sum | cut -c1-7)
+          echo "V=$V" >> "$GITHUB_ENV"
           sed -i "s/const BUILD = '__BUILD__'/const BUILD = '$V'/" _site/index.html
           grep -q "const BUILD = '$V'" _site/index.html
 
@@ -45,7 +50,6 @@ jobs:
       - name: Acik programlara bildirim
         if: ${{ env.SB_URL != '' && env.SB_KEY != '' }}
         run: |
-          V="${GITHUB_SHA::7}"
           H=(-H "apikey: $SB_KEY" -H "Content-Type: application/json")
           [[ "$SB_KEY" == eyJ* ]] && H+=(-H "Authorization: Bearer $SB_KEY")
           ROW=$(curl -sSf "${H[@]}" -H "Prefer: resolution=merge-duplicates,return=representation" \

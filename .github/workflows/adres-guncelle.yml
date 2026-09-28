@@ -24,13 +24,25 @@ jobs:
 
       - name: PTT listesini indir
         run: |
-          URL="https://postakodu.ptt.gov.tr/Dosyalar/pk_list.zip"
-          # PTT sunucusu sertifika zincirini eksik gönderiyor; önce normal dene,
-          # sertifika hatasında doğrulamasız indir (liste aşağıda ayrıca denetleniyor)
-          curl -fsSL --retry 3 --retry-delay 20 -m 180 -A "Mozilla/5.0" -o pk_list.zip "$URL" \
-            || curl -fsSL -k --retry 3 --retry-delay 20 -m 180 -A "Mozilla/5.0" -o pk_list.zip "$URL"
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0 Safari/537.36"
+          # PTT sunucusu sertifika zincirini eksik gönderiyor: -k gerekli (liste ayrıca denetleniyor)
+          get() { curl -fsSL -k --retry 2 --retry-delay 10 -m 180 -A "$UA" -e "https://postakodu.ptt.gov.tr/" -o "$2" "$1"; }
+          iszip() { [ -s "$1" ] && head -c 2 "$1" | grep -q PK; }
+          get "https://postakodu.ptt.gov.tr/Dosyalar/pk_list.zip" pk_list.zip || true
+          if ! iszip pk_list.zip; then
+            echo "::warning::Bilinen adres zip dondurmedi. Gelen sayfa:"
+            head -c 600 pk_list.zip | tr -d '\r'; echo
+            get "https://postakodu.ptt.gov.tr/" ana.html || true
+            echo "--- Ana sayfadaki dosya baglantilari:"
+            grep -oiE 'href="[^"]+\.(zip|xlsx?)"' ana.html | sed -E 's/^href="//I; s/"$//' | sort -u | tee linkler.txt || true
+            while read -r L; do
+              case "$L" in http*) U="$L" ;; /*) U="https://postakodu.ptt.gov.tr$L" ;; *) U="https://postakodu.ptt.gov.tr/$L" ;; esac
+              echo "Deneniyor: $U"
+              if get "$U" pk_list.zip && iszip pk_list.zip; then echo "Bulundu: $U"; break; fi
+            done < linkler.txt
+          fi
           ls -la pk_list.zip
-          head -c 2 pk_list.zip | grep -q PK || { echo "Indirilen dosya zip degil"; exit 1; }
+          iszip pk_list.zip || { echo "::error::PTT listesi indirilemedi (zip degil)"; exit 1; }
 
       - name: Il dosyalarini uret
         run: python3 adres/uret.py --ptt pk_list.zip --out adres

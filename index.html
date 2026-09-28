@@ -214,6 +214,8 @@ img.thumb{cursor:zoom-in}
 @keyframes shake{20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
 @media(max-width:560px){.pin-card{padding:32px 20px 24px;border-radius:20px}.pin-card .pin-logo,.pin-card .mark{width:220px;height:62px;margin-bottom:20px}}
 .setup{margin:auto;width:min(480px,calc(100vw - 32px));text-align:left}
+.upd{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:95;display:flex;align-items:center;gap:12px;padding:10px 12px 10px 16px;border-radius:14px;background:rgba(24,24,22,.94);color:#fff;box-shadow:var(--shadow);font-size:13.5px;animation:fade .25s;max-width:calc(100vw - 32px)}
+.upd .btn.ghost{color:#fff}
 .toasts{position:fixed;right:16px;top:calc(16px + env(safe-area-inset-top,0px));z-index:100;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
 .toast{padding:10px 14px;border-radius:var(--r);background:rgba(24,24,22,.90);color:#fff;border:1px solid rgba(255,255,255,.12);box-shadow:var(--shadow);font-weight:600;font-size:13px;animation:fade .25s;max-width:min(360px,calc(100vw - 32px))}
 .toast.ok{border-left:3px solid var(--ok)}.toast.err{border-left:3px solid var(--err)}
@@ -422,6 +424,8 @@ const esc = v => String(v ?? '').replace(/[&<>"'`]/g, c => ({ '&':'&amp;','<':'&
 const part = v => v == null || v === false ? '' : Array.isArray(v) ? v.map(part).join('') : (typeof v === 'object' && RAW in v) ? v[RAW] : esc(v);
 function html(strs, ...vals) { let o = ''; strs.forEach((s, i) => { o += s; if (i < vals.length) o += part(vals[i]); }); return raw(o); }
 const mount = (el, t) => { el.innerHTML = part(t); };
+/* Yayın damgası: GitHub yayın adımı bunu commit kimliğiyle değiştirir */
+const BUILD = '__BUILD__';
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const safeImg = s => typeof s === 'string' && /^data:image\/(png|jpe?g|webp);base64,[A-Za-z0-9+/=]+$/.test(s) ? s : '';
@@ -734,7 +738,7 @@ function setSync() {
 
 /* Uzaktan değişiklik gelince açık ekranı yazarken bozmadan tazele */
 const remoteChanged = debounce(() => {
-  loadSettings(); applyTheme(); refreshBrand();
+  loadSettings(); applyTheme(); refreshBrand(); checkAppVersion();
   if (!$('#main') || $('.ov')) return;
   const v = state.view;
   if (v === 'teklifler') drawList(true);
@@ -745,6 +749,28 @@ const remoteChanged = debounce(() => {
   else if (v === 'teklifForm') { drawPickFilters(); drawPick(); }
   else if (['teklifDetay', 'musteriDetay', 'personelDetay'].includes(v)) { const sc = $('#main .page')?.scrollTop; go(v, state.params); const p = $('#main .page'); if (p && sc) p.scrollTop = sc; }
 }, 300);
+
+/* Yeni sürüm bildirimi: kontrol için sunucuya ayrıca istek atılmaz.
+   GitHub yayını meta/app_version satırını yazar ve canlı kanaldan duyurur;
+   kapalı/uyuyan programlar aynı satırı bir sonraki fark çekiminde görür. */
+let updShown = false;
+function checkAppVersion() {
+  const v = mem('meta').get('app_version')?.sha;
+  if (!v || BUILD === '__BUILD__' || v === BUILD || updShown || !$('#main')) return;
+  updShown = true;
+  const el = document.createElement('div'); el.className = 'upd';
+  mount(el, html`<span><b>Yeni sürüm hazır.</b> Güncellemek için yenileyin.</span><button class="btn sm primary" data-upd>Şimdi Güncelle</button><button class="btn ghost icon sm" data-updx aria-label="Sonra">${I('x')}</button>`);
+  document.body.appendChild(el);
+  el.addEventListener('click', async e => {
+    if (e.target.closest('[data-updx]')) { el.remove(); return; }
+    if (!e.target.closest('[data-upd]')) return;
+    if (state.view === 'teklifForm' && !await confirmBox({ title: 'Güncelle', body: html`<p>Açık teklif formundaki kaydedilmemiş değişiklikler kaybolacak.</p>`, ok: 'Yine de güncelle', danger: true })) return;
+    await Sync.flush();
+    /* Önbelleği tazele, sonra yeniden yükle (tek seferlik 2 küçük istek) */
+    await Promise.all(['./', 'config.js'].map(u => fetch(u, { cache: 'reload' }).catch(() => {})));
+    location.reload();
+  });
+}
 
 /* Uygulama gizliyken bağlantıyı uyut, geri gelince sadece farkları çek */
 let sleepT = null;
@@ -2124,6 +2150,7 @@ async function startApp() {
   try { await Sync.delta(); } catch (e) { toast(e.message, 'err'); }
   if (Sync.online && first && !DB.yontem.all().length) DB.yontem.save(['Nakit', 'Havale', 'Kart', 'Çek'].map((ad, i) => ({ id: uid(), ad, aciklama: '', sira: i })));
   if (Sync.online) purgeBin();
+  checkAppVersion();
   if (!started) { started = true; remoteChanged(); }
 }
 async function boot() {

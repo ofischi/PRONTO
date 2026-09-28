@@ -848,11 +848,11 @@ const state = { view: 'teklifler', params: {}, settingsOk: false, draft: null };
 const app = $('#app');
 
 /* ---------- toast / modal / onay / menü ---------- */
-function toast(msg, type = 'ok') {
+function toast(msg, type = 'ok', ms = 3200) {
   /* Hata alanda zaten kırmızı işaretliyse ayrıca kutu gösterme */
   if (type === 'err') { const ctx = $$('.ov').pop() || $('#main'); if (ctx && $('.inp.bad,.validation-error', ctx)) return; }
   const t = document.createElement('div'); t.className = 'toast ' + type; t.textContent = msg;
-  $('#toasts').appendChild(t); setTimeout(() => t.remove(), 3200);
+  $('#toasts').appendChild(t); setTimeout(() => t.remove(), ms);
 }
 function modal({ title, body, foot, size = '', cls = '', onMount, closeOnBg = true }) {
   const ov = document.createElement('div'); ov.className = 'ov ' + cls;
@@ -1164,10 +1164,7 @@ A.openTeklif = el => { LS.sel = el.dataset.id; go('teklifDetay', { id: el.datase
 A.rowMenu = (el, e) => { e.stopPropagation(); const id = el.dataset.id; popMenu(el, [
   { label: 'Hızlı Detay', icon: 'doc', run: () => quickTeklifDetail(id) },
   { label: 'Düzenle', icon: 'edit', run: () => go('teklifForm', { id }) },
-  { label: 'Önizle', icon: 'doc', run: () => pdfPreview(id) },
-  { label: 'PDF İndir', icon: 'pdf', run: () => downloadTeklifPdf(DB.teklif.find(id)) },
-  { label: 'Yazdır', icon: 'print', run: () => printTeklif(DB.teklif.find(id)) },
-  { label: 'Paylaş', icon: 'share', run: () => shareTeklif(DB.teklif.find(id)) }, '-',
+  { label: 'PDF', icon: 'pdf', run: () => pdfPreview(id) }, '-',
   { label: 'Sil', icon: 'trash', danger: true, run: () => deleteTeklif(id) }]); };
 const EMPTY_F = () => ({ cari: '', durum: '', personel: '', tarih: '', from: '', to: '' });
 A.listMore = el => popMenu(el, [
@@ -1261,10 +1258,12 @@ VIEWS.teklifForm = (main, { id }) => {
   const pg = main.querySelector('.page');
   pg.addEventListener('input', e => { clearValidationOnEdit(e); formInput(e); }); pg.addEventListener('change', e => { clearValidationOnEdit(e); formInput(e); });
   const kat = $('#pkat'), mod = $('#pmod');
-  kat.addEventListener('focus', () => {
+  // Seçili kategoriye / modele tekrar tıklanınca kutu boşalır, yeni seçime hazır olur
+  const resetKat = () => {
     if (!kat.getAttribute('list')) kat.setAttribute('list', 'pkatList');
-    if (PK.kat) { PK.katQ = PK.kat = PK.model = PK.modelQ = ''; drawPickFilters(); drawPick(); }
-  });
+    if (PK.kat || PK.katQ || kat.value) { PK.katQ = PK.kat = PK.model = PK.modelQ = ''; kat.value = ''; mod.value = ''; drawPickFilters(); drawPick(); }
+  };
+  kat.addEventListener('focus', resetKat); kat.addEventListener('mousedown', () => { if (document.activeElement === kat && PK.kat) resetKat(); });
   kat.addEventListener('input', debounce(() => {
     PK.katQ = clean(kat.value, 60);
     const match = DB.urun.all().find(u => trLower(u.kategori) === trLower(PK.katQ));
@@ -1272,10 +1271,11 @@ VIEWS.teklifForm = (main, { id }) => {
     drawPickFilters(); drawPick();
     if (match) { kat.removeAttribute('list'); kat.blur(); }
   }, 100));
-  mod.addEventListener('focus', () => {
+  const resetMod = () => {
     if (!mod.getAttribute('list')) mod.setAttribute('list', 'pmodList');
-    if (PK.model) { PK.modelQ = PK.model = ''; mod.value = ''; drawPick(); }
-  });
+    if (PK.model || PK.modelQ || mod.value) { PK.modelQ = PK.model = ''; mod.value = ''; drawPick(); }
+  };
+  mod.addEventListener('focus', resetMod); mod.addEventListener('mousedown', () => { if (document.activeElement === mod && PK.model) resetMod(); });
   mod.addEventListener('input', debounce(() => {
     PK.modelQ = clean(mod.value, 60);
     const match = DB.urun.all().filter(u => !PK.kat || u.kategori === PK.kat).find(u => trLower(u.model) === trLower(PK.modelQ));
@@ -1577,7 +1577,7 @@ VIEWS.teklifDetay = (main, { id, tab = 'urunler' }) => {
   const payRows = pesRow ? [...pays, pesRow] : pays, payCount = payRows.length;
   mount(main, html`<div class="page detail"><div class="ph"><div class="ph-l"><button class="btn icon" data-act="nav" data-v="teklifler" aria-label="Geri">${I('back')}</button>
       <div><h1 style="display:flex;gap:10px;align-items:center">Teklif ${t.no} ${stTag(t.durum)}</h1><div class="muted sm">${cs.unvan}</div></div></div>
-    <div class="ph-act"><button class="btn" data-act="editTeklif" data-id="${t.id}">${I('edit')} Düzenle</button><button class="btn" data-act="pdf" data-id="${t.id}">${I('pdf')} PDF İndir</button><button class="btn" data-act="printT" data-id="${t.id}">${I('print')} Yazdır</button><button class="btn" data-act="shareT" data-id="${t.id}">${I('share')} Paylaş</button><button class="btn icon" data-act="rowMenu" data-id="${t.id}" aria-label="Diğer">${I('dots')}</button></div></div>
+    <div class="ph-act"><button class="btn" data-act="editTeklif" data-id="${t.id}">${I('edit')} Düzenle</button><button class="btn primary" data-act="pdf" data-id="${t.id}">${I('pdf')} PDF</button><button class="btn icon" data-act="rowMenu" data-id="${t.id}" aria-label="Diğer">${I('dots')}</button></div></div>
     <div class="dgrid">
       <div class="card"><div class="card-h"><h3>Müşteri</h3></div><dl class="kv"><dt>Ünvan</dt><dd>${cs.unvan}</dd><dt>Telefon</dt><dd>${cs.gsm || '—'}</dd><dt>E-posta</dt><dd>${cs.eposta || '—'}</dd><dt>Adres</dt><dd>${[cs.adres, cs.ilce, cs.sehir, cs.ulke].filter(Boolean).join(', ')}</dd></dl></div>
       <div class="card"><div class="card-h"><h3>Teklif</h3></div><dl class="kv"><dt>Teklif Tarihi</dt><dd>${fmtDate(t.tarih)}</dd><dt>Teslim Tarihi</dt><dd>${fmtDate(t.teslim)}</dd><dt>Döviz</dt><dd>${t.doviz}</dd><dt>Personel</dt><dd>${t.personelAd}</dd>
@@ -1608,7 +1608,7 @@ VIEWS.teklifDetay = (main, { id, tab = 'urunler' }) => {
 };
 A.dTab = el => go('teklifDetay', { id: el.dataset.id, tab: el.dataset.t });
 A.editTeklif = el => go('teklifForm', { id: el.dataset.id });
-A.pdf = el => downloadTeklifPdf(DB.teklif.find(el.dataset.id));
+A.pdf = el => pdfPreview(el.dataset.id);
 A.printT = el => printTeklif(DB.teklif.find(el.dataset.id));
 A.shareT = el => shareTeklif(DB.teklif.find(el.dataset.id));
 A.totDetail = el => { const t = DB.teklif.find(el.dataset.id); modal({ title: `Teklif ${t.no} toplamlar`, size: 'sm', body: totsHTML(calc(t, payMap()[t.id]), t) }); };
@@ -1746,7 +1746,7 @@ function pdfPreview(id) {
     const box = $('.mdl', m.el); box.classList.add('lg');
     mount(box, html`<div class="pdf-h"><div class="meta">${logoSrc() ? html`<img src="${logoSrc()}" alt="">` : html`<div class="mark">P</div>`}<div style="min-width:0"><div class="b">Teklif ${t.no}</div><div class="muted sm" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.cariSnap.unvan} · ${fmtDate(t.tarih)}</div></div></div>
       <button class="btn icon sm" data-z="-1" aria-label="Uzaklaştır">${I('zout')}</button><button class="btn icon sm" data-z="1" aria-label="Yakınlaştır">${I('zin')}</button>
-      <button class="btn sm" data-set>${I('gear')} Ayarlar</button><button class="btn sm primary" data-dl>${I('pdf')} PDF İndir</button><button class="btn sm" data-print>${I('print')} Yazdır</button><button class="btn sm" data-share>${I('share')} Paylaş</button>
+      <button class="btn sm" data-set>${I('gear')} Ayarlar</button><button class="btn sm" data-print>${I('print')} Yazdır</button><button class="btn sm primary" data-share>${I('share')} Paylaş</button>
       <button class="btn ghost icon sm" data-x aria-label="Kapat">${I('x')}</button></div><div class="pdf-stage" data-stage><div class="pdf-zoom" data-zoom></div></div>`);
     const render = () => { mount(m.$('[data-zoom]'), pdfDoc(t, o)); applyZoom(); };
     const applyZoom = () => { m.$('[data-zoom]').style.transform = `scale(${zoom})`; const d = m.$('.pdoc'); if (d) m.$('[data-zoom]').style.height = (d.offsetHeight * zoom) + 'px'; };
@@ -1757,7 +1757,6 @@ function pdfPreview(id) {
     stage.addEventListener('touchend', () => { pinch = null; });
     m.el.addEventListener('click', e => {
       const z = e.target.closest('[data-z]'); if (z) setZoom(zoom + +z.dataset.z * .15);
-      if (e.target.closest('[data-dl]')) { Local.set('pdf_last', o); downloadTeklifPdf(t, o); }
       if (e.target.closest('[data-print]')) { Local.set('pdf_last', o); printTeklif(t, o); }
       if (e.target.closest('[data-share]')) { Local.set('pdf_last', o); shareTeklif(t, o); }
       if (e.target.closest('[data-set]')) pdfSettings(o, no => { o = no; render(); });
@@ -1779,30 +1778,43 @@ function openOut(url) {
   window.open(url, '_blank', 'noopener');
 }
 function shareTeklif(t, o = curPdfOpts()) {
-  const c = calc(t, payMap()[t.id]), cs = t.cariSnap || {};
-  const text = `Merhaba, ${cs.unvan || ''} için hazırladığımız ${t.no} numaralı teklif ektedir.\nTarih: ${fmtDate(t.tarih)} · Teslim: ${fmtDate(t.teslim)}\nGenel Toplam: ${money(c.genel, t.doviz)}${c.pes ? `\nAlınan: ${money(c.pes, t.doviz)} · Kalan: ${money(c.kalan, t.doviz)}` : ''}\n\n${S.firma.ad || ''}${S.firma.tel ? ' · ' + S.firma.tel : ''}`;
-  const phone = waPhone(cs.gsm), mail = V.email(cs.eposta) && cs.eposta ? cs.eposta : '';
-  const hasDesk = !!desktop();
+  const cs = t.cariSnap || {}, phone = waPhone(cs.gsm), mail = V.email(cs.eposta) && cs.eposta ? cs.eposta : '';
+  const d = desktop(), canCopy = !!(d && typeof d.copyFile === 'function' && typeof d.openWhatsApp === 'function');
+  if (!d) {
+    const c = calc(t, payMap()[t.id]);
+    const text = `Merhaba, ${cs.unvan || ''} için hazırladığımız ${t.no} numaralı teklif.\nGenel Toplam: ${money(c.genel, t.doviz)}\n\n${S.firma.ad || ''}`;
+    return modal({ title: `Teklif ${t.no} — Paylaş`, size: 'sm', body: html`<p class="muted sm" style="margin-top:0">PDF dosyası olarak paylaşım masaüstü programında (PRONTO Teklif) çalışır. Tarayıcıda yalnızca metin paylaşılabilir.</p>
+      <div class="grid"><button class="btn primary" data-sh="wa">WhatsApp (metin)</button><button class="btn" data-sh="print">Yazdır / PDF olarak kaydet</button></div>`,
+      onMount: m => m.el.addEventListener('click', e => { const k = e.target.closest('[data-sh]')?.dataset.sh; if (!k) return; m.close();
+        if (k === 'wa') window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener'); else printTeklif(t, o); }) });
+  }
   modal({ title: `Teklif ${t.no} — Paylaş`, size: 'sm', body: html`
-    <p class="muted sm" style="margin-top:0">${hasDesk ? 'PDF dosyası hazırlanıp klasörde gösterilir; açılan sohbete / e-postaya sürükleyip ekleyin.' : 'Mesaj hazır metinle açılır. PDF için önce "PDF İndir"i kullanın.'}</p>
+    <p class="muted sm" style="margin-top:0">${canCopy ? html`PDF hazırlanıp <b>panoya kopyalanır</b>. Açılan sohbete <b>Ctrl+V</b> ile yapıştırıp gönderin.` : 'PDF hazırlanıp klasörde gösterilir; açılan sohbete sürükleyip bırakın.'}</p>
     <div class="grid">
-      <button class="btn primary" data-sh="wa">WhatsApp${phone ? html` <span class="muted" style="font-weight:500">(${cs.gsm})</span>` : ''}</button>
+      <button class="btn primary" data-sh="wa">${I('share')} WhatsApp ile PDF gönder</button>
+      ${phone ? html`<button class="btn" data-sh="waCari">WhatsApp — ${cs.unvan || 'müşteri'} sohbeti <span class="muted" style="font-weight:500">(${cs.gsm})</span></button>` : ''}
       <button class="btn" data-sh="mail">E-posta${mail ? html` <span class="muted" style="font-weight:500">(${mail})</span>` : ''}</button>
-      ${hasDesk ? html`<button class="btn" data-sh="file">Sadece PDF'i klasörde göster</button>` : ''}
-      <button class="btn ghost" data-sh="copy">Metni kopyala</button>
+      <button class="btn" data-sh="save">${I('pdf')} PDF olarak kaydet…</button>
+      <button class="btn ghost" data-sh="file">PDF'i klasörde göster</button>
     </div>`,
     onMount: m => m.el.addEventListener('click', async e => {
       const b = e.target.closest('[data-sh]'); if (!b) return;
-      const k = b.dataset.sh; b.disabled = true;
+      const k = b.dataset.sh; $$('[data-sh]', m.el).forEach(x => x.disabled = true);
       try {
-        if (k === 'copy') { await navigator.clipboard.writeText(text); toast('Metin kopyalandı'); return; }
-        if (hasDesk) { const r = await teklifPdfFile(t, o, { ask: false, reveal: true }); if (!r || !r.ok) throw new Error('PDF kaydedilemedi'); }
-        if (k === 'wa') openOut(phone ? `https://wa.me/${phone}?text=${encodeURIComponent(text)}` : `https://wa.me/?text=${encodeURIComponent(text)}`);
-        if (k === 'mail') openOut(`mailto:${encodeURIComponent(mail)}?subject=${encodeURIComponent(`Teklif ${t.no} — ${S.firma.ad || ''}`)}&body=${encodeURIComponent(text)}`);
-        if (k === 'file') toast('PDF klasörde gösterildi');
+        if (k === 'save') { const r = await teklifPdfFile(t, o, { ask: true }); if (r?.ok) { toast('PDF kaydedildi'); m.close(); } return; }
+        const r = await teklifPdfFile(t, o, { ask: false, reveal: k === 'file' || !canCopy });
+        if (!r || !r.ok) throw new Error(r?.error || 'PDF hazırlanamadı');
+        if (k === 'file') { toast('PDF klasörde gösterildi'); m.close(); return; }
+        const copied = canCopy && await d.copyFile(r.path);
+        if (k === 'wa' || k === 'waCari') {
+          const num = k === 'waCari' ? phone : '';
+          if (canCopy) await d.openWhatsApp(num); else await d.openExternal(num ? `https://wa.me/${num}` : 'https://wa.me/');
+        }
+        if (k === 'mail') openOut(`mailto:${encodeURIComponent(mail)}?subject=${encodeURIComponent(`Teklif ${t.no} — ${S.firma.ad || ''}`)}`);
+        toast(copied ? (k === 'mail' ? 'PDF kopyalandı — e-postada Ctrl+V ile ekleyin.' : 'PDF kopyalandı — WhatsApp\'ta kişiyi seçip Ctrl+V ile yapıştırın.') : 'PDF klasörde gösterildi — açılan pencereye sürükleyin.', 'ok', 8000);
         m.close();
       } catch (er) { toast('Paylaşım yapılamadı: ' + (er.message || er), 'err'); }
-      finally { b.disabled = false; }
+      finally { $$('[data-sh]', m.el).forEach(x => x.disabled = false); }
     }) });
 }
 function pdfSettings(cur, onApply) {

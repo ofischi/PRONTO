@@ -20,13 +20,17 @@ jobs:
   guncelle:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: PTT listesini indir
         run: |
-          curl -fsSL --retry 3 --retry-delay 20 -m 180 -A "Mozilla/5.0" \
-            -o pk_list.zip "https://postakodu.ptt.gov.tr/Dosyalar/pk_list.zip"
+          URL="https://postakodu.ptt.gov.tr/Dosyalar/pk_list.zip"
+          # PTT sunucusu sertifika zincirini eksik gönderiyor; önce normal dene,
+          # sertifika hatasında doğrulamasız indir (liste aşağıda ayrıca denetleniyor)
+          curl -fsSL --retry 3 --retry-delay 20 -m 180 -A "Mozilla/5.0" -o pk_list.zip "$URL" \
+            || curl -fsSL -k --retry 3 --retry-delay 20 -m 180 -A "Mozilla/5.0" -o pk_list.zip "$URL"
           ls -la pk_list.zip
+          head -c 2 pk_list.zip | grep -q PK || { echo "Indirilen dosya zip degil"; exit 1; }
 
       - name: Il dosyalarini uret
         run: python3 adres/uret.py --ptt pk_list.zip --out adres

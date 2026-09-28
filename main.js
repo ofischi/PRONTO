@@ -1,10 +1,12 @@
 // PRONTO — Windows masaüstü kabuğu.
 // Program GitHub Pages'teki index.html'i açar: siteyi güncelleyince 10 bilgisayar da
 // yeniden kurulum olmadan yeni sürümü alır. Kabuk değişirse otomatik güncelleme devreye girer.
-const { app, BrowserWindow, dialog, shell } = require('electron');
+const { app, BrowserWindow, dialog, shell, ipcMain } = require('electron');
+const path = require('path'), fs = require('fs');
 const { autoUpdater } = require('electron-updater');
 
-const URL_APP = 'https://ofischi.github.io/PRONTO/';
+// Test için adres değiştirilebilir; kurulu programda her zaman GitHub adresi kullanılır
+const URL_APP = (!app.isPackaged && process.env.PRONTO_URL) || 'https://ofischi.github.io/PRONTO/';
 // Açılışta her zaman sunucudaki güncel sürümü iste (10 dk önbellek beklenmez)
 const NO_CACHE = { extraHeaders: 'pragma: no-cache\ncache-control: no-cache\n' };
 if (!app.requestSingleInstanceLock()) app.quit();
@@ -14,12 +16,12 @@ function createWindow() {
   win = new BrowserWindow({
     width: 1440, height: 920, minWidth: 1100, minHeight: 700, show: false,
     title: 'PRONTO', backgroundColor: '#F2F1EE',
-    webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true, devTools: !app.isPackaged }
+    webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true, devTools: !app.isPackaged }
   });
   win.removeMenu();
   win.once('ready-to-show', () => { win.maximize(); win.show(); });
   // Dış bağlantılar tarayıcıda açılsın, program başka siteye gitmesin
-  win.webContents.setWindowOpenHandler(({ url }) => { shell.openExternal(url); return { action: 'deny' }; });
+  win.webContents.setWindowOpenHandler(({ url }) => { if (/^(https?:|mailto:|whatsapp:)/i.test(url)) shell.openExternal(url); return { action: 'deny' }; });
   win.webContents.on('will-navigate', (e, url) => { if (!url.startsWith(URL_APP)) e.preventDefault(); });
   // İnternet yoksa boş ekran yerine açıklama göster
   win.webContents.on('did-fail-load', (_e, code, _d, url) => {
@@ -39,6 +41,55 @@ function createWindow() {
   });
   win.loadURL(URL_APP, NO_CACHE);
 }
+
+// ---- PDF kaydet / paylaş (yalnızca PRONTO sayfasından gelen istekler kabul edilir)
+const fromApp = e => e.senderFrame && String(e.senderFrame.url).startsWith(URL_APP);
+const cleanName = s => (String(s || '').replace(/[\\/:*?"<>|\x00-\x1f]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120) || 'Teklif').replace(/(\.pdf)?$/i, '.pdf');
+let pdfBusy = false;
+// Alt bilgi (firma satırı + Sayfa x / y) Electron'un şablonuyla basılır; metinler HTML'den arındırılır
+const esc = v => String(v || '').slice(0, 300).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function makePdf(wc, o) {
+  const f = o.footer && typeof o.footer === 'object' ? o.footer : null;
+  return wc.printToPDF({
+    pageSize: o.pageSize === 'A3' ? 'A3' : 'A4', landscape: !!o.landscape, printBackground: true, preferCSSPageSize: true,
+    displayHeaderFooter: !!f, headerTemplate: '<span></span>',
+    footerTemplate: f ? `<div style="width:100%;margin:0 12mm;display:flex;justify-content:space-between;font:8px Manrope,Segoe UI,sans-serif;color:#4a4f5a"><span>${esc(f.left)}</span><span>${esc(f.page)} <span class="pageNumber"></span> / <span class="totalPages"></span></span></div>` : ''
+  });
+}
+ipcMain.handle('pdf:save', async (e, o = {}) => {
+  if (!fromApp(e)) return { ok: false, error: 'izin yok' };
+  if (pdfBusy) return { ok: false, error: 'meşgul' };
+  pdfBusy = true;
+  try {
+    const name = cleanName(o.fileName);
+    let file;
+    if (o.ask !== false) {
+      const r = await dialog.showSaveDialog(win, { title: 'PDF olarak kaydet', defaultPath: path.join(app.getPath('downloads'), name), filters: [{ name: 'PDF', extensions: ['pdf'] }] });
+      if (r.canceled || !r.filePath) return { ok: false, canceled: true };
+      file = r.filePath.toLowerCase().endsWith('.pdf') ? r.filePath : r.filePath + '.pdf';
+    } else {
+      const dir = path.join(app.getPath('downloads'), 'PRONTO Teklifler');
+      fs.mkdirSync(dir, { recursive: true });
+      file = path.join(dir, name);
+    }
+    // Pencerenin gri zemini PDF kenarlarına basılmasın
+    const bw = BrowserWindow.fromWebContents(e.sender);
+    if (bw) bw.setBackgroundColor('#FFFFFF');
+    const data = await makePdf(e.sender, o);
+    if (bw) bw.setBackgroundColor('#F2F1EE');
+    fs.writeFileSync(file, data);
+    if (o.reveal) shell.showItemInFolder(file);
+    return { ok: true, path: file };
+  } catch (err) {
+    return { ok: false, error: String(err && err.message || err) };
+  } finally { pdfBusy = false; }
+});
+const OUT_OK = /^(https:\/\/(wa\.me|api\.whatsapp\.com)\/|whatsapp:|mailto:)/i;
+ipcMain.handle('open:external', (e, url) => {
+  url = String(url || '');
+  if (!fromApp(e) || url.length > 8000 || !OUT_OK.test(url)) return false;
+  return shell.openExternal(url).then(() => true, () => false);
+});
 
 autoUpdater.autoDownload = false;
 autoUpdater.on('update-available', async info => {

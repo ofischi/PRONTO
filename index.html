@@ -545,7 +545,7 @@ async function api(path, { method = 'GET', body, prefer } = {}) {
   try { r = await fetch(`${CFG.url}/rest/v1/${path}`, { method, headers: { apikey: CFG.key, Authorization: 'Bearer ' + t, 'Content-Type': 'application/json', ...(prefer ? { Prefer: prefer } : {}) }, body: body ? JSON.stringify(body) : undefined }); }
   catch { throw new NetError('Çevrimdışı'); }
   if (r.status === 401) { await Auth.refresh(); return api(path, { method, body, prefer }); }
-  if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.message || `Sunucu hatası (${r.status})`); }
+  if (!r.ok) { const j = await r.json().catch(() => ({})); throw Object.assign(new Error(j.message || `Sunucu hatası (${r.status})`), { status: r.status, code: j.code }); }
   return r.status === 204 ? null : r.json();
 }
 /* Çok kullanıcıda aynı numara çıkmasın: sayaç sunucuda artar */
@@ -633,6 +633,7 @@ const Sync = {
     for (const r of await idbAll('rows')) mem(r.tbl).set(r.id, r.data);
     for (const o of await idbAll('outbox')) { this.outbox.set(o.k, o); o.deleted ? mem(o.tbl).delete(o.id) : mem(o.tbl).set(o.id, o.data); }
   },
+  drop(o) { this.outbox.delete(o.k); idbTx('outbox', s => s.delete(o.k)).catch(() => {}); },
   put(tbl, id, data) { mem(tbl).set(id, data); this.queue({ k: kOf(tbl, id), tbl, id, data, deleted: false }); },
   del(tbl, id) { mem(tbl).delete(id); this.queue({ k: kOf(tbl, id), tbl, id, data: null, deleted: true }); },
   queue(o) {
@@ -647,9 +648,20 @@ const Sync = {
     this.busy = true; clearTimeout(this.retry);
     try {
       while (this.outbox.size) {
-        const batch = [...this.outbox.values()].slice(0, 100);
-        const res = await api('pt_rows?on_conflict=tbl,id&select=tbl,id,updated_at', { method: 'POST', prefer: 'resolution=merge-duplicates,return=representation',
-          body: batch.map(o => ({ tbl: o.tbl, id: o.id, data: o.deleted ? null : o.data, deleted: o.deleted })) });
+        let batch = [...this.outbox.values()].slice(0, 100), res;
+        const send = b => api('pt_rows?on_conflict=tbl,id&select=tbl,id,updated_at', { method: 'POST', prefer: 'resolution=merge-duplicates,return=representation',
+          body: b.map(o => ({ tbl: o.tbl, id: o.id, data: o.deleted ? null : o.data, deleted: o.deleted })) });
+        try { res = await send(batch); }
+        catch (e) {
+          if (e.status !== 400) throw e;
+          /* Sunucu doğrulaması bir kaydı reddetti: tek tek gönder, geçersiz olanı at (sonsuz tekrar yok) */
+          res = [];
+          for (const o of batch) {
+            try { res.push(...await send([o])); }
+            catch (e2) { if (e2.status !== 400) throw e2; this.drop(o); toast('Geçersiz bir kayıt sunucu tarafından reddedildi: ' + e2.message, 'err'); }
+          }
+          batch = batch.filter(o => this.outbox.has(o.k));
+        }
         const at = new Map((res || []).map(r => [kOf(r.tbl, r.id), r.updated_at]));
         const sent = [];
         for (const o of batch) {
@@ -661,8 +673,8 @@ const Sync = {
       this.setOnline(true);
     } catch (e) {
       if (e instanceof NetError) this.setOnline(false); else if (!(e instanceof AuthError)) toast('Kayıt sunucuya gönderilemedi: ' + e.message, 'err');
-      /* Sadece bekleyen değişiklik varsa tekrar dene (boşta trafik yok) */
-      this.retry = setTimeout(() => this.flush(), 30000);
+      /* Sadece bekleyen değişiklik varsa tekrar dene (boşta trafik yok); hız sınırında 1 dk bekle */
+      this.retry = setTimeout(() => this.flush(), e.status === 429 ? 60000 : 30000);
     } finally { this.busy = false; setSync(); }
   },
   /* Son eşitlemeden beri değişenleri çek (tam tarama yok) */

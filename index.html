@@ -1869,7 +1869,8 @@ function textAsk(title, value, onOk, max = 80) {
     onMount: m => { const go = () => { const n = clean(m.$('[data-n]').value, max).toLocaleUpperCase('tr-TR'); if (!n) return toast('Bir değer girin', 'err'); m.close(); onOk(n); };
       m.$('[data-n]').addEventListener('keydown', e => { if (e.key === 'Enter') go(); }); m.el.addEventListener('click', e => { if (e.target.closest('[data-s]')) go(); }); } });
 }
-const trAdresMetni = v => [v.mahalle, v.sokak, v.binaNo && `No:${v.binaNo}`, v.daireNo && `D:${v.daireNo}`, v.adresEk, v.pk].filter(Boolean).join(' ');
+// Formda yalnızca il / ilçe / mahalle seçilir. Eski kayıtlardaki serbest adres (adresEk) silinmez, sona eklenir.
+const trAdresMetni = v => [v.mahalle, v.sokak, v.binaNo && `No:${v.binaNo}`, v.daireNo && `D:${v.daireNo}`, v.adresEk].filter(Boolean).join(' ');
 
 function cariForm(c, onSaved) {
   const v = c ? { ...c } : { tur: '', unvan: '', ulke: 'Türkiye', sehir: '', ilce: '', adres: '', gsm: '', doviz: S.doviz, vkn: '', vd: '', sabit: '', yetkili: '', eposta: '' };
@@ -1882,9 +1883,6 @@ function cariForm(c, onSaved) {
       ${pick('tur', 'Cari Türü')}${inp('unvan', 'Cari Ünvanı', 1, 'maxlength="120" autofocus')}
       ${pick('ulke', 'Ülke')}${pick('sehir', 'İl')}
       ${pick('ilce', 'İlçe')}${pick('mahalle', 'Mahalle / Köy')}
-      ${inp('sokak', 'Cadde / Sokak', 0, 'maxlength="80" placeholder="Örn. Atatürk Cd."', 'tr-f')}
-      <div class="field tr-f"><label>Bina No / Daire No</label><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><input class="inp" data-c="binaNo" value="${v.binaNo}" maxlength="10" placeholder="Bina"><input class="inp" data-c="daireNo" value="${v.daireNo}" maxlength="10" placeholder="Daire"></div></div>
-      ${inp('pk', 'Posta Kodu', 0, 'inputmode="numeric" maxlength="5"', 'tr-f')}${inp('adresEk', 'Adres ek bilgi (site, blok, kat…)', 0, 'maxlength="150"', 'tr-f')}
       ${inp('adres', 'Adres', 1, 'maxlength="250"', 'span2 intl-f')}
       <div class="muted sm span2 tr-f" data-adrinfo style="margin-top:-4px"></div>
       ${inp('gsm', 'GSM', 1, 'inputmode="tel" maxlength="20" placeholder="+90 5xx xxx xx xx"')}
@@ -1895,7 +1893,6 @@ function cariForm(c, onSaved) {
     onMount: m => {
       const tr = () => v.ulke === 'Türkiye';
       let liste = null, yukleniyor = false;
-      const setIn = (k, val) => { v[k] = val; const i = m.$(`[data-c="${k}"]`); if (i) i.value = val; };
       const upd = () => {
         const t = tr();
         m.$('[data-pk="tur"] span').textContent = v.tur || 'Seçin'; m.$('[data-pk="ulke"] span').textContent = v.ulke || 'Seçin';
@@ -1905,7 +1902,8 @@ function cariForm(c, onSaved) {
         m.$('[data-pk="ilce"]').disabled = !v.sehir; m.$('[data-pk="mahalle"]').disabled = !v.ilce;
         for (const k of ['sehir', 'ilce', 'mahalle']) m.$(`[data-f="${k}"]`).classList.toggle('hidden', !t);
         $$('.tr-f', m.el).forEach(x => x.classList.toggle('hidden', !t)); $$('.intl-f', m.el).forEach(x => x.classList.toggle('hidden', t));
-        m.$('[data-adrinfo]').textContent = t && (v.mahalle || v.sokak) ? 'Adres: ' + trAdresMetni(v) : '';
+        m.$('[data-adrinfo]').textContent = t && v.adresEk ? 'Eski kayıttaki adres korunuyor: ' + v.adresEk : '';
+        m.$('[data-adrinfo]').classList.toggle('hidden', !(t && v.adresEk));
       };
       const yukle = async () => {
         if (!v.sehir || !tr()) { liste = null; return null; }
@@ -1916,24 +1914,24 @@ function cariForm(c, onSaved) {
         return liste;
       };
       upd(); if (tr() && v.sehir) yukle();
-      const setV = e => { const k = e.target.dataset.c; if (k) { v[k] = e.target.value; e.target.classList.remove('bad'); if (k === 'pk') { e.target.value = v.pk = e.target.value.replace(/\D/g, ''); } upd(); } };
+      const setV = e => { const k = e.target.dataset.c; if (k) { v[k] = e.target.value; e.target.classList.remove('bad'); } };
       m.el.addEventListener('input', setV); m.el.addEventListener('change', setV);
       m.el.addEventListener('click', async e => {
         const p = e.target.closest('[data-pk]'); if (!p) { if (e.target.closest('[data-save]')) save(); return; }
         const k = p.dataset.pk;
         if (k === 'tur') picker({ title: 'Cari türü', value: v.tur, options: S.cariTurleri.map(x => ({ v: x, l: x })), onPick: x => { v.tur = x; upd(); }, addLabel: 'Cari Türü Ekle', onAdd: () => cariTuruForm(null, x => { v.tur = x; upd(); }) });
         if (k === 'ulke') picker({ title: 'Ülke', value: v.ulke, options: ULKELER.map(x => ({ v: x, l: x })), onPick: x => { v.ulke = x; if (x !== 'Türkiye') { v.sehir = v.ilce = v.mahalle = ''; } upd(); } });
-        if (k === 'sehir') picker({ title: 'İl', value: v.sehir, options: ILLER.map(x => ({ v: x, l: x })), onPick: x => { if (x !== v.sehir) { v.sehir = x; v.ilce = v.mahalle = ''; setIn('pk', ''); } upd(); yukle(); } });
+        if (k === 'sehir') picker({ title: 'İl', value: v.sehir, options: ILLER.map(x => ({ v: x, l: x })), onPick: x => { if (x !== v.sehir) { v.sehir = x; v.ilce = v.mahalle = ''; } upd(); yukle(); } });
         if (k === 'ilce') {
           if (yukleniyor) toast('Liste hazırlanıyor…'); const L = await yukle();
           picker({ title: `${v.sehir} — İlçe`, value: v.ilce, options: (L?.ilceler || []).map(x => ({ v: x.ad, l: x.ad, sub: `${x.mah.length} mahalle / köy` })),
-            onPick: x => { if (x !== v.ilce) { v.ilce = x; v.mahalle = ''; setIn('pk', ''); } upd(); },
+            onPick: x => { if (x !== v.ilce) { v.ilce = x; v.mahalle = ''; } upd(); },
             addLabel: 'Listede yok, elle yaz', onAdd: () => textAsk('İlçe', v.ilce, x => { v.ilce = x; v.mahalle = ''; upd(); }, 60) });
         }
         if (k === 'mahalle') {
           const L = await yukle(), ic = L?.ilceler.find(x => trLower(x.ad) === trLower(v.ilce));
-          picker({ title: `${v.ilce} — Mahalle / Köy`, value: v.mahalle, options: (ic?.mah || []).map(x => ({ v: x.ad, l: x.ad, sub: x.pk ? `Posta kodu ${x.pk}` : '' })),
-            onPick: x => { v.mahalle = x; const pk = ic?.mah.find(y => y.ad === x)?.pk; if (pk) setIn('pk', pk); upd(); m.$('[data-c="sokak"]').focus(); },
+          picker({ title: `${v.ilce} — Mahalle / Köy`, value: v.mahalle, options: (ic?.mah || []).map(x => ({ v: x.ad, l: x.ad })),
+            onPick: x => { v.mahalle = x; upd(); },
             addLabel: 'Listede yok, elle yaz', onAdd: () => textAsk('Mahalle / Köy', v.mahalle, x => { v.mahalle = x; upd(); }) });
         }
       });
@@ -1943,7 +1941,6 @@ function cariForm(c, onSaved) {
         if (!d.tur) er.tur = 1; if (!d.unvan) er.unvan = 'Ünvan zorunlu'; if (!d.ulke) er.ulke = 1;
         if (d.ulke === 'Türkiye') {
           if (!ILLER.includes(d.sehir)) er.sehir = 1; if (!d.ilce) er.ilce = 'İlçe zorunlu'; if (!d.mahalle) er.mahalle = 'Mahalle zorunlu';
-          if (d.pk && !/^\d{5}$/.test(d.pk)) er.pk = 'Posta kodu 5 haneli olmalı';
           const UP = x => x.toLocaleUpperCase('tr-TR'); d.binaNo = UP(clean(d.binaNo, 10)); d.daireNo = UP(clean(d.daireNo, 10)); d.sokak = UP(clean(d.sokak, 80)); d.adresEk = UP(clean(d.adresEk, 150)); d.mahalle = UP(d.mahalle);
           d.ilce = d.ilce.toLocaleUpperCase('tr-TR'); d.adres = trAdresMetni(d).slice(0, 250);
         } else {

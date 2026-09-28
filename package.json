@@ -1,6 +1,6 @@
 {
-  "name": "pronto",
-  "version": "1.0.0",
+  "name": "pronto-teklif",
+  "version": "1.0.1",
   "description": "PRONTO Teklif / Satış",
   "main": "main.js",
   "author": "Ofischi",
@@ -18,11 +18,26 @@
     "electron-builder": "^26.0.12"
   },
   "build": {
-    "appId": "com.ofischi.pronto",
-    "productName": "PRONTO",
+    "appId": "com.ofischi.pronto.teklif",
+    "productName": "PRONTO Teklif",
     "files": ["main.js", "package.json"],
-    "win": { "icon": "build/icon.ico", "target": [{ "target": "nsis", "arch": ["x64"] }], "artifactName": "PRONTO-Kurulum-${version}.${ext}" },
-    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true, "createStartMenuShortcut": true, "shortcutName": "PRONTO" },
-    "publish": { "provider": "github", "owner": "ofischi", "repo": "PRONTO",  "releaseType": "draft" }
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "artifactName": "PRONTO-Teklif-Kurulum-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "PRONTO Teklif"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "ofischi",
+      "repo": "PRONTO",
+      "releaseType": "draft"
+    }
   }
 }

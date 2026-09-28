@@ -1,7 +1,8 @@
 name: Adres listesini guncelle
 
-# 6 ayda bir (1 Ocak ve 1 Temmuz) PTT'nin resmî posta kodu listesini indirir,
-# il başına küçük dosyalar üretir; liste değiştiyse siteyi yeniden yayınlar.
+# 6 ayda bir (1 Ocak ve 1 Temmuz) il / ilçe / mahalle / köy listesini yeniler.
+# Kaynak: TÜİK MEDAS verisi — github.com/ubeydeozdmr/turkiye-api (MIT lisans).
+# Liste değiştiyse il dosyalarını günceller ve siteyi yeniden yayınlar; değişmediyse hiçbir şey yapmaz.
 # Actions sekmesinden "Run workflow" ile elle de çalıştırılabilir.
 on:
   schedule:
@@ -22,38 +23,25 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: PTT listesini indir
+      - name: TUIK verisini indir
         run: |
-          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0 Safari/537.36"
-          # PTT sunucusu sertifika zincirini eksik gönderiyor: -k gerekli (liste ayrıca denetleniyor)
-          get() { curl -fsSL -k --retry 2 --retry-delay 10 -m 180 -A "$UA" -e "https://postakodu.ptt.gov.tr/" -o "$2" "$1"; }
-          iszip() { [ -s "$1" ] && head -c 2 "$1" | grep -q PK; }
-          get "https://postakodu.ptt.gov.tr/Dosyalar/pk_list.zip" pk_list.zip || true
-          if ! iszip pk_list.zip; then
-            echo "::warning::Bilinen adres zip dondurmedi. Gelen sayfa:"
-            head -c 600 pk_list.zip | tr -d '\r'; echo
-            get "https://postakodu.ptt.gov.tr/" ana.html || true
-            echo "--- Ana sayfadaki dosya baglantilari:"
-            grep -oiE 'href="[^"]+\.(zip|xlsx?)"' ana.html | sed -E 's/^href="//I; s/"$//' | sort -u | tee linkler.txt || true
-            while read -r L; do
-              case "$L" in http*) U="$L" ;; /*) U="https://postakodu.ptt.gov.tr$L" ;; *) U="https://postakodu.ptt.gov.tr/$L" ;; esac
-              echo "Deneniyor: $U"
-              if get "$U" pk_list.zip && iszip pk_list.zip; then echo "Bulundu: $U"; break; fi
-            done < linkler.txt
-          fi
-          ls -la pk_list.zip
-          iszip pk_list.zip || { echo "::error::PTT listesi indirilemedi (zip degil)"; exit 1; }
+          git clone --depth 1 --filter=blob:none --sparse https://github.com/ubeydeozdmr/turkiye-api.git kaynak
+          git -C kaynak sparse-checkout set datasets
+          echo "Kaynak surumu: $(git -C kaynak log -1 --format='%h %cd' --date=short)"
+          ls kaynak/datasets
 
       - name: Il dosyalarini uret
-        run: python3 adres/uret.py --ptt pk_list.zip --out adres
+        run: |
+          YIL=$(ls kaynak/datasets | grep -E '^[0-9]{4}$' | sort | tail -1)
+          python3 adres/uret.py --tuik kaynak/datasets --out adres --surum "$YIL"
+          rm -rf kaynak
 
       - name: Degistiyse kaydet ve siteyi yayinla
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # Yalnızca sürüm tarihi değiştiyse (liste aynıysa) hiçbir şey yapma
-          if git diff --quiet -- adres ':(exclude)adres/surum.json' && ! git ls-files --others --exclude-standard adres | grep -q .; then
-            git checkout -- adres; echo "Liste degismemis."; exit 0
+          if git diff --quiet -- adres && [ -z "$(git ls-files --others --exclude-standard adres)" ]; then
+            echo "Liste degismemis, bir sey yapilmadi."; exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

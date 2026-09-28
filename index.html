@@ -68,6 +68,25 @@ svg.i{width:18px;height:18px;flex-shrink:0;fill:none;stroke:currentColor;stroke-
 .tgl::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--muted);transition:transform .2s,background .2s}
 .tgl.on::after{transform:translateX(14px);background:var(--accent)}
 @media (max-width:560px){.side{width:56px}.side .lbl,.side .brand-text,.sync span{display:none}}
+/* Telefon: sol çubuk yerine alt menü çubuğu (içerik tam genişlik kullanır) */
+@media (max-width:560px){
+ .app{flex-direction:column}
+ .main{order:1;flex:1;min-height:0}
+ .side{order:2;width:100%;flex-direction:row;align-items:center;border-right:0;border-top:1px solid var(--border);padding:0 4px env(safe-area-inset-bottom,0px);min-height:58px}
+ .side-top{padding:6px 2px 6px 4px;flex-direction:row;gap:0}
+ .brand{width:44px;height:44px;padding:5px;margin:0;border-radius:11px;box-shadow:none}
+ .brand img,.brand .mark{height:30px;max-width:34px;font-size:15px}
+ .nav{flex-direction:row;padding:4px 0;gap:0;overflow:visible}
+ .side .nav-item{flex:1;justify-content:center;padding:12px 0;gap:0;border-radius:10px;min-width:0}
+ .side .nav-item:hover{padding-left:0}
+ .side .nav-item::before{left:50%;top:auto;bottom:2px;transform:translateX(-50%);height:2px;width:0}
+ .side .nav-item:hover::before,.side .nav-item.active::before{height:2px;width:40%}
+ .nav-item svg.i{width:22px;height:22px}
+ .side-bot{flex-direction:row;align-items:center;border-top:0;padding:4px 0;gap:0}
+ .side-bot .nav-item{flex:0 0 40px}
+ .side .tgl{display:none}
+ .sync{padding:0 4px;position:absolute;left:44px;top:8px}
+}
 
 .main{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;position:relative}
 .page{flex:1;overflow:auto;padding:24px 28px 40px;animation:viewEnter .34s var(--ease-out) both}
@@ -163,7 +182,7 @@ table.tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
 .lcard{border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:6px;cursor:pointer}
 .lcard .row{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .lcard .ttl{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-@media (max-width:767px){.tw .tbl.resp{display:none}.tw .cards{display:grid;padding:0}.tw{background:transparent;border:0;box-shadow:none}}
+@media (max-width:767px){.tw .tbl.resp{display:none}.tw .cards{display:grid;grid-template-columns:minmax(0,1fr);padding:0}.tw{background:transparent;border:0;box-shadow:none}}
 .empty{padding:48px 16px;text-align:center;color:var(--muted)}
 .empty b{display:block;color:var(--text);font-size:15px;margin-bottom:4px}
 .more-l{padding:12px;text-align:center;color:var(--muted);font-size:12px}
@@ -196,7 +215,7 @@ img.thumb{cursor:zoom-in}
 @media(max-width:640px){.detail-panel-ov .mdl{width:100vw;border-radius:0}.detail-panel-grid{grid-template-columns:1fr}.detail-panel-item{grid-template-columns:48px minmax(0,1fr)}.detail-panel-item .price{grid-column:2;text-align:left}}
 @media (max-width:560px){.ov{padding:8px;align-items:end}.mdl{max-height:calc(100dvh - 16px)}}
 /* giriş / şifre kartı */
-.pin-ov{z-index:80;background:rgba(18,20,24,.22);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
+.pin-ov{z-index:80;align-items:center!important;background:rgba(18,20,24,.22);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
 .pin-card{width:min(360px,calc(100vw - 32px));padding:40px 32px 34px;border-radius:24px;background:#fff;border:1px solid rgba(28,28,30,.08);box-shadow:0 18px 50px rgba(20,24,32,.16);text-align:center;animation:zoom .2s ease;color:#252525}
 .pin-card .pin-logo,.pin-card .mark{width:248px;height:68px;object-fit:contain;display:block;margin:0 auto 24px;border-radius:12px;background:#000;color:#fff}
 .pin-card .mark{display:grid}
@@ -281,7 +300,7 @@ img.thumb{cursor:zoom-in}
 .it-g2{display:grid;grid-template-columns:90px 1fr 1fr;gap:8px;margin-top:8px;align-items:end}
 .it .inp{height:34px;font-size:13px}
 .it textarea.inp{min-height:44px;margin-top:8px}
-@media (max-width:760px){.it-main{grid-template-columns:1fr}.it-photo{width:100%;height:190px}.it-g{grid-template-columns:repeat(2,minmax(0,1fr))}.it-g2{grid-template-columns:80px 1fr}.it-g2 .ltot{grid-column:span 2}}
+@media (max-width:760px){.items-scroll{max-height:none;overflow:visible;padding-right:0}.it-main{grid-template-columns:1fr}.it-photo{width:100%;height:130px}.it-g{grid-template-columns:repeat(2,minmax(0,1fr))}.it-g2{grid-template-columns:80px 1fr}.it-g2 .ltot{grid-column:span 2}}
 .ltot{text-align:right;font-weight:700;padding-bottom:7px}
 .tots{display:flex;flex-direction:column;gap:6px}
 .tots .row{display:flex;justify-content:space-between;gap:12px}
@@ -301,7 +320,7 @@ img.thumb{cursor:zoom-in}
 .offer-people{margin-top:9px;padding-top:8px;border-top:1px solid var(--border);display:grid;gap:6px}
 .offer-person-row{display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:7px;align-items:center}
 .offer-person-label{font-size:10px;font-weight:700;color:var(--muted)}
-.offer-person-row .pickbtn{height:34px;padding:0 10px}.offer-person-row .pickbtn svg{display:none}
+.offer-person-row .pickbtn{height:34px;padding:0 10px;min-width:0;overflow:hidden}.pickbtn>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}.offer-person-row .pickbtn svg{display:none}
 .offer-person-row .btn.sm{height:30px;padding:0 8px;font-size:10px}.offer-person-row .muted.sm{display:none}
 @media(max-width:700px){.pick-filters{grid-template-columns:1fr}.offer-currency{justify-content:stretch}.offer-currency .field{width:100%}.offer-conditions{grid-template-columns:1fr}.offer-person-row{grid-template-columns:62px minmax(0,1fr) auto}}
 /* detay */
@@ -332,6 +351,7 @@ img.thumb{cursor:zoom-in}
 @media (max-width:900px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .stat{padding:14px 16px;border-radius:var(--r-lg)}
 .stat .v{font-size:19px;font-weight:800;margin-top:4px;overflow-wrap:anywhere}
+@media (max-width:560px){.stat{padding:12px}.stat .v{font-size:15px;overflow-wrap:normal;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}h1{font-size:20px}}
 .offer-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
 .offer-kpi{padding:12px 14px;border-radius:12px;min-width:0;transition:transform .18s var(--ease),border-color .18s var(--ease)}
 .offer-kpi:hover{transform:translateY(-2px);border-color:rgba(230,178,42,.28)}
@@ -351,7 +371,13 @@ img.thumb{cursor:zoom-in}
 .pdf-h .meta{flex:1;min-width:160px;display:flex;align-items:center;gap:10px}
 .pdf-h .meta img,.pdf-h .meta .mark{height:30px}
 .pdf-stage{flex:1;overflow:auto;padding:24px;background:color-mix(in srgb,var(--bg) 60%,transparent);touch-action:pan-x pan-y}
-.pdf-zoom{transform-origin:top center;margin:0 auto;width:max-content}
+.pdf-zoom{margin:0 auto;position:relative}
+.pdf-zoom>.pdoc{transform-origin:top left;position:absolute;left:0;top:0}
+@media (max-width:560px){
+ .pdf-h{flex-wrap:nowrap;gap:6px;padding:8px 10px}.pdf-h .meta{min-width:0}.pdf-h .meta .muted{display:none}
+ .pdf-h [data-z]{display:none}.pdf-h .btn .bl{display:none}.pdf-h .btn{padding:0 10px}
+ .pdf-stage{padding:10px}
+}
 .pdoc{--pf:#1a1d24;background:#fff;color:var(--pf);width:210mm;min-height:297mm;padding:14mm 12mm 26mm;font:10pt/1.4 var(--font);box-shadow:0 10px 40px rgba(0,0,0,.35);position:relative}
 .pdoc.A3{width:297mm;min-height:420mm}
 .pdoc.land{width:297mm;min-height:210mm}.pdoc.A3.land{width:420mm;min-height:297mm}
@@ -1758,15 +1784,17 @@ async function downloadTeklifPdf(t, o = curPdfOpts()) {
 function printTeklif(t, o = curPdfOpts()) { printHTML(pdfDoc(t, o), pageCss(o.size, o.orient, (PL[o.lang] || PL.tr).sayfa)); }
 function pdfPreview(id) {
   const t = DB.teklif.find(id); if (!t) return;
-  let o = { ...S.pdf, ...(Local.get('pdf_last', null) || {}) }, zoom = isMobile() ? .45 : .85;
+  let o = { ...S.pdf, ...(Local.get('pdf_last', null) || {}) }, zoom = .85;
   modal({ cls: 'pdf-ov', title: null, body: '', onMount: m => {
     const box = $('.mdl', m.el); box.classList.add('lg');
     mount(box, html`<div class="pdf-h"><div class="meta">${logoSrc() ? html`<img src="${logoSrc()}" alt="">` : html`<div class="mark">P</div>`}<div style="min-width:0"><div class="b">Teklif ${t.no}</div><div class="muted sm" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.cariSnap.unvan} · ${fmtDate(t.tarih)}</div></div></div>
       <button class="btn icon sm" data-z="-1" aria-label="Uzaklaştır">${I('zout')}</button><button class="btn icon sm" data-z="1" aria-label="Yakınlaştır">${I('zin')}</button>
-      <button class="btn sm" data-set>${I('gear')} Ayarlar</button><button class="btn sm" data-dl>${I('pdf')} PDF</button><button class="btn sm" data-print>${I('print')} Yazdır</button><button class="btn sm primary" data-share>${I('share')} Paylaş</button>
+      <button class="btn sm" data-set title="Ayarlar">${I('gear')}<span class="bl"> Ayarlar</span></button><button class="btn sm" data-dl title="PDF">${I('pdf')}<span class="bl"> PDF</span></button><button class="btn sm" data-print title="Yazdır">${I('print')}<span class="bl"> Yazdır</span></button><button class="btn sm primary" data-share title="Paylaş">${I('share')}<span class="bl"> Paylaş</span></button>
       <button class="btn ghost icon sm" data-x aria-label="Kapat">${I('x')}</button></div><div class="pdf-stage" data-stage><div class="pdf-zoom" data-zoom></div></div>`);
-    const render = () => { mount(m.$('[data-zoom]'), pdfDoc(t, o)); applyZoom(); };
-    const applyZoom = () => { m.$('[data-zoom]').style.transform = `scale(${zoom})`; const d = m.$('.pdoc'); if (d) m.$('[data-zoom]').style.height = (d.offsetHeight * zoom) + 'px'; };
+    // Sayfa ölçeklenir, kutu ölçekli boyuta ayarlanır: dar ekranda kaymadan ortalanır, gerekirse kaydırılır
+    let fitted = false;
+    const render = () => { mount(m.$('[data-zoom]'), pdfDoc(t, o)); if (!fitted) { fitted = true; const d = m.$('.pdoc'), st = m.$('[data-stage]'); if (d && st) { const cs = getComputedStyle(st); const w = st.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight); zoom = Math.min(zoom, Math.max(.25, w / d.offsetWidth)); } } applyZoom(); };
+    const applyZoom = () => { const z = m.$('[data-zoom]'), d = m.$('.pdoc'); if (!d) return; d.style.transform = `scale(${zoom})`; z.style.width = (d.offsetWidth * zoom) + 'px'; z.style.height = (d.offsetHeight * zoom) + 'px'; };
     const setZoom = z => { zoom = Math.min(2.5, Math.max(.25, z)); applyZoom(); };
     const stage = m.$('[data-stage]');
     stage.addEventListener('wheel', e => { if (e.ctrlKey) { e.preventDefault(); setZoom(zoom - e.deltaY * .01); } }, { passive: false });

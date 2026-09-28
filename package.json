@@ -23,6 +23,6 @@
     "files": ["main.js", "package.json"],
     "win": { "icon": "build/icon.ico", "target": [{ "target": "nsis", "arch": ["x64"] }], "artifactName": "PRONTO-Kurulum-${version}.${ext}" },
     "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true, "createStartMenuShortcut": true, "shortcutName": "PRONTO" },
-    "publish": { "provider": "github", "owner": "ofischi", "repo": "PRONTO", "releaseType": "release" }
+    "publish": { "provider": "github", "owner": "ofischi", "repo": "PRONTO",  "releaseType": "draft" }
   }
 }

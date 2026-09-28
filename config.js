@@ -6,3 +6,4 @@ window.PRONTO_CONFIG = {
   anonKey: 'sb_publishable_rW37lBEKqw9UGqHpjWoHvw_k_A3GHmH',
   email: 'ekip@pronto.app'
 };
+

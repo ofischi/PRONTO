@@ -1749,7 +1749,7 @@ function printHTML(content, css) {
 /* Masaüstü programı: Chrome motoruyla gerçek PDF dosyası (yazı seçilebilir, Türkçe karakter sorunsuz) */
 const desktop = () => window.prontoDesktop && typeof window.prontoDesktop.savePdf === 'function' ? window.prontoDesktop : null;
 const safeFileName = s => clean(s, 120).replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim();
-const teklifFileName = t => safeFileName(`Teklif ${t.no} - ${t.cariSnap?.unvan || ''}`) + '.pdf';
+const teklifFileName = t => safeFileName(`Teklif ${t.no} - ${t.cariSnap?.unvan || ''}`).replace(/[.\s]+$/, '') + '.pdf';
 async function teklifPdfFile(t, o, { ask = true, reveal = false } = {}) {
   const d = desktop();
   if (!d) return null;
@@ -1774,7 +1774,7 @@ function needDesktop(t, o) {
     onMount: m => m.el.addEventListener('click', e => { if (e.target.closest('[data-p]')) { m.close(); printTeklif(t, o); } }) });
 }
 async function downloadTeklifPdf(t, o = curPdfOpts()) {
-  if (!desktop()) return needDesktop(t, o);
+  if (!desktop()) return tkSaveAs(t, o);
   try {
     const r = await teklifPdfFile(t, o, { ask: true });   // kaydedilecek yer sorulur
     if (r?.canceled) return;
@@ -1782,8 +1782,114 @@ async function downloadTeklifPdf(t, o = curPdfOpts()) {
   } catch (e) { toast('PDF oluşturulamadı: ' + (e.message || e), 'err'); }
 }
 function printTeklif(t, o = curPdfOpts()) { printHTML(pdfDoc(t, o), pageCss(o.size, o.orient, (PL[o.lang] || PL.tr).sayfa)); }
+/* ===== Tarayıcı ve telefon: pdfmake ile gerçek (yazısı seçilebilen) teklif PDF'i ===== */
+let tkPdfmakeP = null;
+function tkEnsurePdfmake() {
+  if (window.pdfMake && window.pdfMake.vfs && window.pdfMake.vfs['Roboto-Regular.ttf']) return Promise.resolve();
+  const load = src => new Promise((ok, no) => { const el = document.createElement('script'); el.src = src; el.onload = ok; el.onerror = () => no(new Error('PDF motoru yüklenemedi. İnternet bağlantısını kontrol edin.')); document.head.appendChild(el); });
+  tkPdfmakeP ||= load('https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js')
+    .then(() => load('https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js'))
+    .catch(e => { tkPdfmakeP = null; throw e; });
+  return tkPdfmakeP;
+}
+async function tkImg(src, max, fmt) {
+  if (!src) return null;
+  try {
+    const img = new Image(); img.src = src; await img.decode();
+    const k = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+    const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(img.naturalWidth * k)); c.height = Math.max(1, Math.round(img.naturalHeight * k));
+    const g = c.getContext('2d'); if (fmt === 'jpeg') { g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); } g.drawImage(img, 0, 0, c.width, c.height);
+    return { data: c.toDataURL(fmt === 'jpeg' ? 'image/jpeg' : 'image/png', 0.88), w: c.width, h: c.height };
+  } catch { return null; }
+}
+async function tkPdfBlob(t, o) {
+  await tkEnsurePdfmake();
+  const L = PL[o.lang] || PL.tr, cs = t.cariSnap || {}, pays = (payMap()[t.id] || []).sort((a, b) => a.tarih.localeCompare(b.tarih)), c = calc(t, pays);
+  const INK = '#1a1d24', MUT = '#6b707c', px = v => v * 0.75, fp = px(FOTO_PX[o.foto] || 88), lh = px(LOGO_PX[o.logoSize] || 52);
+  const order = catOrder(), idx = k => { const i = order.indexOf(trLower(k)); return i < 0 ? 999 : i; };
+  const items = t.items.map((it, n) => ({ it, n })).sort((a, b) => idx(a.it.kategori) - idx(b.it.kategori) || a.n - b.n);
+  const logo = await tkImg(logoSrc(), 900, 'png');
+  const fotos = new Map();
+  for (const { it } of items) { const f = safeImg(offerFotoGet(it)); if (f && !fotos.has(f)) fotos.set(f, await tkImg(f, 600, 'jpeg')); }
+  const m = v => money(v, t.doviz);
+  const logoNode = logo ? { image: logo.data, width: Math.min(lh * logo.w / logo.h, 200), alignment: o.logoPos === 'center' ? 'center' : o.logoPos === 'right' ? 'right' : 'left', margin: [0, 0, 0, 12] } : { text: S.firma.ad || 'PRONTO', fontSize: 14, bold: true, margin: [0, 0, 0, 12] };
+  const dot = on => ({ canvas: [{ type: 'ellipse', x: 3.5, y: 5, r1: 3, r2: 3, lineWidth: 0.7, lineColor: INK }].concat(on ? [{ type: 'ellipse', x: 3.5, y: 5, r1: 1.6, r2: 1.6, color: '#000000' }] : []), width: 8 });
+  const radio = (k, opts) => [{ text: L[k === 'teslimYeri' ? 'yer' : k], color: MUT, fontSize: 7.5 }, { table: { body: [opts.flatMap(v => [dot(t[k] === v), { text: L[v], fontSize: 7.5 }])] }, layout: { hLineWidth: () => 0, vLineWidth: () => 0, paddingLeft: i => (i % 2 ? 2 : i ? 6 : 0), paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0 } }];
+  const cust = [{ text: cs.unvan || '', bold: true, fontSize: 9.5, margin: [0, 0, 0, 2] }];
+  if (cs.gsm) cust.push({ text: cs.gsm, fontSize: 8 });
+  const adr = [cs.adres, cs.ilce, cs.sehir, cs.ulke].filter(Boolean).join(', '); if (adr) cust.push({ text: adr, fontSize: 8 });
+  if (cs.eposta) cust.push({ text: cs.eposta, fontSize: 8 });
+  const right = { width: 190, stack: [
+    { text: L.teklif, fontSize: 7, color: MUT, characterSpacing: 0.3, alignment: 'right' },
+    { text: `${L.no} ${t.no}`, fontSize: 12.5, bold: true, alignment: 'right', margin: [0, 1, 0, 4] },
+    { alignment: 'right', table: { widths: ['*', 'auto'], body: [[L.tarih, fmtDate(t.tarih)], [L.teslim, fmtDate(t.teslim)], [L.doviz, t.doviz]].map(([a, b]) => [{ text: a, color: MUT, fontSize: 8, alignment: 'right' }, { text: b, fontSize: 8 }]) }, layout: { hLineWidth: () => 0, vLineWidth: () => 0, paddingLeft: i => (i ? 9 : 0), paddingRight: () => 0, paddingTop: () => 1, paddingBottom: () => 1 } },
+    { margin: [0, 6, 0, 0], table: { widths: ['*', 'auto'], body: [radio('montaj', ['dahil', 'haric']), radio('nakliye', ['dahil', 'haric']), radio('teslimYeri', ['fabrika', 'adres'])].map(r => [Object.assign(r[0], { alignment: 'right' }), r[1]]) }, layout: { hLineWidth: () => 0, vLineWidth: () => 0, paddingLeft: i => (i ? 8 : 0), paddingRight: () => 0, paddingTop: () => 1.5, paddingBottom: () => 1.5 } }
+  ] };
+  const head = ['foto', 'urun', 'olcu', 'renk', 'yon', 'birim', 'adet', 'toplam'].map((k, i) => ({ text: L[k], bold: true, fontSize: 7.8, fillColor: '#eceef1', alignment: i >= 5 ? 'right' : 'left' }));
+  const body = [head], zebra = [];
+  let lastCat = null, zi = 0;
+  for (const { it } of items) {
+    const cat = trLower(it.kategori);
+    if (cat !== lastCat) { lastCat = cat; body.push([{ text: it.kategori || '—', colSpan: 8, bold: true, fontSize: 8, margin: [0, 4, 0, 0] }, {}, {}, {}, {}, {}, {}, {}]); zebra.push('cat'); }
+    const z = zi++ % 2 ? '#f6f7f9' : null;
+    const f = fotos.get(safeImg(offerFotoGet(it)));
+    body.push([f ? { image: f.data, fit: [fp, fp] } : { text: L.yok, fontSize: 6.5, color: '#8a8f99', alignment: 'center', margin: [0, fp * 0.25, 0, fp * 0.25] },
+      { text: itemTitle(it), bold: true, fontSize: 8 }, { text: it.olcu || '—', fontSize: 8 }, { text: it.renk || '—', fontSize: 8 }, { text: it.yon || '—', fontSize: 8 },
+      { text: m(it.fiyat), fontSize: 8, alignment: 'right', noWrap: true }, { text: String(it.adet), fontSize: 8, alignment: 'right' }, { text: m(it.fiyat * it.adet), bold: true, fontSize: 8, alignment: 'right', noWrap: true }].map(x => (z ? Object.assign(x, { fillColor: z }) : x)));
+    zebra.push('item');
+    if (it.aciklama) { body.push([{ text: '', fillColor: z || undefined }, { text: it.aciklama, colSpan: 7, fontSize: 7.5, color: '#4a4f5a', fillColor: z || undefined }, {}, {}, {}, {}, {}, {}]); zebra.push('desc'); }
+  }
+  const kinds = ['head'].concat(zebra);
+  const table = { table: { headerRows: 1, dontBreakRows: true, widths: [fp + 8, '*', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'], body },
+    layout: { hLineWidth: (i) => (i === 0 ? 0 : kinds[i] === 'desc' ? 0 : kinds[i - 1] === 'cat' ? 1.1 : 0.5), hLineColor: (i) => (kinds[i - 1] === 'cat' ? INK : '#dfe2e6'), vLineWidth: () => 0, paddingLeft: () => 5, paddingRight: () => 5, paddingTop: () => 5, paddingBottom: () => 5 } };
+  const payRows = [];
+  if (t.pesinat > 0) payRows.push([t.pesinatTarih ? fmtDate(t.pesinatTarih) : '—', m(t.pesinat), L.pes]);
+  for (const p of pays) payRows.push([fmtDate(p.tarih), m(p.cevrilmis), '']);
+  const payNode = payRows.length ? { width: '*', stack: [{ text: L.odemeler, bold: true, fontSize: 8, margin: [0, 0, 0, 3] }, { table: { body: payRows.map(r => r.map((x, i) => ({ text: x, fontSize: 8, noWrap: i === 1 }))) }, layout: { hLineWidth: () => 0, vLineWidth: () => 0, paddingLeft: () => 0, paddingRight: () => 12, paddingTop: () => 1.5, paddingBottom: () => 1.5 } }] } : { width: '*', text: '' };
+  const kdvL = `${L.kdv} %${NF.format(t.kdv).replace(',00', '')}`;
+  const totRows = [[L.ana, m(c.ana)], [L.isk, c.isk ? '-' + m(c.isk) : m(0)], [L.ara, m(c.ara)], [kdvL, m(c.kdv)], [L.genel, m(c.genel), true], [L.pes, m(c.pes)], [L.kalan, m(c.kalan)]];
+  const totNode = { width: 200, table: { widths: ['*', 'auto'], body: totRows.map(([a, b, g]) => [{ text: a, color: g ? INK : '#4a4f5a', bold: !!g, fontSize: 8.4 }, { text: b, bold: !!g, fontSize: 8.4, alignment: 'right', noWrap: true }]) },
+    layout: { hLineWidth: (i) => (i === 4 ? 1.1 : 0), hLineColor: () => INK, vLineWidth: () => 0, paddingLeft: () => 0, paddingRight: () => 0, paddingTop: (i) => (i === 4 ? 5 : 2), paddingBottom: () => 2 } };
+  const firma = [S.firma.ad, S.firma.tel, S.firma.adres, S.firma.eposta].filter(Boolean).join('  |  ');
+  const dd = {
+    info: { title: `${L.teklif} ${t.no}`, author: S.firma.ad || 'PRONTO', creator: 'PRONTO', producer: 'PRONTO' },
+    pageSize: o.size === 'A3' ? 'A3' : 'A4', pageOrientation: o.orient === 'landscape' ? 'landscape' : 'portrait',
+    pageMargins: [34, 34, 34, 50],
+    defaultStyle: { font: 'Roboto', fontSize: 8, color: INK, lineHeight: 1.2 },
+    footer: (cur, total) => ({ margin: [34, 14, 34, 0], stack: [{ canvas: [{ type: 'line', x1: 0, y1: 0, x2: (o.orient === 'landscape' ? (o.size === 'A3' ? 1190 : 842) : (o.size === 'A3' ? 842 : 595)) - 68, y2: 0, lineWidth: 0.6, lineColor: '#d5d8dd' }] }, { margin: [0, 5, 0, 0], columns: [{ text: firma, fontSize: 7, color: '#4a4f5a' }, { width: 'auto', text: `${L.sayfa} ${cur} / ${total}`, fontSize: 7, color: '#4a4f5a' }] }] }),
+    content: [
+      { columns: [{ width: '*', stack: [logoNode].concat(cust) }, right], columnGap: 16, margin: [0, 0, 0, 16] },
+      table,
+      { columns: [payNode, totNode], columnGap: 24, margin: [0, 16, 0, 0], unbreakable: true }
+    ]
+  };
+  return new Promise((ok, no) => { try { window.pdfMake.createPdf(dd).getBlob(b => ok(b)); } catch (e) { no(e); } });
+}
+/* PDF butonu (tarayıcı/telefon): yalnız "Farklı Kaydet" — yazdırma penceresi açılmaz */
+async function tkSaveAs(t, o) {
+  let handle = null; const name = teklifFileName(t);
+  if (window.showSaveFilePicker) {
+    try { handle = await window.showSaveFilePicker({ suggestedName: name, types: [{ description: 'PDF', accept: { 'application/pdf': ['.pdf'] } }] }); }
+    catch (e) { if (e && e.name === 'AbortError') return; handle = null; }
+  }
+  try {
+    const blob = await tkPdfBlob(t, o);
+    if (handle) { const w = await handle.createWritable(); await w.write(blob); await w.close(); toast('PDF kaydedildi', 'ok', 4000); }
+    else { const u = URL.createObjectURL(blob), a = document.createElement('a'); a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 2000); toast('PDF indirildi', 'ok', 4000); }
+  } catch (e) { toast('PDF oluşturulamadı: ' + (e.message || e), 'err'); }
+}
+/* Paylaş butonu (tarayıcı/telefon): yalnız paylaşım — indirme / kaydetme yapmaz */
+async function tkShareWeb(t, o) {
+  if (!navigator.share) return toast('Bu tarayıcı dosya paylaşmayı desteklemiyor. PDF butonuyla kaydedip gönderebilirsiniz.', 'err', 6000);
+  try {
+    const blob = await tkPdfBlob(t, o), file = new File([blob], teklifFileName(t), { type: 'application/pdf' });
+    if (navigator.canShare && !navigator.canShare({ files: [file] })) return toast('Bu cihaz PDF paylaşmayı desteklemiyor. PDF butonuyla kaydedip gönderebilirsiniz.', 'err', 6000);
+    await navigator.share({ title: `Teklif ${t.no}`, files: [file] });
+  } catch (e) { if (!e || e.name !== 'AbortError') toast('Paylaşılamadı: ' + (e.message || e), 'err'); }
+}
 function pdfPreview(id) {
   const t = DB.teklif.find(id); if (!t) return;
+  if (!desktop()) tkEnsurePdfmake().catch(() => {});
   let o = { ...S.pdf, ...(Local.get('pdf_last', null) || {}) }, zoom = .85;
   modal({ cls: 'pdf-ov', title: null, body: '', onMount: m => {
     const box = $('.mdl', m.el); box.classList.add('lg');
@@ -1826,21 +1932,19 @@ function openOut(url) {
 function shareTeklif(t, o = curPdfOpts()) {
   const cs = t.cariSnap || {}, phone = waPhone(cs.gsm), mail = V.email(cs.eposta) && cs.eposta ? cs.eposta : '';
   const d = desktop(), canCopy = !!(d && typeof d.copyFile === 'function' && typeof d.openWhatsApp === 'function');
-  if (!d) return needDesktop(t, o);
+  if (!d) return tkShareWeb(t, o);
   modal({ title: `Teklif ${t.no} — Paylaş`, size: 'sm', body: html`
     <p class="muted sm" style="margin-top:0">${canCopy ? html`PDF hazırlanıp <b>panoya kopyalanır</b>. Açılan sohbete <b>Ctrl+V</b> ile yapıştırıp gönderin.` : 'PDF hazırlanıp klasörde gösterilir; açılan sohbete sürükleyip bırakın.'}</p>
     <div class="grid">
       <button class="btn primary" data-sh="wa">${I('share')} WhatsApp ile PDF gönder</button>
       ${phone ? html`<button class="btn" data-sh="waCari">WhatsApp — ${cs.unvan || 'müşteri'} sohbeti <span class="muted" style="font-weight:500">(${cs.gsm})</span></button>` : ''}
       <button class="btn" data-sh="mail">E-posta${mail ? html` <span class="muted" style="font-weight:500">(${mail})</span>` : ''}</button>
-      <button class="btn" data-sh="save">${I('pdf')} PDF olarak kaydet…</button>
       <button class="btn ghost" data-sh="file">PDF'i klasörde göster</button>
     </div>`,
     onMount: m => m.el.addEventListener('click', async e => {
       const b = e.target.closest('[data-sh]'); if (!b) return;
       const k = b.dataset.sh; $$('[data-sh]', m.el).forEach(x => x.disabled = true);
       try {
-        if (k === 'save') { const r = await teklifPdfFile(t, o, { ask: true }); if (r?.ok) { toast('PDF kaydedildi'); m.close(); } return; }
         const r = await teklifPdfFile(t, o, { ask: false, reveal: k === 'file' || !canCopy });
         if (!r || !r.ok) throw new Error(r?.error || 'PDF hazırlanamadı');
         if (k === 'file') { toast('PDF klasörde gösterildi'); m.close(); return; }

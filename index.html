@@ -273,6 +273,12 @@ img.thumb{cursor:zoom-in}
 @media (max-width:900px){.form-bottom{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:700px){.condition-pesinat-row{grid-template-columns:1fr 1fr}}
 @media (max-width:1000px){.tf{grid-template-columns:minmax(0,1fr)}}
+/* Teklif formu: dar ekranda (dizüstü penceresi/tablet) alanlar sıkışmasın — yerleşim içerik genişliğine göre */
+@media (max-width:1240px){.tf{grid-template-columns:minmax(0,1fr)}}
+.tf>div:first-child,.form-right{container-type:inline-size;min-width:0}
+@container (max-width:760px){.tf .it-main{grid-template-columns:170px minmax(0,1fr)}.tf .it-photo{width:170px;height:130px}}
+@container (max-width:560px){.tf .form-bottom{grid-template-columns:minmax(0,1fr)}.tf .it-main{grid-template-columns:1fr}.tf .it-photo{width:100%;height:130px}}
+@container (max-width:440px){.tf .it-g{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .pick-filters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.pick-filter{position:relative;min-width:0}.pick-filter .inp{padding-left:34px}
 .pick-filter-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);display:flex;z-index:1;color:var(--muted);pointer-events:none}.pick-filter-icon svg{width:16px;height:16px}
 .pick-res{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow:auto;margin-top:10px;padding-right:2px}

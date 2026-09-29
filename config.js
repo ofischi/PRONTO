@@ -1,9 +1,9 @@
-/* PRONTO bağlantı ayarı.
-   anon/publishable anahtar gizli değildir; güvenlik ortak şifre + RLS ile sağlanır.
-   service_role / secret anahtarını ASLA buraya yazmayın. */
+/* PRONTO Teklif bağlantı ayarı — artık Sipariş Takibi ile AYNI Supabase projesi.
+   publishable (anon) anahtar gizli değildir; güvenlik şifre + RLS kurallarıyla sağlanır.
+   Teklif girişi (ekip@pronto.app) yalnızca teklif tablolarını görebilir.
+   ⚠ secret / service_role anahtarını ASLA buraya yazmayın. */
 window.PRONTO_CONFIG = {
-  url: 'https://qjvyqlznfgskhwosdbxe.supabase.co',
-  anonKey: 'sb_publishable_rW37lBEKqw9UGqHpjWoHvw_k_A3GHmH',
+  url: 'https://ehdoledrfdoluixohypp.supabase.co',
+  anonKey: 'sb_publishable_S20ikh0v3dOAFjY-zX6p8Q_aHATfRxW',
   email: 'ekip@pronto.app'
 };
-

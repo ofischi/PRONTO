@@ -158,7 +158,7 @@ select.inp option{background:var(--bg2);color:var(--text)}
 .st-Üretimde{color:var(--info);border-color:color-mix(in srgb,var(--info) 40%,transparent);background:color-mix(in srgb,var(--info) 10%,transparent)}
 .st-Sevkiyata{color:var(--vio);border-color:color-mix(in srgb,var(--vio) 40%,transparent);background:color-mix(in srgb,var(--vio) 10%,transparent)}
 .st-Teslim{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 40%,transparent);background:color-mix(in srgb,var(--ok) 10%,transparent)}
-.st-İptal{color:var(--err);border-color:color-mix(in srgb,var(--err) 40%,transparent);background:color-mix(in srgb,var(--err) 10%,transparent)}
+.st-Onay{color:var(--warn);border-color:var(--warn);border-style:dashed;background:transparent}.st-Reddedildi{color:var(--err);border-color:color-mix(in srgb,var(--err) 40%,transparent);background:color-mix(in srgb,var(--err) 10%,transparent)}.sipbox{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--surface);box-shadow:var(--shadow);margin:0 0 14px}.sipbox b{font-weight:700}.sipbox .grow{flex:1;min-width:200px}.sipbox.ok{border-color:color-mix(in srgb,var(--ok) 45%,transparent)}.sipbox.wait{border-color:color-mix(in srgb,var(--warn) 55%,transparent)}.sipbox.err{border-color:color-mix(in srgb,var(--err) 50%,transparent)}.sipbox .note{font-size:12.5px;color:var(--err)}.siptag{display:inline-flex;gap:6px;align-items:center;font-size:11.5px;font-weight:600;color:var(--muted);white-space:nowrap}.st-İptal{color:var(--err);border-color:color-mix(in srgb,var(--err) 40%,transparent);background:color-mix(in srgb,var(--err) 10%,transparent)}
 
 /* ---------- tablolar ---------- */
 .tw{flex:1;min-height:0;overflow:auto;border-radius:var(--r-lg)}
@@ -528,8 +528,56 @@ const I = (n, cls = '') => raw(`<svg class="i ${cls}" viewBox="0 0 24 24" aria-h
 /* ---------- sabit listeler ---------- */
 const ILLER = ['Adana','Adıyaman','Afyonkarahisar','Ağrı','Aksaray','Amasya','Ankara','Antalya','Ardahan','Artvin','Aydın','Balıkesir','Bartın','Batman','Bayburt','Bilecik','Bingöl','Bitlis','Bolu','Burdur','Bursa','Çanakkale','Çankırı','Çorum','Denizli','Diyarbakır','Düzce','Edirne','Elazığ','Erzincan','Erzurum','Eskişehir','Gaziantep','Giresun','Gümüşhane','Hakkâri','Hatay','Iğdır','Isparta','İstanbul','İzmir','Kahramanmaraş','Karabük','Karaman','Kars','Kastamonu','Kayseri','Kırıkkale','Kırklareli','Kırşehir','Kilis','Kocaeli','Konya','Kütahya','Malatya','Manisa','Mardin','Mersin','Muğla','Muş','Nevşehir','Niğde','Ordu','Osmaniye','Rize','Sakarya','Samsun','Siirt','Sinop','Sivas','Şanlıurfa','Şırnak','Tekirdağ','Tokat','Trabzon','Tunceli','Uşak','Van','Yalova','Yozgat','Zonguldak'];
 const ULKELER = ['Türkiye','ABD','Afganistan','Almanya','Arnavutluk','Arjantin','Avustralya','Avusturya','Azerbaycan','Bahreyn','Belçika','Beyaz Rusya','Birleşik Arap Emirlikleri','Birleşik Krallık','Bosna-Hersek','Brezilya','Bulgaristan','Cezayir','Çekya','Çin','Danimarka','Endonezya','Ermenistan','Estonya','Etiyopya','Fas','Filipinler','Filistin','Finlandiya','Fransa','Gana','Güney Afrika','Güney Kore','Gürcistan','Hindistan','Hırvatistan','Hollanda','Irak','İran','İrlanda','İspanya','İsrail','İsveç','İsviçre','İtalya','İzlanda','Japonya','Kamerun','Kanada','Karadağ','Katar','Kazakistan','Kenya','Kıbrıs','KKTC','Kırgızistan','Kolombiya','Kosova','Kuveyt','Kuzey Makedonya','Letonya','Libya','Litvanya','Lübnan','Lüksemburg','Macaristan','Malezya','Malta','Meksika','Mısır','Moldova','Moğolistan','Nijerya','Norveç','Özbekistan','Pakistan','Polonya','Portekiz','Romanya','Rusya','Senegal','Sırbistan','Singapur','Slovakya','Slovenya','Somali','Sudan','Suriye','Suudi Arabistan','Şili','Tacikistan','Tanzanya','Tayland','Tunus','Türkmenistan','Ukrayna','Umman','Ürdün','Venezuela','Vietnam','Yemen','Yeni Zelanda','Yunanistan'];
-const DURUMLAR = ['Beklemede','Üretimde','Sevkiyata Hazır','Teslim Edildi','İptal'];
+const DURUMLAR = ['Onay Bekliyor','Reddedildi','Beklemede','Üretimde','Sevkiyata Hazır','Teslim Edildi','İptal'];
 const stTag = d => html`<span class="st st-${String(d).split(' ')[0]}">${d}</span>`;
+/* ---------- Sipariş Takibi bağlantısı ----------
+   "siparis" satırlarını yalnızca veritabanı yazar; bu program sadece okur ve gösterir. */
+const SIP_SIRA = ['Beklemede', 'Üretimde', 'Sevkiyata Hazır', 'Teslim Edildi'];
+const sipBag = t => (t && mem('siparis').get(t.id)) || null;
+function tkDurum(t) {
+  const b = sipBag(t); if (!b) return t.durum || 'Beklemede';
+  if (b.bag === 'bekliyor') return 'Onay Bekliyor';
+  if (b.bag === 'reddedildi') return 'Reddedildi';
+  const ds = (t.items || []).map(i => b.kalemler?.[i.uid]?.durum).filter(Boolean);
+  if (!ds.length) return 'Beklemede';
+  const aktif = ds.filter(d => d !== 'İptal'); if (!aktif.length) return 'İptal';
+  return aktif.reduce((m, d) => (SIP_SIRA.indexOf(d) < SIP_SIRA.indexOf(m) ? d : m), 'Teslim Edildi');
+}
+const sipNo = id => 'PR-' + String(id).padStart(5, '0');
+function sipKalemTag(t, it) {
+  const k = sipBag(t)?.kalemler?.[it.uid]; if (!k) return '';
+  return html`<div class="siptag">${sipNo(k.no)} ${stTag(k.durum)}</div>`;
+}
+function sipFotoKeys(t) {
+  const o = {};
+  for (const it of t.items || []) {
+    let k = '';
+    if (it.fotoRef && photoGet(it.fotoRef)) k = it.fotoRef;
+    else { const k3 = trLower(it.kategori) + '|' + trLower(it.model) + '|' + trLower(it.modul || ''), k2 = trLower(it.kategori) + '|' + trLower(it.model); k = photoGet(k3) ? k3 : photoGet(k2) ? k2 : ''; }
+    if (k) o[it.uid] = k;
+  }
+  return o;
+}
+async function sipGonder(t, { sessiz = false } = {}) {
+  if (!navigator.onLine) { toast('İnternet bağlantısı yok. Bağlantı gelince tekrar deneyin.', 'err'); return null; }
+  await Sync.flush();
+  if ([...Sync.outbox.values()].some(o => (o.tbl === 'teklifler' && o.id === t.id) || o.tbl === 'photo')) { toast('Teklif henüz sunucuya kaydedilmedi, birkaç saniye sonra tekrar deneyin.', 'err'); return null; }
+  try {
+    const r = await api('rpc/pronto_teklif_gonder', { method: 'POST', body: { p_teklif_id: t.id, p_foto: sipFotoKeys(t) } });
+    const m = { gonderildi: `Teklif ${t.no} Sipariş Takibi'ne onaya gönderildi`, guncelleme_gonderildi: 'Değişiklikler Sipariş Takibi\'ne onaya gönderildi', degisiklik_yok: sessiz ? '' : 'Siparişi etkileyen bir değişiklik yok' }[r?.sonuc];
+    if (m) toast(m, 'ok', 5000);
+    return r;
+  } catch (e) { toast('Sipariş Takibi\'ne gönderilemedi: ' + (e.message || e), 'err'); return null; }
+}
+function sipPanel(t) {
+  const b = sipBag(t); if (!b) return '';
+  if (b.bag === 'bekliyor') return html`<div class="sipbox wait"><div class="grow"><b>Sipariş Takibi'nde onay bekliyor</b><div class="muted sm">Onaylanınca ürünlerin durumu burada görünecek.</div></div></div>`;
+  if (b.bag === 'reddedildi') return html`<div class="sipbox err"><div class="grow"><b>Sipariş Takibi reddetti</b><div class="note">${b.ret_notu || ''}</div><div class="muted sm">Düzeltip tekrar gönderebilirsiniz.</div></div><button class="btn primary sm" data-act="sipGonder" data-id="${t.id}">Tekrar Gönder</button></div>`;
+  return html`<div class="sipbox ok"><div class="grow"><b>Siparişe dönüştü</b> · durumlar Sipariş Takibi'nden yönetilir
+    ${b.bekleyen === 'guncelleme' ? html`<div class="muted sm" style="color:var(--warn)">Yaptığınız değişiklikler Sipariş Takibi'nde onay bekliyor.</div>` : ''}
+    ${b.ret_notu ? html`<div class="note">${b.ret_notu}</div>` : ''}</div></div>`;
+}
+
 
 /* =====================================================================
    BULUT BAĞLANTISI (Supabase REST + Auth + Realtime Broadcast)
@@ -765,6 +813,8 @@ const Sync = {
   setOnline(v) { if (this.online !== v) { this.online = v; setSync(); } }
 };
 
+/* Sunucu değiştiyse (taşıma sonrası) son eşitleme zamanı sıfırlanır: bir kez tam çekim */
+try { const eski = Local.get('cfg_url', null); if (eski !== CFG.url) { if (eski) Auth.save(null); Sync.last = null; Local.set('last_sync', null); Local.set('cfg_url', CFG.url); } } catch {}
 function setSync() {
   const el = $('#sync'); if (!el) return;
   const n = Sync.outbox.size;
@@ -1093,10 +1143,10 @@ function listRows() {
   let rows = DB.teklif.all().filter(t => !t.deletedAt).map(t => ({ t, c: calc(t, pm[t.id]) }));
   rows = rows.filter(({ t, c }) => {
     if (f.cari && t.cariId !== f.cari) return false;
-    if (f.durum && t.durum !== f.durum) return false;
+    if (f.durum && tkDurum(t) !== f.durum) return false;
     if (f.personel && t.personelId !== f.personel) return false;
     if (rg && (t.tarih < rg[0] || t.tarih > rg[1])) return false;
-    if (q) { const hay = trLower([t.no, t.cariSnap.unvan, t.personelAd, t.durum, t.doviz, fmtDate(t.tarih), fmtDate(t.teslim), c.genel, NF.format(c.genel), c.adet, ...t.items.flatMap(i => [i.kategori, i.model, i.modul, i.olcu, i.renk, i.yon, i.aciklama])].join(' ')); if (!hay.includes(q)) return false; }
+    if (q) { const hay = trLower([t.no, t.cariSnap.unvan, t.personelAd, tkDurum(t), t.doviz, fmtDate(t.tarih), fmtDate(t.teslim), c.genel, NF.format(c.genel), c.adet, ...t.items.flatMap(i => [i.kategori, i.model, i.modul, i.olcu, i.renk, i.yon, i.aciklama])].join(' ')); if (!hay.includes(q)) return false; }
     return true;
   });
   const k = { tarih: r => r.t.tarih + r.t.no, tutar: r => r.c.genel, no: r => r.t.no, musteri: r => trLower(r.t.cariSnap.unvan) }[LS.sort];
@@ -1124,8 +1174,8 @@ function drawList(keepScroll) {
   const rows = listRows(); LS._total = rows.length; const vis = rows.slice(0, LS.limit);
   $('#cnt').textContent = `${rows.length} teklif`;
   $('#sortLbl').textContent = `${SORT_L[LS.sort]} ${LS.dir === 'desc' ? '↓' : '↑'}`;
-  const kBek = rows.filter(r => r.t.durum === 'Beklemede').length;
-  const kUret = rows.filter(r => r.t.durum === 'Üretimde').length;
+  const kBek = rows.filter(r => tkDurum(r.t) === 'Beklemede').length;
+  const kUret = rows.filter(r => tkDurum(r.t) === 'Üretimde').length;
   const kTop = {}; rows.forEach(r => { kTop[r.t.doviz] = (kTop[r.t.doviz] || 0) + (+r.c.genel || 0); });
   mount($('#offerKpis'), html`
     <div class="offer-kpi"><div class="k-label">Toplam Teklif</div><div class="k-value">${rows.length}</div><div class="k-sub">Görüntülenen sonuç</div></div>
@@ -1147,13 +1197,13 @@ function drawList(keepScroll) {
     ${vis.map(({ t, c }) => html`<tr data-act="openTeklif" data-id="${t.id}" class="${LS.sel === t.id ? 'sel' : ''}">
       <td class="b">${t.no}</td><td>${t.cariSnap.unvan}</td><td class="r">${c.adet}</td><td class="r">${money(c.ana, t.doviz)}</td><td class="r">${c.isk ? '-' + money(c.isk, t.doviz) : money(0, t.doviz)}</td>
       <td class="r">${money(c.ara, t.doviz)}</td><td class="r">${money(c.kdv, t.doviz)}</td><td class="r b">${money(c.genel, t.doviz)}</td><td class="r">${money(c.pes, t.doviz)}</td><td class="r">${money(c.kalan, t.doviz)}</td>
-      <td>${fmtDate(t.tarih)}</td><td>${fmtDate(t.teslim)}</td><td>${t.personelAd}</td><td>${t.doviz}</td><td>${stTag(t.durum)}</td>
+      <td>${fmtDate(t.tarih)}</td><td>${fmtDate(t.teslim)}</td><td>${t.personelAd}</td><td>${t.doviz}</td><td>${stTag(tkDurum(t))}</td>
       <td><button class="btn ghost icon sm" data-act="rowMenu" data-id="${t.id}" aria-label="İşlemler">${I('dots')}</button></td></tr>`)}
   </tbody></table>
   <div class="cards">${vis.map(({ t, c }) => html`<div class="lcard" data-act="openTeklif" data-id="${t.id}">
     <div class="row"><span class="ttl">${t.cariSnap.unvan}</span><button class="btn ghost icon sm" data-act="rowMenu" data-id="${t.id}" aria-label="İşlemler">${I('dots')}</button></div>
     <div class="row sm muted"><span>#${t.no} · ${fmtDate(t.tarih)}</span><span>Teslim ${fmtDate(t.teslim)}</span></div>
-    <div class="row"><span class="b">${money(c.genel, t.doviz)}</span>${stTag(t.durum)}</div>
+    <div class="row"><span class="b">${money(c.genel, t.doviz)}</span>${stTag(tkDurum(t))}</div>
     <div class="row sm"><span class="muted">Kalan</span><span>${money(c.kalan, t.doviz)}</span></div></div>`)}</div>
   ${LS.limit < rows.length ? html`<div class="more-l">Aşağı kaydırdıkça yükleniyor…</div>` : ''}`);
   if (keepScroll) tw.scrollTop = st;
@@ -1174,7 +1224,7 @@ function quickTeklifDetail(id) {
   modal({ title: `Teklif ${t.no} — Hızlı Detay`, cls: 'detail-panel-ov', body: html`
     <div class="detail-panel-grid">
       <div class="detail-panel-card"><div class="lbl">Müşteri</div><div class="val">${cs.unvan || '—'}</div></div>
-      <div class="detail-panel-card"><div class="lbl">Durum</div><div class="val">${stTag(t.durum)}</div></div>
+      <div class="detail-panel-card"><div class="lbl">Durum</div><div class="val">${stTag(tkDurum(t))}</div></div>
       <div class="detail-panel-card"><div class="lbl">Teklif Tarihi</div><div class="val">${fmtDate(t.tarih)}</div></div>
       <div class="detail-panel-card"><div class="lbl">Teslim Tarihi</div><div class="val">${fmtDate(t.teslim)}</div></div>
       <div class="detail-panel-card"><div class="lbl">Personel</div><div class="val">${t.personelAd || '—'}</div></div>
@@ -1226,6 +1276,7 @@ A.openFilter = el => {
 function teklifOzet(t) { const c = calc(t, payMap()[t.id]); return html`<dl class="kv"><dt>Teklif No</dt><dd class="b">${t.no}</dd><dt>Müşteri</dt><dd>${t.cariSnap.unvan}</dd><dt>Tarih</dt><dd>${fmtDate(t.tarih)}</dd><dt>Ürün adedi</dt><dd>${c.adet}</dd><dt>Genel Toplam</dt><dd class="b">${money(c.genel, t.doviz)}</dd><dt>Alınan</dt><dd>${money(c.pes, t.doviz)}</dd></dl>`; }
 async function deleteTeklif(id) {
   const t = DB.teklif.find(id); if (!t) return;
+  { const b = sipBag(t); if (b && b.bag !== 'reddedildi') return toast('Bu teklif Sipariş Takibi\'ne bağlı; silinemez. Gerekirse siparişleri orada iptal edin.', 'err', 6000); }
   if (!await confirmBox({ title: 'Teklifi sil', body: html`${teklifOzet(t)}<p style="margin:14px 0 0">Bu teklifi silmek istediğinize emin misiniz? Teklif ödemeleriyle birlikte Geri Dönüşüm Kutusu'na taşınır ve 7 gün sonra kalıcı olarak silinir.</p>`, ok: 'Sil', danger: true })) return;
   DB.teklif.upsert({ ...t, deletedAt: Date.now() }); toast('Teklif Geri Dönüşüm Kutusu\'na taşındı');
   if (state.view === 'teklifler') drawList(); else go('teklifler');
@@ -1587,6 +1638,7 @@ A.saveTeklif = async el => {
   DB.teklif.upsert(t); saveVariants(t.items);
   logAct(d.id ? `Teklif ${t.no} düzenlendi` : `Teklif ${t.no} oluşturuldu`);
   toast(d.id ? 'Değişiklikler kaydedildi' : `Teklif ${t.no} kaydedildi`); go('teklifDetay', { id: t.id });
+  { const b = sipBag(t); if (d.id && b && (b.bag === 'onaylandi' || b.bag === 'bekliyor')) sipGonder(t, { sessiz: true }); }
 };
 /* İşlem günlüğü yalnızca bu cihazda tutulur (sunucuya trafik yok) */
 function logAct(msg) { const l = Local.get('log', []); l.unshift({ ts: Date.now(), msg }); Local.set('log', l.slice(0, 50)); }
@@ -1603,8 +1655,8 @@ VIEWS.teklifDetay = (main, { id, tab = 'urunler' }) => {
   const pesRow = t.pesinat > 0 ? { pesinat: true, tarih: t.pesinatTarih || t.tarih, tutar: t.pesinat, doviz: t.doviz, cevrilmis: t.pesinat, aciklama: 'Teklifte alınan peşinat' } : null;
   const payRows = pesRow ? [...pays, pesRow] : pays, payCount = payRows.length;
   mount(main, html`<div class="page detail"><div class="ph"><div class="ph-l"><button class="btn icon" data-act="nav" data-v="teklifler" aria-label="Geri">${I('back')}</button>
-      <div><h1 style="display:flex;gap:10px;align-items:center">Teklif ${t.no} ${stTag(t.durum)}</h1><div class="muted sm">${cs.unvan}</div></div></div>
-    <div class="ph-act"><button class="btn" data-act="editTeklif" data-id="${t.id}">${I('edit')} Düzenle</button><button class="btn primary" data-act="pdf" data-id="${t.id}">${I('pdf')} PDF</button><button class="btn icon" data-act="rowMenu" data-id="${t.id}" aria-label="Diğer">${I('dots')}</button></div></div>
+      <div><h1 style="display:flex;gap:10px;align-items:center">Teklif ${t.no} ${stTag(tkDurum(t))}</h1><div class="muted sm">${cs.unvan}</div></div></div>
+    <div class="ph-act"><button class="btn" data-act="editTeklif" data-id="${t.id}">${I('edit')} Düzenle</button><button class="btn primary" data-act="pdf" data-id="${t.id}">${I('pdf')} PDF</button>${!sipBag(t) ? html`<button class="btn" data-act="sipGonder" data-id="${t.id}">${I('share')} Siparişe Gönder</button>` : ''}<button class="btn icon" data-act="rowMenu" data-id="${t.id}" aria-label="Diğer">${I('dots')}</button></div></div>
     <div class="dgrid">
       <div class="card"><div class="card-h"><h3>Müşteri</h3></div><dl class="kv"><dt>Ünvan</dt><dd>${cs.unvan}</dd><dt>Telefon</dt><dd>${cs.gsm || '—'}</dd><dt>E-posta</dt><dd>${cs.eposta || '—'}</dd><dt>Adres</dt><dd>${[cs.adres, cs.ilce, cs.sehir, cs.ulke].filter(Boolean).join(', ')}</dd></dl></div>
       <div class="card"><div class="card-h"><h3>Teklif</h3></div><dl class="kv"><dt>Teklif Tarihi</dt><dd>${fmtDate(t.tarih)}</dd><dt>Teslim Tarihi</dt><dd>${fmtDate(t.teslim)}</dd><dt>Döviz</dt><dd>${t.doviz}</dd><dt>Personel</dt><dd>${t.personelAd}</dd>
@@ -1615,11 +1667,11 @@ VIEWS.teklifDetay = (main, { id, tab = 'urunler' }) => {
           ${pays.length ? html`<dt>Diğer ödemeler</dt><dd>${money(r2(c.pes - (+t.pesinat || 0)), t.doviz)}</dd>` : ''}
           <dt>Toplam alınan</dt><dd>${money(c.pes, t.doviz)}</dd><dt>Kalan</dt><dd class="b">${money(c.kalan, t.doviz)}</dd><dt>Ödeme sayısı</dt><dd>${payCount}</dd></dl>
         <div class="prog"><i style="width:${pct.toFixed(1)}%"></i></div></div></div>
-    <div class="tabs" role="tablist"><button class="${tab === 'urunler' ? 'on' : ''}" data-act="dTab" data-id="${t.id}" data-t="urunler">Ürünler (${t.items.length})</button><button class="${tab === 'odemeler' ? 'on' : ''}" data-act="dTab" data-id="${t.id}" data-t="odemeler">Ödemeler (${payCount})</button></div>
-    ${tab === 'urunler' ? html`<div class="tw"><table class="tbl static resp"><thead><tr>${['', 'Ürün', 'Ölçü', 'Renk', 'Yön', 'Adet', 'Birim Fiyat', 'Toplam', 'Açıklama'].map((h, i) => html`<th class="${i >= 5 && i <= 7 ? 'r' : ''}"><div class="thi">${h}</div></th>`)}</tr></thead><tbody>
-        ${t.items.map(it => { const f = safeImg(offerFotoGet(it)); return html`<tr><td>${f ? html`<img class="thumb" src="${f}" alt="" data-act="img">` : html`<span class="thumb">Fotoğraf Yok</span>`}</td><td class="b">${itemTitle(it)}</td><td>${it.olcu || '—'}</td><td>${it.renk || '—'}</td><td>${it.yon || '—'}</td><td class="r">${it.adet}</td><td class="r">${money(it.fiyat, t.doviz)}</td><td class="r b">${money(it.fiyat * it.adet, t.doviz)}</td><td class="wrap" style="min-width:180px">${it.aciklama || ''}</td></tr>`; })}</tbody></table>
+    ${sipPanel(t)}<div class="tabs" role="tablist"><button class="${tab === 'urunler' ? 'on' : ''}" data-act="dTab" data-id="${t.id}" data-t="urunler">Ürünler (${t.items.length})</button><button class="${tab === 'odemeler' ? 'on' : ''}" data-act="dTab" data-id="${t.id}" data-t="odemeler">Ödemeler (${payCount})</button></div>
+    ${tab === 'urunler' ? html`<div class="tw"><table class="tbl static resp"><thead><tr>${['', 'Ürün', ...(sipBag(t) ? ['Sipariş'] : []), 'Ölçü', 'Renk', 'Yön', 'Adet', 'Birim Fiyat', 'Toplam', 'Açıklama'].map((h, i, a) => html`<th class="${i >= a.length - 4 && i <= a.length - 2 ? 'r' : ''}"><div class="thi">${h}</div></th>`)}</tr></thead><tbody>
+        ${t.items.map(it => { const f = safeImg(offerFotoGet(it)); return html`<tr><td>${f ? html`<img class="thumb" src="${f}" alt="" data-act="img">` : html`<span class="thumb">Fotoğraf Yok</span>`}</td><td class="b">${itemTitle(it)}</td>${sipBag(t) ? html`<td class="nowrap">${sipKalemTag(t, it) || html`<span class="muted sm">—</span>`}</td>` : ''}<td>${it.olcu || '—'}</td><td>${it.renk || '—'}</td><td>${it.yon || '—'}</td><td class="r">${it.adet}</td><td class="r">${money(it.fiyat, t.doviz)}</td><td class="r b">${money(it.fiyat * it.adet, t.doviz)}</td><td class="wrap" style="min-width:180px">${it.aciklama || ''}</td></tr>`; })}</tbody></table>
         <div class="cards">${t.items.map(it => { const f = safeImg(offerFotoGet(it)); return html`<div class="lcard" style="cursor:default"><div class="row" style="justify-content:flex-start">${f ? html`<img class="thumb" src="${f}" alt="" data-act="img">` : html`<span class="thumb">Fotoğraf Yok</span>`}<div style="min-width:0"><div class="ttl">${itemTitle(it)}</div><div class="muted sm">${[it.olcu, it.renk, it.yon].filter(Boolean).join(' · ')}</div></div></div>
-          <div class="row sm"><span class="muted">${it.adet} × ${money(it.fiyat, t.doviz)}</span><span class="b">${money(it.fiyat * it.adet, t.doviz)}</span></div>${it.aciklama ? html`<div class="sm muted" style="white-space:pre-wrap">${it.aciklama}</div>` : ''}</div>`; })}</div></div>`
+          <div class="row sm"><span class="muted">${it.adet} × ${money(it.fiyat, t.doviz)}</span><span class="b">${money(it.fiyat * it.adet, t.doviz)}</span></div>${it.aciklama ? html`<div class="sm muted" style="white-space:pre-wrap">${it.aciklama}</div>` : ''}${sipKalemTag(t, it)}</div>`; })}</div></div>`
     : html`<div class="toolbar"><button class="btn primary" data-act="addPay" data-id="${t.id}">${I('plus')} Ödeme Ekle</button></div>
       ${payRows.length ? html`<div class="tw"><table class="tbl static resp"><thead><tr>${['Tarih', 'Tutar', 'Kur', `Karşılığı (${t.doviz})`, 'Yöntem', 'Açıklama', ''].map((h, i) => html`<th class="${i === 1 || i === 3 ? 'r' : ''}"><div class="thi">${h}</div></th>`)}</tr></thead><tbody>
         ${payRows.map(p => html`<tr><td>${fmtDate(p.tarih)}</td><td class="r">${money(p.tutar, p.doviz)}</td><td>${p.doviz !== t.doviz ? kurText(p.doviz, t.doviz, p.kur) : '—'}</td><td class="r b">${money(p.cevrilmis, t.doviz)}</td><td>${p.pesinat ? 'Peşinat' : (DB.yontem.find(p.yontemId)?.ad || '—')}</td><td class="wrap">${p.aciklama || ''}</td>
@@ -1636,6 +1688,12 @@ VIEWS.teklifDetay = (main, { id, tab = 'urunler' }) => {
 A.dTab = el => go('teklifDetay', { id: el.dataset.id, tab: el.dataset.t });
 A.editTeklif = el => go('teklifForm', { id: el.dataset.id });
 A.pdf = el => pdfPreview(el.dataset.id);
+A.sipGonder = async el => {
+  const t = DB.teklif.find(el.dataset.id); if (!t) return;
+  if (!await confirmBox({ title: 'Siparişe Gönder', body: html`<p style="margin-top:0">Teklif <b>${t.no}</b> — ${t.cariSnap.unvan}</p><p>Sipariş Takibi'ne onaya gönderilsin mi?</p><p class="muted sm">Orada onaylanınca siparişler oluşur; ürünlerin durumu buraya otomatik gelir.</p>`, ok: 'Gönder' })) return;
+  el.disabled = true; try { await sipGonder(t); } finally { el.disabled = false; }
+};
+
 A.printT = el => printTeklif(DB.teklif.find(el.dataset.id));
 A.shareT = el => shareTeklif(DB.teklif.find(el.dataset.id));
 A.totDetail = el => { const t = DB.teklif.find(el.dataset.id); modal({ title: `Teklif ${t.no} toplamlar`, size: 'sm', body: totsHTML(calc(t, payMap()[t.id]), t) }); };
@@ -2162,8 +2220,8 @@ VIEWS.musteriDetay = (main, { id }) => {
 };
 function teklifMini(ts, pm) {
   return ts.length ? html`<div class="tw"><table class="tbl resp"><thead><tr>${['No', 'Tarih', 'Müşteri', 'Personel', 'Genel Toplam', 'Kalan', 'Durum'].map(h => html`<th><div class="thi">${h}</div></th>`)}</tr></thead><tbody>
-    ${ts.map(t => { const c = calc(t, pm[t.id]); return html`<tr data-act="openTeklif" data-id="${t.id}"><td class="b">${t.no}</td><td>${fmtDate(t.tarih)}</td><td>${t.cariSnap.unvan}</td><td>${t.personelAd}</td><td class="b">${money(c.genel, t.doviz)}</td><td>${money(c.kalan, t.doviz)}</td><td>${stTag(t.durum)}</td></tr>`; })}</tbody></table>
-    <div class="cards">${ts.map(t => { const c = calc(t, pm[t.id]); return html`<div class="lcard" data-act="openTeklif" data-id="${t.id}"><div class="row"><span class="ttl">#${t.no} · ${t.cariSnap.unvan}</span>${stTag(t.durum)}</div><div class="row sm"><span class="muted">${fmtDate(t.tarih)}</span><span class="b">${money(c.genel, t.doviz)}</span></div></div>`; })}</div></div>`
+    ${ts.map(t => { const c = calc(t, pm[t.id]); return html`<tr data-act="openTeklif" data-id="${t.id}"><td class="b">${t.no}</td><td>${fmtDate(t.tarih)}</td><td>${t.cariSnap.unvan}</td><td>${t.personelAd}</td><td class="b">${money(c.genel, t.doviz)}</td><td>${money(c.kalan, t.doviz)}</td><td>${stTag(tkDurum(t))}</td></tr>`; })}</tbody></table>
+    <div class="cards">${ts.map(t => { const c = calc(t, pm[t.id]); return html`<div class="lcard" data-act="openTeklif" data-id="${t.id}"><div class="row"><span class="ttl">#${t.no} · ${t.cariSnap.unvan}</span>${stTag(tkDurum(t))}</div><div class="row sm"><span class="muted">${fmtDate(t.tarih)}</span><span class="b">${money(c.genel, t.doviz)}</span></div></div>`; })}</div></div>`
     : html`<div class="empty card"><b>Teklif yok</b></div>`;
 }
 
@@ -2311,7 +2369,7 @@ function repData() {
 }
 function repTable(tab, D) {
   const { ts } = D;
-  if (tab === 'teklif') return { title: 'Teklif raporu', cols: ['No', 'Tarih', 'Teslim', 'Müşteri', 'Personel', 'Döviz', 'Adet', 'Genel Toplam', 'Alınan', 'Kalan', 'Durum'], rows: ts.map(({ t, c }) => [t.no, fmtDate(t.tarih), fmtDate(t.teslim), t.cariSnap.unvan, t.personelAd, t.doviz, c.adet, money(c.genel, t.doviz), money(c.pes, t.doviz), money(c.kalan, t.doviz), t.durum]) };
+  if (tab === 'teklif') return { title: 'Teklif raporu', cols: ['No', 'Tarih', 'Teslim', 'Müşteri', 'Personel', 'Döviz', 'Adet', 'Genel Toplam', 'Alınan', 'Kalan', 'Durum'], rows: ts.map(({ t, c }) => [t.no, fmtDate(t.tarih), fmtDate(t.teslim), t.cariSnap.unvan, t.personelAd, t.doviz, c.adet, money(c.genel, t.doviz), money(c.pes, t.doviz), money(c.kalan, t.doviz), tkDurum(t)]) };
   if (tab === 'musteri' || tab === 'personel') {
     const g = {}; for (const { t, c } of ts) { const k = tab === 'musteri' ? t.cariSnap.unvan : t.personelAd; const s = g[k] ||= { n: 0, top: {}, pes: {}, kal: {} }; s.n++; addTo(s.top, t.doviz, c.genel); addTo(s.pes, t.doviz, c.pes); addTo(s.kal, t.doviz, c.kalan); }
     return { title: tab === 'musteri' ? 'Müşteri raporu' : 'Personel raporu', cols: [tab === 'musteri' ? 'Müşteri' : 'Personel', 'Teklif Sayısı', 'Toplam', 'Tahsilat', 'Kalan'], rows: Object.entries(g).sort((a, b) => b[1].n - a[1].n).map(([k, s]) => [k, s.n, fmtMulti(s.top), fmtMulti(s.pes), fmtMulti(s.kal)]) };
@@ -2330,7 +2388,7 @@ function drawRep() {
     const top = {}, pes = {}, kal = {}; D.ts.forEach(({ t, c }) => { addTo(top, t.doviz, c.genel); addTo(pes, t.doviz, c.pes); addTo(kal, t.doviz, c.kalan); });
     const t0 = todayISO(), t7 = isoOf(Date.now() + 7 * 864e5), pm = D.pm;
     const all = DB.teklif.all().filter(t => !t.deletedAt);
-    const up = all.filter(t => t.teslim >= t0 && t.teslim <= t7 && t.durum !== 'Teslim Edildi' && t.durum !== 'İptal').sort((a, b) => a.teslim.localeCompare(b.teslim));
+    const up = all.filter(t => t.teslim >= t0 && t.teslim <= t7 && tkDurum(t) !== 'Teslim Edildi' && tkDurum(t) !== 'İptal').sort((a, b) => a.teslim.localeCompare(b.teslim));
     const bek = all.filter(t => t.durum === 'Beklemede').sort((a, b) => b.tarih.localeCompare(a.tarih)).slice(0, 8);
     const log = Local.get('log', []).slice(0, 10);
     const mini = (arr, f) => arr.length ? html`<div class="tw"><table class="tbl"><tbody>${arr.map(t => html`<tr data-act="openTeklif" data-id="${t.id}"><td class="b">${t.no}</td><td>${t.cariSnap.unvan}</td><td>${f(t)}</td><td class="r">${money(calc(t, pm[t.id]).genel, t.doviz)}</td></tr>`)}</tbody></table></div>` : html`<div class="empty card" style="padding:24px">Kayıt yok</div>`;

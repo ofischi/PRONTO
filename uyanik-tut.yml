@@ -1,0 +1,27 @@
+name: Supabase uyanik tut
+
+# Free planda proje 7 gün hiç kullanılmazsa Supabase projeyi durdurur (bayram/tatil).
+# Bu iş 3 günde bir TEK küçük istek atar; veri okumaz/yazmaz, trafiği yok denecek kadar azdır.
+# Anahtar kodda değil, deponun gizli kasasında (SUPABASE_URL / SUPABASE_SECRET_KEY) durur.
+on:
+  schedule:
+    - cron: '17 6 */3 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    env:
+      SB_URL: ${{ secrets.SUPABASE_URL }}
+      SB_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+    steps:
+      - name: Tek kucuk istek
+        if: ${{ env.SB_URL != '' && env.SB_KEY != '' }}
+        run: |
+          H=(-H "apikey: $SB_KEY")
+          [[ "$SB_KEY" == eyJ* ]] && H+=(-H "Authorization: Bearer $SB_KEY")
+          curl -sSf -o /dev/null "${H[@]}" "$SB_URL/rest/v1/pt_counters?select=name&limit=1"
+          echo "Supabase uyanik"

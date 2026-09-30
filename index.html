@@ -235,6 +235,18 @@ img.thumb{cursor:zoom-in}
 .setup{margin:auto;width:min(480px,calc(100vw - 32px));text-align:left}
 .upd{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:95;display:flex;align-items:center;gap:12px;padding:10px 12px 10px 16px;border-radius:14px;background:rgba(24,24,22,.94);color:#fff;box-shadow:var(--shadow);font-size:13.5px;animation:fade .25s;max-width:calc(100vw - 32px)}
 .upd .btn.ghost{color:#fff}
+/* Teklif paneli: tam ekran form, alta küçültülebilir */
+.tkp{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;background:var(--bg);animation:viewEnter .22s var(--ease-out) both}
+.tkp.min{display:none}
+.tkp>.page{flex:1;min-height:0}
+.tkm{position:fixed;right:16px;bottom:16px;z-index:55;display:flex;align-items:center;gap:6px;max-width:min(560px,calc(100vw - 32px));padding:6px 6px 6px 8px;border-radius:14px;background:var(--mdl);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--accent);box-shadow:var(--shadow)}
+.tkm-open{display:flex;align-items:center;gap:10px;min-width:0;flex:1;padding:6px 8px;border:0;background:transparent;color:var(--text);font:inherit;text-align:left;cursor:pointer;border-radius:10px}
+.tkm-open:hover{background:var(--surface-2)}
+.tkm-open .i{flex-shrink:0;color:var(--accent)}
+.tkm-t{display:flex;flex-direction:column;min-width:0}
+.tkm-t b{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tkm-t span{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:560px){.tkm{left:8px;right:8px;max-width:none;bottom:calc(66px + env(safe-area-inset-bottom,0px))}}
 .toasts{position:fixed;right:16px;top:calc(16px + env(safe-area-inset-top,0px));z-index:100;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
 .toast{padding:10px 14px;border-radius:var(--r);background:rgba(24,24,22,.90);color:#fff;border:1px solid rgba(255,255,255,.12);box-shadow:var(--shadow);font-weight:600;font-size:13px;animation:fade .25s;max-width:min(360px,calc(100vw - 32px))}
 .toast.ok{border-left:3px solid var(--ok)}.toast.err{border-left:3px solid var(--err)}
@@ -832,6 +844,7 @@ function setSync() {
 const remoteChanged = debounce(() => {
   loadSettings(); applyTheme(); refreshBrand(); checkAppVersion();
   if (!$('#main') || $('.ov')) return;
+  if (tkPanel.el) { drawPickFilters(); drawPick(); }
   const v = state.view;
   if (v === 'teklifler') drawList(true);
   else if (v === 'musteriler') drawCari();
@@ -856,7 +869,7 @@ function checkAppVersion() {
   el.addEventListener('click', async e => {
     if (e.target.closest('[data-updx]')) { el.remove(); return; }
     if (!e.target.closest('[data-upd]')) return;
-    if (state.view === 'teklifForm' && !await confirmBox({ title: 'Güncelle', body: html`<p>Açık teklif formundaki kaydedilmemiş değişiklikler kaybolacak.</p>`, ok: 'Yine de güncelle', danger: true })) return;
+    tkTaslakKaydet(true);   /* açık teklif formu bu bilgisayarda saklanır, güncellemeden sonra devam edilir */
     await Sync.flush();
     /* Önbelleği tazele, sonra yeniden yükle (tek seferlik 2 küçük istek) */
     await Promise.all(['./', 'config.js'].map(u => fetch(u, { cache: 'reload' }).catch(() => {})));
@@ -933,7 +946,7 @@ const app = $('#app');
 /* ---------- toast / modal / onay / menü ---------- */
 function toast(msg, type = 'ok', ms = 3200) {
   /* Hata alanda zaten kırmızı işaretliyse ayrıca kutu gösterme */
-  if (type === 'err') { const ctx = $$('.ov').pop() || $('#main'); if (ctx && $('.inp.bad,.validation-error', ctx)) return; }
+  if (type === 'err') { const ctx = $$('.ov').pop() || (tkPanel.el && !tkPanel.min ? tkPanel.el : $('#main')); if (ctx && $('.inp.bad,.validation-error', ctx)) return; }
   const t = document.createElement('div'); t.className = 'toast ' + type; t.textContent = msg;
   $('#toasts').appendChild(t); setTimeout(() => t.remove(), ms);
 }
@@ -1108,6 +1121,7 @@ function bindBrand() {
   b.addEventListener('contextmenu', e => e.preventDefault());
 }
 function go(view, params = {}) {
+  if (view === 'teklifForm') { tkPanelAc(params.id || null); return; }
   if (view !== 'ayarlar') state.settingsOk = false;
   state.view = view; state.params = params; closePop();
   markNav(); const main = $('#main'); if (!main) return;
@@ -1294,15 +1308,15 @@ async function deleteTeklif(id) {
 function catOrder() { const o = []; for (const u of DB.urun.all()) if (!o.includes(trLower(u.kategori))) o.push(trLower(u.kategori)); return o; }
 function newDraft() { return { tarih: todayISO(), teslim: '', doviz: '', cariId: '', personelId: '', items: [], iskontoTip: 'tutar', iskontoDeger: 0, iskontoTutar: 0, pesinat: 0, pesinatTarih: '', kdv: S.kdv, montaj: '', nakliye: '', teslimYeri: '', durum: 'Beklemede' }; }
 const PK = { kat: '', model: '', katQ: '', modelQ: '' };
-VIEWS.teklifForm = (main, { id }) => {
+VIEWS.teklifForm = (main, { id, taslak }) => {
   const edit = !!id; const src = id && DB.teklif.find(id);
-  if (edit && !src) return go('teklifler');
-  const d = state.draft = edit ? deep(src) : newDraft();
+  if (edit && !src) return;
+  const d = state.draft = taslak ? { ...deep(taslak.d), _orig: taslak.orig || null } : edit ? deep(src) : newDraft();
   if (edit && d.iskontoTip === '%' && d.iskontoDeger) { d.iskontoTutar = calc(d, []).isk; d.iskontoDeger = 0; d.iskontoTip = 'tutar'; }
-  d._orig = edit ? JSON.stringify(src) : null;
+  if (!taslak) d._orig = edit ? JSON.stringify(src) : null;
   PK.kat = PK.model = PK.katQ = PK.modelQ = '';
   mount(main, html`<div class="page"><div class="ph"><div class="ph-l"><button class="btn icon" data-act="formBack" aria-label="Geri">${I('back')}</button><div><h1>${edit ? `Teklif ${src.no} — Düzenle` : 'Yeni Teklif'}</h1><div class="muted sm">${edit ? 'Müşteri ve personel değiştirilemez.' : 'Teklif numarası kayıtta otomatik verilir.'}</div></div></div>
-    <div class="ph-act"><button class="btn" data-act="formBack">Vazgeç</button><button class="btn primary" data-act="saveTeklif">${edit ? 'Değişiklikleri Kaydet' : 'Teklifi Kaydet'}</button></div></div>
+    <div class="ph-act"><button class="btn" data-act="tkMin" title="Küçült (Esc) — diğer ekranlarda çalışmaya devam edin">${I('min')} Küçült</button><button class="btn" data-act="formBack">Vazgeç</button><button class="btn primary" data-act="saveTeklif">${edit ? 'Değişiklikleri Kaydet' : 'Teklifi Kaydet'}</button></div></div>
     <div class="tf"><div>
       <div class="card offer-main-card"><div class="card-h"><h3>TEKLİF BİLGİLERİ</h3></div>
         <div class="offer-currency"><div class="field"><label>DÖVİZ <span class="req">*</span></label><select class="inp" data-d="doviz" ${edit ? 'disabled' : ''}><option value="">SEÇİN</option>${CURS.map(c => html`<option value="${c}" ${d.doviz === c ? 'selected' : ''}>${c}</option>`)}</select></div></div>
@@ -1583,8 +1597,118 @@ const stripDraft = d => { const o = { ...d }; delete o._orig; return o; };
 A.formBack = async () => {
   const d = state.draft; const dirty = d.id ? JSON.stringify(stripDraft(d)) !== d._orig : d.items.length || d.cariId;
   if (dirty && !await confirmBox({ title: 'Kaydedilmemiş değişiklikler', body: html`<p>Yaptığınız değişiklikler kaybolacak. Çıkmak istiyor musunuz?</p>`, ok: 'Çık', danger: true })) return;
-  d.id ? go('teklifDetay', { id: d.id }) : go('teklifler');
+  tkPanelKapat();
 };
+
+/* =====================================================================
+   TEKLİF PANELİ: "Yeni Teklif" / "Düzenle" tam ekran panelde açılır.
+   – Küçült ile alta iner, bu arada diğer ekranlar kullanılır. Tek panel.
+   Taslak YALNIZCA bu bilgisayarda saklanır (sunucuya trafik yok).
+   ===================================================================== */
+IP.min = '<path d="M6 12h12"/>';
+const tkPanel = { el: null, mini: null, min: false };
+const TK_TASLAK = 'teklif_taslak';
+function tkDirty(d = state.draft) {
+  if (!d) return false;
+  return d.id ? JSON.stringify(stripDraft(d)) !== d._orig : !!(d.items.length || d.cariId || d.personelId);
+}
+let tkKotaUyari = false;
+function tkTaslakKaydet(simdi) {
+  clearTimeout(tkTaslakKaydet._t);
+  const yaz = () => {
+    const d = state.draft; if (!tkPanel.el || !d) return;
+    if (!tkDirty(d)) { Local.del(TK_TASLAK); return; }
+    try { localStorage.setItem('pl_' + TK_TASLAK, JSON.stringify({ v: 1, id: d.id || null, orig: d._orig || null, d: stripDraft(d), at: Date.now(), min: tkPanel.min })); }
+    catch { if (!tkKotaUyari) { tkKotaUyari = true; toast('Taslak bu bilgisayara kaydedilemedi (yer dolu). Teklifi kaydetmeyi unutmayın.', 'err', 7000); } }
+  };
+  simdi ? yaz() : (tkTaslakKaydet._t = setTimeout(yaz, 500));
+}
+function tkTaslakOku() {
+  const t = Local.get(TK_TASLAK, null);
+  if (!t || t.v !== 1 || !t.d || typeof t.d !== 'object' || !Array.isArray(t.d.items)) return null;
+  if (t.id != null && typeof t.id !== 'string') return null;
+  return t;
+}
+function tkOzet(d) {
+  const c = d.id ? d.cariSnap : DB.cari.find(d.cariId);
+  const n = d.items.length, cur = CURS.includes(d.doviz) ? d.doviz : null;
+  let top = ''; try { const k = calc(d, []); top = cur ? money(k.genel, cur) : NF.format(k.genel); } catch {}
+  return { baslik: d.id ? `Teklif ${d.no || ''} düzenleniyor` : 'Yeni teklif', alt: [c?.unvan || 'Müşteri seçilmedi', `${n} ürün`, n ? top : ''].filter(Boolean).join(' · ') };
+}
+function tkMiniCiz() {
+  if (!tkPanel.mini) return;
+  const o = tkOzet(state.draft);
+  mount(tkPanel.mini, html`<button class="tkm-open" data-tkp="ac" title="Teklif formunu aç">${I('doc')}<span class="tkm-t"><b>${o.baslik}</b><span>${o.alt}</span></span></button><button class="btn sm primary" data-tkp="ac">Aç</button><button class="btn ghost icon sm" data-tkp="x" aria-label="Taslağı kapat">${I('x')}</button>`);
+}
+function tkPanelKur(id, taslak) {
+  if (id && !DB.teklif.find(id)) { toast('Teklif bulunamadı (silinmiş olabilir).', 'err'); return false; }
+  const el = document.createElement('div'); el.id = 'tkPanel'; el.className = 'tkp'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Teklif formu');
+  document.body.appendChild(el); tkPanel.el = el; tkPanel.min = false; state.draft = null;
+  const mini = document.createElement('div'); mini.id = 'tkMini'; mini.className = 'tkm hidden'; document.body.appendChild(mini); tkPanel.mini = mini;
+  VIEWS.teklifForm(el, { id, taslak });
+  if (!state.draft) { tkPanelKaldir(); return false; }
+  return true;
+}
+function tkPanelKaldir() {
+  if (tkPanel.el) tkTaslakKaydet(true);
+  tkPanel.el?.remove(); tkPanel.mini?.remove(); tkPanel.el = tkPanel.mini = null; tkPanel.min = false; state.draft = null;
+}
+function tkPanelKapat() {           /* kaydedildi ya da vazgeçildi: taslak silinir */
+  clearTimeout(tkTaslakKaydet._t); Local.del(TK_TASLAK);
+  tkPanel.el?.remove(); tkPanel.mini?.remove(); tkPanel.el = tkPanel.mini = null; tkPanel.min = false; state.draft = null;
+}
+function tkKucult() {
+  if (!tkPanel.el || tkPanel.min) return;
+  tkPanel.min = true; tkPanel.el.classList.add('min'); tkMiniCiz(); tkPanel.mini.classList.remove('hidden'); tkTaslakKaydet(true); closePop();
+}
+function tkBuyut() {
+  if (!tkPanel.el) return;
+  tkPanel.min = false; tkPanel.el.classList.remove('min'); tkPanel.mini.classList.add('hidden');
+  drawPickFilters(); drawPick(); drawFormCari(); drawFormPers(); drawTots();
+}
+async function tkPanelAc(id) {
+  closePop();
+  if (tkPanel.el) {
+    const ayni = (state.draft?.id || null) === (id || null);
+    if (ayni || !tkDirty()) { if (!ayni) { tkPanelKapat(); return void tkPanelKur(id, null); } return tkBuyut(); }
+    const o = tkOzet(state.draft);
+    const r = await choiceBox({ title: 'Açık bir teklif formu var', body: html`<p style="margin-top:0"><b>${o.baslik}</b></p><p class="muted sm">${o.alt}</p><p>Aynı anda tek teklif formu açılabilir. Önce açık olanı kaydedin ya da silin.</p>`,
+      options: [{ v: 'sil', l: 'Onu sil, bunu aç' }, { v: 'don', l: 'Açık olana dön', primary: true }] });
+    if (r === 'don') return tkBuyut();
+    if (r !== 'sil') return;
+    tkPanelKapat();
+  }
+  tkPanelKur(id, null);
+}
+let tkSoruldu = false;
+async function tkTaslakSor() {
+  if (tkSoruldu || tkPanel.el) return; const t = tkTaslakOku(); if (!t) return; tkSoruldu = true;
+  if (t.id && !DB.teklif.find(t.id)) {
+    const cur = t.d; if (!await confirmBox({ title: 'Yarım kalan teklif', body: html`<p>Teklif ${cur.no || ''} için yarım kalan bir düzenleme vardı ama teklif artık bulunamıyor (silinmiş olabilir).</p><p>Taslak silinsin mi?</p>`, ok: 'Taslağı sil', danger: true })) return;
+    Local.del(TK_TASLAK); return;
+  }
+  const o = tkOzet(t.d);
+  const r = await choiceBox({ title: 'Yarım kalan teklif', body: html`<p style="margin-top:0"><b>${o.baslik}</b></p><p class="muted sm">${o.alt}</p><p class="muted sm">Son değişiklik: ${new Date(t.at).toLocaleString('tr-TR')}</p>`,
+    options: [{ v: 'sil', l: 'Sil' }, { v: 'devam', l: 'Devam et', primary: true }] });
+  if (r === 'sil') { if (await confirmBox({ title: 'Taslağı sil', body: html`<p>Yarım kalan teklif silinsin mi? Bu geri alınamaz.</p>`, ok: 'Sil', danger: true })) { Local.del(TK_TASLAK); toast('Taslak silindi'); } else { if (tkPanelKur(t.id, t)) tkKucult(); } return; }
+  if (!tkPanelKur(t.id, t)) return;
+  if (r !== 'devam') tkKucult();   /* Vazgeç: taslak alt çubukta bekler */
+}
+A.tkMin = () => tkKucult();
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-tkp]'); if (!b || !tkPanel.mini || !tkPanel.mini.contains(b)) return;
+  if (b.dataset.tkp === 'ac') return tkBuyut();
+  if (b.dataset.tkp === 'x') {
+    if (tkDirty() && !await confirmBox({ title: 'Taslağı kapat', body: html`<p>Kaydedilmemiş teklif formu silinsin mi?</p>`, ok: 'Sil ve kapat', danger: true })) return;
+    tkPanelKapat();
+  }
+});
+/* Esc: panel kapanmaz, küçülür (açık pencere/menü varsa önce onlar kapanır) */
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && tkPanel.el && !tkPanel.min && !$('.ov') && !popEl && !e.defaultPrevented) tkKucult(); });
+/* Taslak: formdaki her değişiklikten sonra (yalnızca bu bilgisayara) */
+['input', 'change', 'click', 'drop'].forEach(ev => document.addEventListener(ev, () => { if (tkPanel.el) tkTaslakKaydet(); }, true));
+addEventListener('pagehide', () => tkTaslakKaydet(true));
+document.addEventListener('visibilitychange', () => { if (document.hidden) tkTaslakKaydet(true); });
 const normYon = y => ({ 'sağ': 'sag', 'sol': 'sol', 'çift': 'cift', 'yok': 'yok' }[trLower(y)] || y);
 /* Tek doğrulama listesi: hem mesaj hem alan işaretleme buradan */
 function validateTeklif(d) {
@@ -1622,7 +1746,14 @@ A.saveTeklif = async el => {
     $('.validation-error')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;
   }
-  if (d.id && !await confirmBox({ title: 'Kaydet', body: html`<p>Değişiklikleri kaydetmek istiyor musunuz?</p>`, ok: 'Kaydet' })) return;
+  if (d.id) {
+    const cur = DB.teklif.find(d.id);
+    if (!cur || cur.deletedAt) { toast('Bu teklif siz düzenlerken silinmiş; kaydedilemedi.', 'err', 6000); return; }
+    const degisti = JSON.stringify(cur) !== d._orig;
+    if (!await confirmBox(degisti
+      ? { title: 'Teklif başka yerde değişti', body: html`<p>Teklif <b>${cur.no}</b> siz düzenlerken başka bir yerde değiştirildi.</p><p>Kaydederseniz o değişikliklerin üzerine yazılır.</p>`, ok: 'Yine de kaydet', danger: true }
+      : { title: 'Kaydet', body: html`<p>Değişiklikleri kaydetmek istiyor musunuz?</p>`, ok: 'Kaydet' })) return;
+  }
   const t = stripDraft(d);
   if (!t.id) {
     el && (el.disabled = true);
@@ -1643,7 +1774,7 @@ A.saveTeklif = async el => {
   t.updated = Date.now();
   DB.teklif.upsert(t); saveVariants(t.items);
   logAct(d.id ? `Teklif ${t.no} düzenlendi` : `Teklif ${t.no} oluşturuldu`);
-  toast(d.id ? 'Değişiklikler kaydedildi' : `Teklif ${t.no} kaydedildi`); go('teklifDetay', { id: t.id });
+  tkPanelKapat(); toast(d.id ? 'Değişiklikler kaydedildi' : `Teklif ${t.no} kaydedildi`); go('teklifDetay', { id: t.id });
   { const b = sipBag(t); if (d.id && b && (b.bag === 'onaylandi' || b.bag === 'bekliyor')) sipGonder(t, { sessiz: true }); }
 };
 /* İşlem günlüğü yalnızca bu cihazda tutulur (sunucuya trafik yok) */
@@ -2594,6 +2725,7 @@ function sessionEnded() {
   loginFlow(); ending = false;
 }
 function loginFlow() {
+  tkPanelKaldir(); tkSoruldu = false;
   $$('.ov').forEach(o => o.remove()); closePop(); mount(app, html`<div style="flex:1"></div>`);
   passPad({ title: 'PRONTO SİPARİŞ', sub: 'Şifrenizi girin', cancellable: false, submit: async p => { const r = await checkPassword(p); if (r.ok) startApp(); return r; } });
 }
@@ -2608,6 +2740,7 @@ async function startApp() {
   if (Sync.online) purgeBin();
   checkAppVersion();
   if (!started) { started = true; remoteChanged(); }
+  tkTaslakSor();
 }
 async function boot() {
   loadSettings(); applyTheme();

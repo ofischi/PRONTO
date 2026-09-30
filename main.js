@@ -10,19 +10,23 @@ const URL_APP = (!app.isPackaged && process.env.PRONTO_URL) || 'https://ofischi.
 // Açılışta her zaman sunucudaki güncel sürümü iste (10 dk önbellek beklenmez)
 const NO_CACHE = { extraHeaders: 'pragma: no-cache\ncache-control: no-cache\n' };
 if (!app.requestSingleInstanceLock()) app.quit();
+// Sadece PRONTO'nun kendi adresi (aynı köken + yol öneki) güvenilir sayılır
+const sameApp = (u) => { try { const a = new URL(u), b = new URL(URL_APP); return a.origin === b.origin && a.pathname.startsWith(b.pathname); } catch { return false; } };
 
 let win;
 function createWindow() {
   win = new BrowserWindow({
     width: 1440, height: 920, minWidth: 1100, minHeight: 700, show: false,
     title: 'PRONTO', backgroundColor: '#F2F1EE',
-    webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true, devTools: !app.isPackaged }
+    webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true, devTools: !app.isPackaged, webviewTag: false }
   });
   win.removeMenu();
   win.once('ready-to-show', () => { win.maximize(); win.show(); });
   // Dış bağlantılar tarayıcıda açılsın, program başka siteye gitmesin
-  win.webContents.setWindowOpenHandler(({ url }) => { if (/^(https?:|mailto:|whatsapp:)/i.test(url)) shell.openExternal(url); return { action: 'deny' }; });
-  win.webContents.on('will-navigate', (e, url) => { if (!url.startsWith(URL_APP)) e.preventDefault(); });
+  win.webContents.setWindowOpenHandler(({ url }) => { if (/^(https:|mailto:|whatsapp:)/i.test(url)) shell.openExternal(url); return { action: 'deny' }; });
+  win.webContents.on('will-navigate', (e, url) => { if (!sameApp(url)) e.preventDefault(); });
+  win.webContents.on('will-redirect', (e, url) => { if (!sameApp(url)) e.preventDefault(); });
+  win.webContents.on('will-attach-webview', (e) => e.preventDefault());
   // İnternet yoksa boş ekran yerine açıklama göster
   win.webContents.on('did-fail-load', (_e, code, _d, url) => {
     if (code === -3 || !String(url).startsWith(URL_APP)) return;
@@ -121,6 +125,10 @@ autoUpdater.on('update-downloaded', async () => {
 autoUpdater.on('error', e => console.error('Güncelleme hatası:', e));
 
 app.whenReady().then(() => {
+  const { session } = require('electron');
+  const IZIN = new Set(['clipboard-sanitized-write', 'fullscreen']);
+  session.defaultSession.setPermissionRequestHandler((wc, perm, cb) => cb(IZIN.has(perm) && sameApp(wc.getURL())));
+  session.defaultSession.setPermissionCheckHandler((wc, perm) => IZIN.has(perm));
   createWindow();
   if (app.isPackaged) setTimeout(() => autoUpdater.checkForUpdates().catch(() => {}), 5000);
 });

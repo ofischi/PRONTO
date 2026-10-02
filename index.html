@@ -2332,9 +2332,74 @@ function cariForm(c, onSaved) {
         for (const k in er) { const i = m.$(`[data-c="${k}"]`); i && i.classList.add('bad'); m.$(`[data-pk="${k}"]`)?.closest('.field').classList.add('validation-error'); const t = m.$(`[data-e="${k}"]`); if (t && typeof er[k] === 'string') t.textContent = er[k]; }
         if (Object.keys(er).length) return;
         const row = { ...(c || {}), ...d, id: c?.id || uid(), created: c?.created || Date.now() };
+        if (c && cariBilgiDegisti(c, row)) { cariYay(c, row, m, onSaved); return; }
         DB.cari.upsert(row); m.close(); toast(c ? 'Cari güncellendi' : 'Cari kaydedildi'); logAct(`Cari ${c ? 'güncellendi' : 'eklendi'}: ${row.unvan}`); onSaved && onSaved(row);
       };
     } });
+}
+/* ---------- Müşteri bilgisi değişince: eski teklifler + Sipariş Takibi tek işlemde güncellenir ---------- */
+const CARI_YAYILAN = ['unvan', 'gsm', 'sabit', 'eposta', 'adres', 'ilce', 'sehir', 'ulke', 'vkn', 'vd', 'yetkili'];
+const cariBilgiDegisti = (a, b) => CARI_YAYILAN.some(k => String(a[k] ?? '') !== String(b[k] ?? ''));
+async function cariYay(c, row, formM, onSaved) {
+  const btn = formM.$('[data-save]'); const eskiYazi = btn.textContent;
+  const bitir = () => { btn.disabled = false; btn.textContent = eskiYazi; };
+  const yerel = () => { DB.cari.upsert(row); formM.close(); toast('Cari güncellendi'); logAct(`Cari güncellendi: ${row.unvan}`); onSaved && onSaved(row); };
+  if (!navigator.onLine || !Auth.s) return toast('Müşteri bilgisi eski tekliflere ve Sipariş Takibi\'ne de yazılacağı için internet bağlantısı gerekli.', 'err', 6000);
+  btn.disabled = true; btn.textContent = 'Kontrol ediliyor…';
+  try {
+    // bu müşteriye ait gönderilmemiş değişiklik varsa önce gönderilir (sunucudaki güncel hali ezilmesin)
+    const bekleyen = () => [...Sync.outbox.values()].some(o => (o.tbl === 'cariler' && o.id === c.id) || (o.tbl === 'teklifler' && o.data?.cariId === c.id));
+    if (bekleyen()) { await Sync.flush(); if (bekleyen()) { bitir(); return toast('Bu müşteriye ait değişiklikler henüz sunucuya gönderilmedi. Birkaç saniye sonra tekrar deneyin.', 'err', 6000); } }
+    let p;
+    try { p = await api('rpc/pronto_cari_onizle', { method: 'POST', body: { p_cari_id: c.id, p_yeni: row } }); }
+    catch (e) { if (e.code === 'P0002' || e.status === 404) { bitir(); return yerel(); } throw e; }
+    if (p.cakisma) {
+      bitir();
+      return confirmBox({ title: 'Müşteri adı kullanılıyor', ok: 'Tamam', cancel: 'Kapat', body: html`<p style="margin-top:0">Sipariş Takibi'nde <b>${p.cakisma}</b> adlı başka bir müşteri kartı var.</p><p>Önce Sipariş Takibi'nde bu kartı düzeltin, sonra tekrar kaydedin.</p><p class="muted sm">Hiçbir şey değiştirilmedi.</p>` });
+    }
+    const adDegisti = trLower(p.eski_ad) !== trLower(p.yeni_ad);
+    const manuel = adDegisti ? (p.manuel || []) : [];
+    if (!p.teklif && !p.siparis && !p.kart && !manuel.length) { bitir(); return yerel(); }
+    bitir();
+    modal({ title: 'Müşteri bilgilerini güncelle', size: 'lg', body: html`
+      ${adDegisti ? html`<p style="margin-top:0"><span class="muted">${p.eski_ad}</span> → <b>${p.yeni_ad}</b></p>` : html`<p style="margin-top:0"><b>${p.yeni_ad}</b> — iletişim / vergi bilgileri değişti</p>`}
+      <div class="card" style="margin-bottom:12px"><div class="b" style="margin-bottom:6px">Birlikte güncellenecekler</div>
+        <div>• <b>${p.teklif}</b> teklif (liste, PDF ve raporlar yeni bilgiyle)</div>
+        <div>• <b>${p.siparis}</b> sipariş — Sipariş Takibi (teslim edilen ve iptal dahil)</div>
+        ${p.kart ? html`<div>• Sipariş Takibi müşteri kartı: <b>${p.kart.ad}</b></div>` : ''}</div>
+      ${manuel.length ? html`<div class="card"><div class="row" style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px">
+          <div><div class="b">Elle girilmiş siparişler (${manuel.length})</div><div class="muted sm">Sipariş Takibi'nde bu müşteri adıyla elle girilmiş. Değişmesini istediklerinizi işaretleyin.</div></div>
+          <label class="sm" style="display:flex;gap:6px;align-items:center;white-space:nowrap;cursor:pointer"><input type="checkbox" data-mtum> Tümünü seç</label></div>
+        <div style="max-height:260px;overflow:auto;border:1px solid var(--border);border-radius:10px">${manuel.map(x => html`<label style="display:flex;gap:10px;align-items:center;padding:8px 10px;border-bottom:1px solid var(--border);cursor:pointer">
+          <input type="checkbox" data-mid="${x.id}"><span style="flex:1;min-width:0"><b>${sipNo(x.id)}</b> · ${x.urun} × ${x.adet}<span class="muted sm"> · ${x.tedarikci || ''}</span></span>
+          <span class="muted sm">${fmtDate(x.tarih)}</span>${stTag(x.durum)}</label>`)}</div></div>` : ''}
+      <p class="muted sm" style="margin-bottom:0">Hepsi tek işlemde güncellenir: ya hepsi değişir ya hiçbiri. Hiçbir kayıt silinmez.</p>`,
+      foot: html`<button class="btn" data-x>Vazgeç</button><button class="btn primary" data-onay>Güncelle</button>`,
+      onMount: m => {
+        m.el.addEventListener('change', e => { if (e.target.matches('[data-mtum]')) $$('[data-mid]', m.el).forEach(x => x.checked = e.target.checked); });
+        m.el.addEventListener('click', async e => {
+          if (!e.target.closest('[data-onay]')) return;
+          const b = m.$('[data-onay]'); b.disabled = true; b.textContent = 'Güncelleniyor…';
+          const ids = $$('[data-mid]', m.el).filter(x => x.checked).map(x => Number(x.dataset.mid));
+          try {
+            const r = await api('rpc/pronto_cari_guncelle', { method: 'POST', body: { p_cari_id: c.id, p_yeni: row, p_manuel: ids } });
+            const rows = r.rows || [];
+            Sync.applyRows(rows); RT.broadcast(rows); Sync.bump(rows); remoteChanged();
+            m.close(); formM.close();
+            const yeni = DB.cari.find(c.id) || row;
+            toast(`Güncellendi: ${r.teklif} teklif, ${r.siparis + r.manuel} sipariş${r.kart ? ', Sipariş Takibi müşteri kartı' : ''}`, 'ok', 5000);
+            logAct(`Cari güncellendi: ${yeni.unvan} (${r.teklif} teklif, ${r.siparis + r.manuel} sipariş)`);
+            onSaved && onSaved(yeni);
+          } catch (er) {
+            b.disabled = false; b.textContent = 'Güncelle';
+            toast(er instanceof NetError ? 'İnternet bağlantısı yok. Hiçbir şey değiştirilmedi.' : 'Güncellenemedi: ' + er.message, 'err', 7000);
+          }
+        });
+      } });
+  } catch (e) {
+    bitir();
+    toast(e instanceof NetError ? 'İnternet bağlantısı yok. Hiçbir şey değiştirilmedi.' : 'Kontrol edilemedi: ' + e.message, 'err', 6000);
+  }
 }
 function cariTuruForm(old, onSaved) {
   modal({ title: old ? 'Cari türünü düzenle' : 'Cari türü ekle', size: 'sm', body: html`<div class="field"><label>Ad</label><input class="inp" data-n value="${old || ''}" maxlength="40" autofocus></div>`,

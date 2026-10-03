@@ -1822,7 +1822,7 @@ VIEWS.teklifDetay = (main, { id, tab = 'urunler' }) => {
       <div><h1 style="display:flex;gap:10px;align-items:center">Teklif ${t.no} ${durumTag(t)}</h1><div class="muted sm">${cs.unvan}</div></div></div>
     <div class="ph-act"><button class="btn" data-act="editTeklif" data-id="${t.id}">${I('edit')} Düzenle</button><button class="btn primary" data-act="pdf" data-id="${t.id}">${I('pdf')} PDF</button>${!sipBag(t) ? html`<button class="btn${gonderilmedi(t) ? ' btn-gonder' : ''}" data-act="sipGonder" data-id="${t.id}">${I('share')} Siparişe Gönder</button>` : ''}<button class="btn icon" data-act="rowMenu" data-id="${t.id}" aria-label="Diğer">${I('dots')}</button></div></div>
     <div class="dgrid">
-      <div class="card"><div class="card-h"><h3>Müşteri</h3></div><dl class="kv"><dt>Ünvan</dt><dd>${cs.unvan}</dd><dt>Telefon</dt><dd>${cs.gsm || '—'}</dd><dt>E-posta</dt><dd>${cs.eposta || '—'}</dd><dt>Adres</dt><dd>${[cs.adres, cs.ilce, cs.sehir, cs.ulke].filter(Boolean).join(', ')}</dd></dl></div>
+      <div class="card"><div class="card-h"><h3>Müşteri</h3></div><dl class="kv"><dt>Ünvan</dt><dd>${cs.unvan}</dd>${cs.yetkili ? html`<dt>Yetkili</dt><dd>${cs.yetkili}</dd>` : ''}<dt>Telefon</dt><dd>${cs.gsm || '—'}</dd>${cs.sabit ? html`<dt>Sabit No</dt><dd>${cs.sabit}</dd>` : ''}<dt>E-posta</dt><dd>${cs.eposta || '—'}</dd><dt>Adres</dt><dd>${[cs.adres, cs.ilce, cs.sehir, cs.ulke].filter(Boolean).join(', ')}</dd>${cs.vd ? html`<dt>Vergi Dairesi</dt><dd>${cs.vd}</dd>` : ''}${cs.vkn ? html`<dt>${String(cs.vkn).length === 11 ? 'TCKN' : 'VKN'}</dt><dd>${cs.vkn}</dd>` : ''}</dl></div>
       <div class="card"><div class="card-h"><h3>Teklif</h3></div><dl class="kv"><dt>Teklif Tarihi</dt><dd>${fmtDate(t.tarih)}</dd><dt>Teslim Tarihi</dt><dd>${fmtDate(t.teslim)}</dd><dt>Döviz</dt><dd>${t.doviz}</dd><dt>Personel</dt><dd>${t.personelAd}</dd>
         <dt>Montaj</dt><dd>${LBL[t.montaj]}</dd><dt>Nakliye</dt><dd>${LBL[t.nakliye]}</dd><dt>Teslim Yeri</dt><dd>${LBL[t.teslimYeri]}</dd></dl></div>
       <div class="card"><div class="card-h"><h3>Ödeme özeti</h3><button class="btn sm" data-act="addPay" data-id="${t.id}">${I('plus')} Ödeme</button></div>
@@ -1913,11 +1913,28 @@ function payForm(t, p) {
 const PL = {
   tr: { teklif: 'TEKLİF', no: 'Teklif No', tarih: 'Teklif Tarihi', teslim: 'Teslim Tarihi', doviz: 'Döviz', montaj: 'Montaj', nakliye: 'Nakliye', yer: 'Teslim Yeri', dahil: 'Dahil', haric: 'Hariç', fabrika: 'Fabrika', adres: 'Adres',
     foto: 'Fotoğraf', urun: 'Ürün', olcu: 'Ölçü', renk: 'Renk', yon: 'Yön', birim: 'Birim Fiyat', adet: 'Adet', toplam: 'Toplam Fiyat', yok: 'Fotoğraf Yok',
-    ana: 'Ana Para', isk: 'İskonto', ara: 'Ara Toplam', kdv: 'KDV', genel: 'Genel Toplam', pes: 'Alınan Peşinat', kalan: 'Kalan Tutar', odemeler: 'Ödemeler', sayfa: 'Sayfa' },
+    ana: 'Ana Para', isk: 'İskonto', ara: 'Ara Toplam', kdv: 'KDV', genel: 'Genel Toplam', pes: 'Alınan Peşinat', kalan: 'Kalan Tutar', odemeler: 'Ödemeler', sayfa: 'Sayfa',
+    yetkili: 'Yetkili', gsm: 'GSM', sabit: 'Tel', eposta: 'E-posta', vkn: 'VKN', tckn: 'TCKN', vd: 'Vergi Dairesi' },
   en: { teklif: 'QUOTATION', no: 'Quote No', tarih: 'Quote Date', teslim: 'Delivery Date', doviz: 'Currency', montaj: 'Assembly', nakliye: 'Shipping', yer: 'Delivery', dahil: 'Included', haric: 'Excluded', fabrika: 'Ex-works', adres: 'To address',
     foto: 'Photo', urun: 'Product', olcu: 'Size', renk: 'Color', yon: 'Side', birim: 'Unit Price', adet: 'Qty', toplam: 'Total', yok: 'No Photo',
-    ana: 'Subtotal', isk: 'Discount', ara: 'Net', kdv: 'VAT', genel: 'Grand Total', pes: 'Paid', kalan: 'Balance', odemeler: 'Payments', sayfa: 'Page' }
+    ana: 'Subtotal', isk: 'Discount', ara: 'Net', kdv: 'VAT', genel: 'Grand Total', pes: 'Paid', kalan: 'Balance', odemeler: 'Payments', sayfa: 'Page',
+    yetkili: 'Contact', gsm: 'Mobile', sabit: 'Phone', eposta: 'E-mail', vkn: 'Tax No', tckn: 'ID No', vd: 'Tax Office' }
 };
+/* Teklifte müşteri bilgileri: caride girilen her bilgi yazılır, boş olan hiç görünmez */
+function custSatirlar(cs, L) {
+  const v = x => String(x ?? '').trim(), out = [];
+  if (v(cs.yetkili)) out.push([L.yetkili, v(cs.yetkili)]);
+  const tel = [v(cs.gsm) && [L.gsm, v(cs.gsm)], v(cs.sabit) && [L.sabit, v(cs.sabit)]].filter(Boolean);
+  if (tel.length) out.push(tel);
+  if (v(cs.eposta)) out.push([L.eposta, v(cs.eposta)]);
+  const adr = [cs.adres, cs.ilce, cs.sehir, cs.ulke].map(v).filter(Boolean);
+  // Türkiye adreslerinde ilçe/il zaten adres metninin içinde: tekrar yazılmaz
+  const tekil = adr.filter((x, i) => !adr.slice(0, i).some(y => trLower(y).includes(trLower(x))));
+  if (tekil.length) out.push(['', tekil.join(', ')]);
+  const vergi = [v(cs.vd) && [L.vd, v(cs.vd)], v(cs.vkn) && [v(cs.vkn).length === 11 ? L.tckn : L.vkn, v(cs.vkn)]].filter(Boolean);
+  if (vergi.length) out.push(vergi);
+  return out.map(x => (Array.isArray(x[0]) ? x : [x]));   // her satır: [[etiket, değer], ...]
+}
 const FOTO_PX = { s: 56, m: 88, l: 130 }, LOGO_PX = { s: 34, m: 52, l: 76 };
 function pdfDoc(t, o) {
   const L = PL[o.lang] || PL.tr, cs = t.cariSnap, pays = (payMap()[t.id] || []).sort((a, b) => a.tarih.localeCompare(b.tarih)), c = calc(t, pays), fp = FOTO_PX[o.foto] || 88;
@@ -1928,7 +1945,7 @@ function pdfDoc(t, o) {
   return html`<div class="pdoc ${o.size} ${o.orient === 'landscape' ? 'land' : ''}">
     <div class="pd-head"><div style="flex:1;min-width:0">
         <div class="pd-logo ${o.logoPos}">${logo ? html`<img src="${logo}" alt="" style="height:${LOGO_PX[o.logoSize] || 52}px">` : html`<span class="fn">${S.firma.ad || 'PRONTO'}</span>`}</div>
-        <div class="pd-cust"><b>${cs.unvan}</b>${cs.gsm ? html`<div>${cs.gsm}</div>` : ''}<div>${[cs.adres, cs.ilce, cs.sehir, cs.ulke].filter(Boolean).join(', ')}</div>${cs.eposta ? html`<div>${cs.eposta}</div>` : ''}</div></div>
+        <div class="pd-cust"><b>${cs.unvan}</b>${custSatirlar(cs, L).map(sat => html`<div>${sat.map(([k, d], i) => html`${i ? ' · ' : ''}${k ? html`<span style="color:#6b707c">${k}:</span> ` : ''}${d}`)}</div>`)}</div></div>
       <div class="pd-right"><div style="font-size:8.5pt;color:#6b707c;letter-spacing:.12em">${L.teklif}</div><div class="pd-no">${L.no} ${t.no}</div>
         <table class="pd-kv"><tr><td>${L.tarih}</td><td>${fmtDate(t.tarih)}</td></tr><tr><td>${L.teslim}</td><td>${fmtDate(t.teslim)}</td></tr><tr><td>${L.doviz}</td><td>${t.doviz}</td></tr></table>
         <div class="pd-dl">${radio('montaj', ['dahil', 'haric'])}${radio('nakliye', ['dahil', 'haric'])}${radio('teslimYeri', ['fabrika', 'adres'])}</div></div></div>
@@ -2038,9 +2055,7 @@ async function tkPdfBlob(t, o) {
   const dot = on => ({ canvas: [{ type: 'ellipse', x: 3.5, y: 5, r1: 3, r2: 3, lineWidth: 0.7, lineColor: INK }].concat(on ? [{ type: 'ellipse', x: 3.5, y: 5, r1: 1.6, r2: 1.6, color: '#000000' }] : []), width: 8 });
   const radio = (k, opts) => [{ text: L[k === 'teslimYeri' ? 'yer' : k], color: MUT, fontSize: 7.5 }, { table: { body: [opts.flatMap(v => [dot(t[k] === v), { text: L[v], fontSize: 7.5 }])] }, layout: { hLineWidth: () => 0, vLineWidth: () => 0, paddingLeft: i => (i % 2 ? 2 : i ? 6 : 0), paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0 } }];
   const cust = [{ text: cs.unvan || '', bold: true, fontSize: 9.5, margin: [0, 0, 0, 2] }];
-  if (cs.gsm) cust.push({ text: cs.gsm, fontSize: 8 });
-  const adr = [cs.adres, cs.ilce, cs.sehir, cs.ulke].filter(Boolean).join(', '); if (adr) cust.push({ text: adr, fontSize: 8 });
-  if (cs.eposta) cust.push({ text: cs.eposta, fontSize: 8 });
+  for (const sat of custSatirlar(cs, L)) cust.push({ fontSize: 8, text: sat.flatMap(([k, d], i) => [...(i ? [{ text: '  ·  ', color: MUT }] : []), ...(k ? [{ text: k + ': ', color: MUT }] : []), { text: d }]) });
   const right = { width: 190, stack: [
     { text: L.teklif, fontSize: 7, color: MUT, characterSpacing: 0.3, alignment: 'right' },
     { text: `${L.no} ${t.no}`, fontSize: 12.5, bold: true, alignment: 'right', margin: [0, 1, 0, 4] },

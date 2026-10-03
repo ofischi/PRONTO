@@ -168,6 +168,7 @@ tr.gonder-yok>td:first-child{box-shadow:inset 3px 0 0 #ef4444}
 .st-Beklemede{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,transparent);background:color-mix(in srgb,var(--warn) 10%,transparent)}
 .st-Üretimde{color:var(--info);border-color:color-mix(in srgb,var(--info) 40%,transparent);background:color-mix(in srgb,var(--info) 10%,transparent)}
 .st-Sevkiyata{color:var(--vio);border-color:color-mix(in srgb,var(--vio) 40%,transparent);background:color-mix(in srgb,var(--vio) 10%,transparent)}
+.st-SSH{color:#c2410c;border-color:color-mix(in srgb,#c2410c 45%,transparent);background:color-mix(in srgb,#c2410c 10%,transparent)}
 .st-Teslim{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 40%,transparent);background:color-mix(in srgb,var(--ok) 10%,transparent)}
 .st-Onay{color:var(--warn);border-color:var(--warn);border-style:dashed;background:transparent}.st-Reddedildi{color:var(--err);border-color:color-mix(in srgb,var(--err) 40%,transparent);background:color-mix(in srgb,var(--err) 10%,transparent)}.sipbox{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--surface);box-shadow:var(--shadow);margin:0 0 14px}.sipbox b{font-weight:700}.sipbox .grow{flex:1;min-width:200px}.sipbox.ok{border-color:color-mix(in srgb,var(--ok) 45%,transparent)}.sipbox.wait{border-color:color-mix(in srgb,var(--warn) 55%,transparent)}.sipbox.err{border-color:color-mix(in srgb,var(--err) 50%,transparent)}.sipbox .note{font-size:12.5px;color:var(--err)}.siptag{display:inline-flex;gap:6px;align-items:center;font-size:11.5px;font-weight:600;color:var(--muted);white-space:nowrap}.st-İptal{color:var(--err);border-color:color-mix(in srgb,var(--err) 40%,transparent);background:color-mix(in srgb,var(--err) 10%,transparent)}
 
@@ -561,7 +562,7 @@ const I = (n, cls = '') => raw(`<svg class="i ${cls}" viewBox="0 0 24 24" aria-h
 /* ---------- sabit listeler ---------- */
 const ILLER = ['Adana','Adıyaman','Afyonkarahisar','Ağrı','Aksaray','Amasya','Ankara','Antalya','Ardahan','Artvin','Aydın','Balıkesir','Bartın','Batman','Bayburt','Bilecik','Bingöl','Bitlis','Bolu','Burdur','Bursa','Çanakkale','Çankırı','Çorum','Denizli','Diyarbakır','Düzce','Edirne','Elazığ','Erzincan','Erzurum','Eskişehir','Gaziantep','Giresun','Gümüşhane','Hakkâri','Hatay','Iğdır','Isparta','İstanbul','İzmir','Kahramanmaraş','Karabük','Karaman','Kars','Kastamonu','Kayseri','Kırıkkale','Kırklareli','Kırşehir','Kilis','Kocaeli','Konya','Kütahya','Malatya','Manisa','Mardin','Mersin','Muğla','Muş','Nevşehir','Niğde','Ordu','Osmaniye','Rize','Sakarya','Samsun','Siirt','Sinop','Sivas','Şanlıurfa','Şırnak','Tekirdağ','Tokat','Trabzon','Tunceli','Uşak','Van','Yalova','Yozgat','Zonguldak'];
 const ULKELER = ['Türkiye','ABD','Afganistan','Almanya','Arnavutluk','Arjantin','Avustralya','Avusturya','Azerbaycan','Bahreyn','Belçika','Beyaz Rusya','Birleşik Arap Emirlikleri','Birleşik Krallık','Bosna-Hersek','Brezilya','Bulgaristan','Cezayir','Çekya','Çin','Danimarka','Endonezya','Ermenistan','Estonya','Etiyopya','Fas','Filipinler','Filistin','Finlandiya','Fransa','Gana','Güney Afrika','Güney Kore','Gürcistan','Hindistan','Hırvatistan','Hollanda','Irak','İran','İrlanda','İspanya','İsrail','İsveç','İsviçre','İtalya','İzlanda','Japonya','Kamerun','Kanada','Karadağ','Katar','Kazakistan','Kenya','Kıbrıs','KKTC','Kırgızistan','Kolombiya','Kosova','Kuveyt','Kuzey Makedonya','Letonya','Libya','Litvanya','Lübnan','Lüksemburg','Macaristan','Malezya','Malta','Meksika','Mısır','Moldova','Moğolistan','Nijerya','Norveç','Özbekistan','Pakistan','Polonya','Portekiz','Romanya','Rusya','Senegal','Sırbistan','Singapur','Slovakya','Slovenya','Somali','Sudan','Suriye','Suudi Arabistan','Şili','Tacikistan','Tanzanya','Tayland','Tunus','Türkmenistan','Ukrayna','Umman','Ürdün','Venezuela','Vietnam','Yemen','Yeni Zelanda','Yunanistan'];
-const DURUMLAR = ['Onay Bekliyor','Reddedildi','Beklemede','Üretimde','Sevkiyata Hazır','Teslim Edildi','İptal'];
+const DURUMLAR = ['Onay Bekliyor','Reddedildi','Beklemede','Üretimde','Sevkiyata Hazır','Teslim Edildi','SSH','İptal'];
 const stTag = d => html`<span class="st st-${String(d).split(' ')[0]}">${d}</span>`;
 /* ---------- Sipariş Takibi bağlantısı ----------
    "siparis" satırlarını yalnızca veritabanı yazar; bu program sadece okur ve gösterir. */
@@ -574,6 +575,7 @@ function tkDurum(t) {
   const ds = (t.items || []).map(i => b.kalemler?.[i.uid]?.durum).filter(Boolean);
   if (!ds.length) return 'Beklemede';
   const aktif = ds.filter(d => d !== 'İptal'); if (!aktif.length) return 'İptal';
+  if (aktif.includes('SSH')) return 'SSH';   // teslim sonrası sorun (Satış Sonrası Hizmet) açık
   return aktif.reduce((m, d) => (SIP_SIRA.indexOf(d) < SIP_SIRA.indexOf(m) ? d : m), 'Teslim Edildi');
 }
 const sipNo = id => 'PR-' + String(id).padStart(5, '0');
@@ -2632,7 +2634,7 @@ function drawRep() {
     const top = {}, pes = {}, kal = {}; D.ts.forEach(({ t, c }) => { addTo(top, t.doviz, c.genel); addTo(pes, t.doviz, c.pes); addTo(kal, t.doviz, c.kalan); });
     const t0 = todayISO(), t7 = isoOf(Date.now() + 7 * 864e5), pm = D.pm;
     const all = DB.teklif.all().filter(t => !t.deletedAt);
-    const up = all.filter(t => t.teslim >= t0 && t.teslim <= t7 && tkDurum(t) !== 'Teslim Edildi' && tkDurum(t) !== 'İptal').sort((a, b) => a.teslim.localeCompare(b.teslim));
+    const up = all.filter(t => t.teslim >= t0 && t.teslim <= t7 && tkDurum(t) !== 'Teslim Edildi' && tkDurum(t) !== 'SSH' && tkDurum(t) !== 'İptal').sort((a, b) => a.teslim.localeCompare(b.teslim));
     const bek = all.filter(t => t.durum === 'Beklemede').sort((a, b) => b.tarih.localeCompare(a.tarih)).slice(0, 8);
     const log = Local.get('log', []).slice(0, 10);
     const mini = (arr, f) => arr.length ? html`<div class="tw"><table class="tbl"><tbody>${arr.map(t => html`<tr data-act="openTeklif" data-id="${t.id}"><td class="b">${t.no}</td><td>${t.cariSnap.unvan}</td><td>${f(t)}</td><td class="r">${money(calc(t, pm[t.id]).genel, t.doviz)}</td></tr>`)}</tbody></table></div>` : html`<div class="empty card" style="padding:24px">Kayıt yok</div>`;
@@ -2665,12 +2667,12 @@ A.repXls = async () => {
 /* =====================================================================
    AYARLAR (aynı şifre ile açılır)
    ===================================================================== */
-const SECS = [['genel', 'Genel'], ['guvenlik', 'Şifre ve Bağlantı'], ['pdf', 'PDF'], ['cari', 'Müşteri/Cari'], ['odeme', 'Ödeme Yöntemleri'], ['cop', 'Geri Dönüşüm Kutusu']];
+const SECS = [['genel', 'Genel'], ['guvenlik', 'Şifre ve Bağlantı'], ['pdf', 'PDF'], ['cari', 'Müşteri/Cari'], ['odeme', 'Ödeme Yöntemleri'], ['cop', 'Geri Dönüşüm Kutusu'], ['yedek', 'Yedekler']];
 VIEWS.ayarlar = (main, { sec = 'genel' }) => {
   if (!state.settingsOk) { go('teklifler'); openSettings(); return; }
   mount(main, html`<div class="page"><div class="ph"><div class="ph-l"><button class="btn icon" data-act="nav" data-v="teklifler" aria-label="Ayarlardan çık">${I('back')}</button><h1>Ayarlar</h1></div></div>
     <div class="set"><nav class="set-nav">${SECS.map(([k, l]) => html`<button class="${sec === k ? 'on' : ''}" data-act="setSec" data-k="${k}">${l}</button>`)}</nav><div id="setBody"></div></div></div>`);
-  ({ genel: setGenel, guvenlik: setGuv, pdf: setPdf, cari: setCari, odeme: setOdeme, cop: setCop })[sec]($('#setBody'));
+  ({ genel: setGenel, guvenlik: setGuv, pdf: setPdf, cari: setCari, odeme: setOdeme, cop: setCop, yedek: setYedek })[sec]($('#setBody'));
 };
 A.setSec = el => go('ayarlar', { sec: el.dataset.k });
 function setGenel(b) {
@@ -2789,6 +2791,64 @@ function purgeBin() {
   const lim = Date.now() - 7 * 864e5, ids = new Set(DB.teklif.all().filter(t => t.deletedAt && t.deletedAt < lim).map(t => t.id));
   if (!ids.size) return;
   ids.forEach(id => DB.teklif.remove(id)); DB.odeme.all().filter(p => ids.has(p.teklifId)).forEach(p => DB.odeme.remove(p.id));
+}
+/* ---------- Yedekler: elle yedek + haftalık otomatik yedekler; geri yükleme şifre + "GERİ YÜKLE" onayı ister ----------
+   Trafik: bu bölüm açılınca 1 küçük liste isteği; yedek alma ve geri yükleme sunucuda yapılır (veri bilgisayara inmez). */
+const YEDEK_TUR = { otomatik: 'Otomatik (haftalık)', elle: 'Elle', oncesi: 'Geri yükleme öncesi' };
+const YEDEK_AD = { teklifler: 'teklif', cariler: 'cari', odemeler: 'ödeme', urunler: 'ürün', personeller: 'personel', odeme_yontemleri: 'ödeme yöntemi', variant: 'varyant', meta: 'ayar' };
+const yedekOzet = oz => Object.entries(oz || {}).filter(([k]) => YEDEK_AD[k]).map(([k, n]) => `${n} ${YEDEK_AD[k]}`).join(' · ') || '—';
+async function setYedek(b) {
+  mount(b, html`<div class="card"><div class="card-h"><h3>Yedekler</h3><button class="btn sm primary" data-yal>Şimdi yedekle</button></div>
+    <p class="muted sm" style="margin-top:0">Her Pazar gecesi otomatik yedek alınır (son 4 hafta saklanır). İstediğiniz an elle de yedekleyebilirsiniz (son 5 saklanır). Fotoğraflar haftalık dış yedekte (GitHub) durur.<br>
+    <b>Geri yükleme</b>: silinen ve değişen teklif/cari/ödeme/ürün kayıtları yedekteki haline döner; yedekten sonra eklenenler silinmez. Geri yüklemeden hemen önce şimdiki durum da yedeklenir. Sipariş Takibi verisi buradan değişmez.</p>
+    <div data-yliste><div class="empty" style="padding:24px">Yükleniyor…</div></div></div>`);
+  const ciz = async () => {
+    const box = $('[data-yliste]', b); if (!box) return;
+    let L; try { L = await api('rpc/pronto_yedek_liste', { method: 'POST', body: {} }); }
+    catch (e) { mount(box, html`<div class="empty" style="padding:24px"><b>Yedek listesi alınamadı</b>${e instanceof NetError ? 'İnternet bağlantısı yok.' : /function|schema cache|does not exist/i.test(e.message) ? 'Yedekleme kurulumu (pronto-yedek.sql) henüz yapılmamış.' : e.message}</div>`); return; }
+    mount(box, L.length ? html`<div class="tw" style="flex:none"><table class="tbl static"><thead><tr><th><div class="thi">Tarih</div></th><th><div class="thi">Tür</div></th><th><div class="thi">İçerik</div></th><th class="r"><div class="thi">Boyut</div></th><th></th></tr></thead><tbody>
+      ${L.map(y => html`<tr><td class="b">${fmtDT(Date.parse(y.tarih))}</td><td>${YEDEK_TUR[y.tur] || y.tur}</td><td class="wrap sm">${yedekOzet(y.ozet)}</td><td class="r sm">${Math.max(1, Math.round(y.boyut / 1024))} KB</td>
+        <td class="r"><button class="btn sm" data-ygeri="${y.id}" data-ytarih="${fmtDT(Date.parse(y.tarih))}">Geri yükle</button></td></tr>`)}</tbody></table></div>`
+      : html`<div class="empty" style="padding:24px"><b>Henüz yedek yok</b>"Şimdi yedekle" ile ilk yedeği alın. Otomatik yedek her Pazar gecesi alınır.</div>`);
+  };
+  b.addEventListener('click', async e => {
+    const al = e.target.closest('[data-yal]');
+    if (al) {
+      if (Sync.outbox.size) { await Sync.flush(); if (Sync.outbox.size) return toast('Önce bekleyen değişikliklerin sunucuya gitmesi gerekiyor. İnternet bağlantısını kontrol edin.', 'err', 6000); }
+      al.disabled = true;
+      try { const y = await api('rpc/pronto_yedek_al', { method: 'POST', body: {} }); toast(`Yedek alındı: ${yedekOzet(y.ozet)}`, 'ok', 5000); logAct('Elle yedek alındı'); await ciz(); }
+      catch (er) { toast(er instanceof NetError ? 'İnternet bağlantısı yok.' : 'Yedek alınamadı: ' + er.message, 'err', 6000); }
+      finally { al.disabled = false; }
+      return;
+    }
+    const gb = e.target.closest('[data-ygeri]'); if (!gb) return;
+    const id = Number(gb.dataset.ygeri), tarih = gb.dataset.ytarih;
+    if (Sync.outbox.size) { await Sync.flush(); if (Sync.outbox.size) return toast('Önce bekleyen değişikliklerin sunucuya gitmesi gerekiyor. İnternet bağlantısını kontrol edin.', 'err', 6000); }
+    passPad({ title: 'Geri yükleme', sub: 'Devam etmek için Ayarlar şifresini girin', button: 'Devam', submit: async p => {
+      const r = await checkPassword(p); if (!r.ok) return r;
+      setTimeout(() => modal({ title: 'Yedekten geri yükle', size: 'sm', body: html`<p style="margin-top:0"><b>${tarih}</b> tarihli yedek geri yüklenecek.</p>
+          <p class="sm">Silinen ve değişen teklif, cari, ödeme, ürün ve personel kayıtları bu yedekteki haline döner. Yedekten sonra eklenenler <b>silinmez</b>. Şimdiki durum da önce yedeklenir. Tüm Teklif bilgisayarlarını etkiler.</p>
+          <div class="field"><label>Onaylamak için <b>GERİ YÜKLE</b> yazın</label><input class="inp" data-yonay autocomplete="off" maxlength="20" autofocus></div>`,
+        foot: html`<button class="btn" data-x>Vazgeç</button><button class="btn danger solid" data-ytamam disabled>Geri yükle</button>`,
+        onMount: m => {
+          const inp = m.$('[data-yonay]'), bt = m.$('[data-ytamam]');
+          const dogru = () => inp.value.trim().toLocaleUpperCase('tr-TR') === 'GERİ YÜKLE';
+          inp.addEventListener('input', () => { bt.disabled = !dogru(); });
+          bt.addEventListener('click', async () => {
+            if (!dogru()) return;
+            bt.disabled = true; bt.textContent = 'Geri yükleniyor…';
+            try {
+              const r2 = await api('rpc/pronto_yedek_geri', { method: 'POST', body: { p_id: id, p_onay: 'GERİ YÜKLE' } });
+              m.close(); await Sync.delta().catch(() => {}); remoteChanged();
+              const k = r2.sonuc?.kayit || {}; toast(`Geri yüklendi: ${k.eklenen || 0} kayıt geri geldi, ${k.guncellenen || 0} kayıt düzeltildi`, 'ok', 6000);
+              logAct(`Yedek geri yüklendi (${tarih})`); go('ayarlar', { sec: 'yedek' });
+            } catch (er) { bt.disabled = false; bt.textContent = 'Geri yükle'; toast(er instanceof NetError ? 'İnternet bağlantısı yok. Hiçbir şey değiştirilmedi.' : 'Geri yüklenemedi: ' + er.message, 'err', 7000); }
+          });
+        } }), 50);
+      return { ok: true };
+    } });
+  });
+  await ciz();
 }
 function setCop(b) {
   purgeBin();

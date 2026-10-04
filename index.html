@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co">
 <!-- telefona uygulama gibi kurulum (ana ekran simgesi, tam ekran) -->
 <link rel="manifest" href="manifest.webmanifest">
@@ -682,6 +682,17 @@ table.pd-t{width:100%;border-collapse:collapse;font-size:9pt}
  .rep-tabs button.on{background:var(--text);color:var(--bg);border-color:transparent}
 }
 </style>
+<style id="klavye-css">
+/* telefon/tablet: 16px altı yazı iPhone'da otomatik yakınlaştırır -> tüm kutular 16px */
+@media (pointer:coarse){input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea,.inp,.it .inp,.offer-currency .inp,.search .inp{font-size:16px!important}}
+/* klavye açılınca pencereler görünür alana (klavyenin üstüne) sığsın */
+@media (pointer:coarse) and (max-width:1024px){
+.ov{bottom:auto!important;height:var(--vvh,100dvh);top:var(--vvt,0px)}
+.mdl{max-height:calc(var(--vvh,100dvh) - 16px)}
+.sih-ov .mdl{max-height:calc(var(--vvh,100dvh) - 8px)}
+.tkp{bottom:auto!important;height:var(--vvh,100dvh);top:var(--vvt,0px)}
+}
+</style>
 </head>
 <body>
 <div id="app" class="app"></div>
@@ -1195,7 +1206,7 @@ function modal({ title, body, foot, size = '', cls = '', onMount, closeOnBg = tr
   document.addEventListener('keydown', onKey);
   const m = { el: ov, close, $: s => $(s, ov) };
   onMount && onMount(m);
-  setTimeout(() => { const f = $('[autofocus]', ov); f && f.focus(); }, 30);
+  setTimeout(() => { const f = $('[autofocus]', ov); if (f && matchMedia('(pointer:coarse)').matches && (f.hasAttribute('data-q') || f.dataset.c === 'unvan')) return; f && f.focus(); }, 30);
   return m;
 }
 function confirmBox({ title = 'Onay', body = '', ok = 'Onayla', danger = false, cancel = 'Vazgeç' }) {
@@ -3547,6 +3558,20 @@ document.addEventListener('input', e => {
   if (up !== el.value) { el.value = up; try { el.setSelectionRange(pos, pos); } catch {} }
 }, true);
 boot();
+</script>
+<script id="klavye-js">
+/* iPhone: klavye açılınca sayfa küçülmez, sadece görünür alan küçülür -> görünür alanı CSS değişkenine yaz */
+(function(){var v=window.visualViewport;if(!v)return;var raf=0;
+function yaz(){raf=0;var r=document.documentElement.style;
+ var klavye=(innerHeight-v.height-v.offsetTop)>80||v.offsetTop>0;
+ if(klavye){r.setProperty('--vvh',v.height+'px');r.setProperty('--vvt',v.offsetTop+'px')}
+ else{r.removeProperty('--vvh');r.removeProperty('--vvt')}}
+function planla(){if(!raf)raf=requestAnimationFrame(yaz)}
+v.addEventListener('resize',planla);v.addEventListener('scroll',planla);
+document.addEventListener('focusout',function(){setTimeout(planla,250)});
+document.addEventListener('focusin',function(e){var t=e.target;if(!t||!t.scrollIntoView||!/INPUT|TEXTAREA|SELECT/.test(t.tagName))return;
+ setTimeout(function(){try{t.scrollIntoView({block:'center',behavior:'smooth'})}catch(_){}},320)});
+})();
 </script>
 </body>
 </html>

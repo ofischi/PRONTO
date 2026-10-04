@@ -6,7 +6,7 @@ name: Siteyi yayinla ve bildir
 on:
   push:
     branches: [main]
-    paths: ['index.html', 'config.js', 'adres/*.json']
+    paths: ['index.html', 'config.js', 'adres/*.json', 'manifest.webmanifest', '*.png']
   workflow_dispatch:
 
 permissions:
@@ -34,6 +34,8 @@ jobs:
         run: |
           mkdir _site
           cp index.html config.js _site/
+          # telefona kurulum: uygulama tanımı + simgeler (varsa)
+          for f in manifest.webmanifest apple-touch-icon.png ikon-64.png ikon-192.png ikon-512.png ikon-maskable-512.png; do if [ -f "$f" ]; then cp "$f" _site/; fi; done
           mkdir _site/adres && cp adres/*.json _site/adres/
           V=$(cat index.html config.js | sha256sum | cut -c1-7)
           echo "V=$V" >> "$GITHUB_ENV"

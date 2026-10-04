@@ -4,6 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co">
+<!-- telefona uygulama gibi kurulum (ana ekran simgesi, tam ekran) -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="64x64" href="ikon/ikon-64.png">
+<link rel="apple-touch-icon" sizes="180x180" href="ikon/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Teklif">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="application-name" content="Teklif">
+<meta name="theme-color" content="#F2F1EE" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111214" media="(prefers-color-scheme: dark)">
 <title>PRONTO</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -470,6 +481,205 @@ table.pd-t{width:100%;border-collapse:collapse;font-size:9pt}
  #print-root .rep th{background:#eee}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ===== düzeltmeler: rapor listeleri, ürün kartı, ayar düğmeleri, toplam çubuğu ===== */
+.mn1{font-size:13px;line-height:1.35;overflow-wrap:anywhere}
+.mn2{display:flex;justify-content:space-between;gap:10px;margin-top:2px;font-size:12.5px;color:var(--muted)}
+.mn2 b{color:var(--text);white-space:nowrap}
+.lcard .ttl.ttl-tam{white-space:normal;overflow:visible;overflow-wrap:anywhere}
+.totbar{background:var(--bg2);backdrop-filter:none;-webkit-backdrop-filter:none}
+@media (max-width:560px){.guv-btns{flex-direction:column}.guv-btns .btn,.guv-cfg{width:100%;justify-content:center;white-space:normal;height:auto;min-height:40px;text-align:center}}
+
+/* ===== telefon + tablet: cam alt bar (C · cam hap + ortada artı) ===== */
+.cb,.cb-ov{display:none}
+@media (max-width:1024px){
+ :root{padding-bottom:0}
+ html{background:var(--bg)}
+ .app{flex-direction:column}
+ .side{display:none!important}
+ .main{order:1;flex:1;min-height:0}
+ .page{padding-bottom:calc(104px + env(safe-area-inset-bottom,0px))}
+ .page.fill{padding-bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+ .totbar{bottom:calc(86px + env(safe-area-inset-bottom,0px));margin:16px 0 0!important;padding:12px 14px;border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow)}
+ .totbar::after{content:"";position:absolute;left:-15px;right:-15px;top:100%;height:calc(110px + env(safe-area-inset-bottom,0px));background:var(--bg);pointer-events:none}
+ .tkm{left:12px;right:12px;max-width:none;bottom:calc(88px + env(safe-area-inset-bottom,0px))}
+ .cb{display:flex;align-items:center;justify-content:space-around;position:fixed;z-index:45;left:14px;right:14px;bottom:calc(12px + env(safe-area-inset-bottom,0px));height:64px;padding:0 6px;max-width:560px;margin:0 auto;border-radius:24px;background:rgba(255,255,255,.74);backdrop-filter:blur(22px) saturate(180%);-webkit-backdrop-filter:blur(22px) saturate(180%);border:1px solid rgba(255,255,255,.75);box-shadow:0 10px 30px rgba(20,20,30,.16),inset 0 1px 0 rgba(255,255,255,.7)}
+ .cb-it{flex:1 1 0;min-width:0;height:52px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;border:0;border-radius:16px;color:#6B6F76;font-size:10.5px;font-weight:600;-webkit-tap-highlight-color:transparent}
+ .cb-it svg.i{width:22px;height:22px}
+ .cb-it span{white-space:nowrap}
+ .cb-it.on{color:var(--text)}
+ .cb-it.on::after{content:"";position:absolute;bottom:3px;width:5px;height:5px;border-radius:50%;background:#d99a14}
+ .cb-fab{flex:0 0 58px;width:58px;height:58px;margin:-34px 4px 0;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,#f3c84b,#d99a14);color:#17181A;border:4px solid rgba(255,255,255,.95);box-shadow:0 8px 20px rgba(217,154,20,.45);-webkit-tap-highlight-color:transparent}
+ .cb-fab svg.i{width:26px;height:26px;stroke-width:2.6}
+ .cb-fab:active,.cb-it:active,.cb-tile:active{transform:scale(.95)}
+ .cb-ov:not(.hidden){display:block;position:fixed;inset:0;z-index:44;background:rgba(15,15,18,.22)}
+ .cb-sheet{position:fixed;left:14px;right:14px;max-width:560px;margin:0 auto;bottom:calc(88px + env(safe-area-inset-bottom,0px));padding:8px 12px 14px;border-radius:24px;background:rgba(255,255,255,.88);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border:1px solid rgba(255,255,255,.8);box-shadow:0 18px 44px rgba(20,20,30,.22);transform:translateY(12px);opacity:0;transition:transform .22s var(--ease-out),opacity .22s var(--ease-out)}
+ .cb-ov.acik .cb-sheet{transform:none;opacity:1}
+ .cb-tut{width:38px;height:4px;border-radius:2px;background:rgba(0,0,0,.18);margin:2px auto 8px}
+ .cb-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:2px 4px 10px}
+ .cb-logo{display:flex;align-items:center;gap:8px;min-width:0}
+ .cb-logo img,.cb-logo .mark{height:26px;width:auto;max-width:120px}
+ .cb-logo .brand-text{display:none}
+ .cb-head .sync{position:static;padding:0}
+ .cb-head .sync span{display:inline;font-size:12px}
+ .cb-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+ .cb-tile{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:76px;padding:8px 4px;border-radius:16px;border:1px solid rgba(0,0,0,.06);background:rgba(255,255,255,.6);color:var(--text);font-size:12px;font-weight:600;text-align:center;-webkit-tap-highlight-color:transparent}
+ .cb-tile svg.i{width:24px;height:24px}
+ .cb-tile.on{background:#FFF4D6;border-color:#EBC45A}
+ .cb-tile .tgl{position:absolute;top:8px;right:8px;transform:scale(.8)}
+ [data-theme=dark] .cb{background:rgba(30,31,34,.8);border-color:rgba(255,255,255,.12);box-shadow:0 10px 30px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06)}
+ [data-theme=dark] .cb-it{color:#9A9EA6}
+ [data-theme=dark] .cb-it.on{color:#F2F2EE}
+ [data-theme=dark] .cb-fab{border-color:rgba(30,31,34,.95)}
+ [data-theme=dark] .cb-ov:not(.hidden){background:rgba(0,0,0,.4)}
+ [data-theme=dark] .cb-sheet{background:rgba(30,31,34,.92);border-color:rgba(255,255,255,.12)}
+ [data-theme=dark] .cb-tut{background:rgba(255,255,255,.22)}
+ [data-theme=dark] .cb-tile{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.08)}
+ [data-theme=dark] .cb-tile.on{background:rgba(217,154,20,.22);border-color:rgba(217,154,20,.55)}
+}
+@media print{.cb,.cb-ov{display:none!important}}
+/* Telefon: üstteki "Yeni Teklif" gizli (alttaki artı aynı işi yapar); tablet/masaüstü/.exe değişmez */
+@media (max-width:767px){.ph-act>[data-act="newTeklif"]{display:none}}
+
+/* ===== telefon/tablet: 4 adımlı Yeni Teklif ===== */
+.tkp.tkp-sih{background:var(--bg)}
+.sih{display:flex;flex-direction:column;height:100%;min-height:0;position:relative}
+.sih-h{display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) 16px 8px}
+.sih-h .btn.icon{width:40px;height:40px;flex:none}
+.sih-ht{flex:1;min-width:0;display:flex;flex-direction:column}
+.sih-ht b{font-size:18px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sih-ht span{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sih-p{display:flex;gap:6px;padding:2px 16px 10px}
+.sih-p button{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;align-items:stretch;background:none;border:0;padding:4px 0;font:700 10.5px var(--font);letter-spacing:.03em;color:var(--muted);text-align:left}
+.sih-p button i{height:4px;border-radius:3px;background:var(--border-2)}
+.sih-p button.on i{background:var(--accent)}
+.sih-p button.cur{color:var(--text)}
+.sih-p button:disabled{opacity:.55;cursor:default}
+.sih-p span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sih-b{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;padding:0 16px calc(112px + env(safe-area-inset-bottom,0px))}
+.sih-c{display:flex;flex-direction:column;gap:10px;max-width:760px;margin:0 auto}
+.sih-l{font:800 11px var(--font);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-top:6px}
+.sih-ara{max-width:none}
+.sih-ara .inp{height:48px;font-size:16px}
+.sih-r{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:11px 13px;color:var(--text);font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.sih-r+.sih-r{margin-top:8px}
+.sih-r.on{border:2px solid var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--surface));padding:10px 12px}
+.sih-r .t{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.sih-r .t b{font-size:14.5px;line-height:1.3;overflow-wrap:anywhere}
+.sih-r .t span{font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.sih-r .t em{font-style:normal;font-weight:800;font-size:13px;margin-top:2px}
+.sih-r>svg.i{color:var(--muted)}
+.sih-av{width:42px;height:42px;border-radius:13px;flex:none;display:flex;align-items:center;justify-content:center;font-weight:800;background:color-mix(in srgb,var(--accent) 18%,transparent);color:color-mix(in srgb,var(--accent) 70%,var(--text))}
+.sih-arti{background:linear-gradient(160deg,#f3c84b,#d99a14);color:#17181A}
+.sih-yeni{border:1.5px dashed var(--accent);background:color-mix(in srgb,var(--accent) 7%,var(--surface))}
+.sih-ok-i{color:var(--accent);font-weight:900;font-size:18px}
+.sih-chips{display:flex;flex-wrap:wrap;gap:7px}
+.sih-chips.bad{outline:2px solid #e5484d;outline-offset:4px;border-radius:12px}
+.sih-chip{min-height:40px;padding:8px 14px;border-radius:999px;border:1px solid var(--border-2);background:var(--surface);color:var(--text);font:650 13.5px var(--font);cursor:pointer;display:inline-flex;align-items:center;gap:6px;-webkit-tap-highlight-color:transparent}
+.sih-chip.on{background:var(--text);color:var(--bg);border-color:transparent}
+.sih-chip:disabled{opacity:.5}
+.sih-chip-ek{border-style:dashed}
+.sih-chip svg.i{width:16px;height:16px}
+.sih-kat{display:flex;gap:7px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;margin:0 -16px;padding-left:16px;padding-right:16px}
+.sih-kat::-webkit-scrollbar{display:none}
+.sih-kat .sih-chip{flex:none;white-space:nowrap}
+.sih-img{width:60px;height:60px;border-radius:12px;object-fit:cover;flex:none;background:var(--surface-2);border:1px solid var(--border)}
+.sih-img.bos{display:flex;align-items:center;justify-content:center;color:var(--muted)}
+.sih-img.sm{width:46px;height:46px;border-radius:10px}
+.sih-ekle{width:40px;height:40px;border-radius:12px;flex:none;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,#f3c84b,#d99a14);color:#17181A;font-weight:800;font-size:13px}
+.sih-ekle.var{background:var(--text);color:var(--bg)}
+.sih-u.var{border-color:color-mix(in srgb,var(--accent) 60%,var(--border))}
+.sih-ug{display:flex;flex-direction:column}
+.sih-sepet{display:none}
+.sih-ara{position:relative}
+.sih-ara-x{position:absolute;right:6px;top:50%;transform:translateY(-50%)}
+.sih-or{display:flex;align-items:center;gap:10px;color:var(--muted);font:800 10.5px var(--font);letter-spacing:.08em;margin:2px 0}
+.sih-or::before,.sih-or::after{content:"";flex:1;height:1px;background:var(--border)}
+.sih-fbg{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.sih-fb{display:flex;align-items:center;gap:10px;min-height:58px;padding:6px 14px;border-radius:14px;border:1px solid var(--border-2);background:var(--surface);color:var(--text);font:inherit;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.sih-fb>svg.i{color:var(--muted);flex:none}
+.sih-fb .v{flex:1;min-width:0;display:flex;flex-direction:column}
+.sih-fb small{font:800 10.5px var(--font);letter-spacing:.07em;color:var(--muted)}
+.sih-fb b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sih-fb b.bos{color:var(--muted);font-weight:500}
+.sih-fb.on{border:2px solid var(--accent);padding:5px 13px}
+.sih-fb:disabled{opacity:.5;cursor:default}
+.sih-bos{border:1.5px dashed var(--border-2);border-radius:16px;padding:20px 16px;text-align:center;color:var(--muted);font-size:13px;font-weight:600;line-height:1.5}
+.sih-bos b{color:var(--text)}
+.sih-ub{margin-bottom:2px}
+.sih-sh{padding-bottom:4px}
+.sih-ki{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.sih-ki .t{flex:1;min-width:0;display:flex;flex-direction:column}
+.sih-ki .t b{font-size:13.5px;overflow-wrap:anywhere}
+.sih-ki .t span{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.sih-ki.bad{background:color-mix(in srgb,#e5484d 8%,transparent);border-radius:10px;padding-left:6px}
+.sih-st-row{display:flex;justify-content:space-between;padding-top:10px;font-size:14px}
+.sih-e{color:#e5484d;font:700 12.5px var(--font);margin-top:-2px}
+.sih-e::before{content:"● "}
+.sih-tg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sih-tg button{height:52px;border-radius:15px;border:1px solid var(--border-2);background:var(--surface);color:var(--text);font:750 15px var(--font);cursor:pointer}
+.sih-tg button.on{background:var(--text);color:var(--bg);border-color:transparent}
+.sih-tg button.bad{border:2px solid #e5484d}
+.sih-g2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.sih-g2 .inp{height:46px;font-size:16px}
+.sih .inp.bad,.sih-ov .inp.bad{border-color:#e5484d!important;box-shadow:0 0 0 1px #e5484d!important}
+.sih-kart{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:12px 14px}
+.sih-kart-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.sih-sat{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;padding:5px 0;border-top:1px solid var(--border)}
+.sih-sat i{font-style:normal;color:var(--muted)}
+.sih-sat b{white-space:nowrap}
+.sih-f{position:absolute;left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom,0px));max-width:760px;margin:0 auto;min-height:64px;display:flex;align-items:center;gap:10px;padding:8px 8px 8px 16px;border-radius:22px;background:color-mix(in srgb,var(--surface-2) 80%,transparent);backdrop-filter:blur(20px) saturate(170%);-webkit-backdrop-filter:blur(20px) saturate(170%);border:1px solid var(--border-2);box-shadow:0 10px 30px rgba(0,0,0,.18)}
+[data-theme=dark] .sih-f{background:rgba(32,34,38,.88)}
+.sih-fs{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;background:none;border:0;padding:0;color:var(--text);font:inherit;text-align:left;cursor:pointer}
+.sih-fs b{font-size:15px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sih-fs span{font-size:12px;color:var(--muted)}
+.sih-go{height:50px;padding:0 18px;border-radius:16px;font-size:15px;flex:none;white-space:nowrap}
+.sih-kl{margin-left:4px}
+@media (max-width:420px){.sih-kl{display:none}}
+/* ürün penceresi ve diğer alt pencereler */
+.sih-ov .mdl{width:min(560px,100vw)}
+@media (max-width:560px){.sih-ov{padding:0!important;align-items:end}.sih-ov .mdl{width:100vw;max-height:92dvh;border-radius:24px 24px 0 0}.sih-ov .mdl-f{padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}}
+.sih-ov .mdl-b{display:flex;flex-direction:column;gap:12px}
+.sih-pu{display:flex;align-items:center;gap:12px}
+.sih-pu>div{flex:1;min-width:0;display:flex;flex-direction:column}
+.sih-pu b{font-size:16.5px;overflow-wrap:anywhere}
+.sih-pu span{font-size:12.5px;color:var(--muted)}
+.sih-step{display:flex;align-items:center;gap:6px}
+.sih-step button{width:46px;height:46px;flex:none;border-radius:12px;border:1px solid var(--border-2);background:var(--surface);color:var(--text);font:800 22px var(--font);cursor:pointer}
+.sih-step .inp{text-align:center;font:800 18px var(--font);height:46px;min-width:0}
+.sih-fiyat{font:800 17px var(--font)!important;height:46px}
+.sih-ov .field .sih-chips{margin-bottom:8px}
+.sih-ov textarea.inp{font-size:16px;min-height:64px}
+.sih-ov .mdl-f .btn{min-height:46px}
+.sih-ekle-b{flex:1}
+.sih-okk{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:10px 0 4px}
+.sih-okk .ci{width:68px;height:68px;border-radius:50%;background:linear-gradient(160deg,#f3c84b,#d99a14);color:#17181A;display:flex;align-items:center;justify-content:center;font:900 32px var(--font);margin-bottom:4px}
+.sih-okk b{font-size:19px}
+.sih-okk span{color:var(--muted)}
+.sih-acts{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.sih-acts .sih-r+.sih-r{margin-top:0}
+.sih-vurgu{border:2px solid var(--accent)}
+.sih-done .sih-g2 .btn{min-height:46px;justify-content:center}
+/* tablet: ürünler ızgara, sağda teklif listesi */
+@media (min-width:700px){
+ .sih-c{max-width:none}
+ .sih-urun{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
+ .sih-ul{display:flex;flex-direction:column;gap:10px;min-width:0}
+ .sih-ug{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
+ .sih-ug .sih-r+.sih-r{margin-top:0}
+ .sih-ug .empty,.sih-ug>div{grid-column:1/-1}
+ .sih-sepet{display:block;position:sticky;top:0;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:14px;max-height:calc(100dvh - 260px);overflow:auto}
+
+ .sih-f{max-width:none}
+}
+
+/* ===== Raporlar: telefonda sekmeler iki satır, kısa listeler kesilmez ===== */
+.tbl td.mn-td{white-space:normal;max-width:none;overflow:visible}
+@media (max-width:767px){
+ .rep-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;border-bottom:0;overflow:visible}
+ .rep-tabs button{border:1px solid var(--border-2);border-radius:999px;margin:0;padding:9px 3px;background:var(--surface);color:var(--text);font-size:12.5px;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .rep-tabs button.on{background:var(--text);color:var(--bg);border-color:transparent}
+}
 </style>
 </head>
 <body>
@@ -517,6 +727,8 @@ const numStr = n => (+n || 0) ? String(r2(n)).replace('.', ',') : '';
 const clean = (s, max = 200) => String(s ?? '').replace(/[\u0000-\u001F\u007F<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
 const cleanML = (s, max = 2000) => String(s ?? '').replace(/[\u0000-\u0009\u000B-\u001F\u007F<>]/g, ' ').trim().slice(0, max);
 const trLower = s => String(s ?? '').toLocaleLowerCase('tr-TR');
+/* Arama: ş/s, ç/c, ğ/g, ü/u, ö/o, ı/i ve büyük/küçük harf ayrımı yapılmaz */
+const trAra = s => trLower(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ı/g, 'i').replace(/\s+/g, ' ').trim();
 const debounce = (fn, ms = 220) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
 const deep = o => JSON.parse(JSON.stringify(o));
 const isMobile = () => matchMedia('(max-width:767px)').matches;
@@ -854,17 +1066,16 @@ const Sync = {
 /* Sunucu değiştiyse (taşıma sonrası) son eşitleme zamanı sıfırlanır: bir kez tam çekim */
 try { const eski = Local.get('cfg_url', null); if (eski !== CFG.url) { if (eski) Auth.save(null); Sync.last = null; Local.set('last_sync', null); Local.set('cfg_url', CFG.url); } } catch {}
 function setSync() {
-  const el = $('#sync'); if (!el) return;
   const n = Sync.outbox.size;
   const [cls, txt] = !Sync.online ? ['off', 'Çevrimdışı'] : n ? ['wait', `${n} değişiklik gönderiliyor`] : RT.joined ? ['on', 'Canlı'] : ['wait', 'Bağlanıyor…'];
-  el.className = 'sync ' + cls; mount(el, html`<i></i><span>${txt}${!Sync.online && n ? ` · ${n} bekliyor` : ''}</span>`);
+  for (const el of [$('#sync'), $('#sync2')]) { if (!el) continue; el.className = 'sync ' + cls; mount(el, html`<i></i><span>${txt}${!Sync.online && n ? ` · ${n} bekliyor` : ''}</span>`); }
 }
 
 /* Uzaktan değişiklik gelince açık ekranı yazarken bozmadan tazele */
 const remoteChanged = debounce(() => {
   loadSettings(); applyTheme(); refreshBrand(); checkAppVersion();
   if (!$('#main') || $('.ov')) return;
-  if (tkPanel.el) { drawPickFilters(); drawPick(); }
+  if (tkPanel.el) { if (tkPanel.sih) sihYenile(); else { drawPickFilters(); drawPick(); } }
   const v = state.view;
   if (v === 'teklifler') drawList(true);
   else if (v === 'musteriler') drawCari();
@@ -1021,7 +1232,7 @@ function picker({ title, options, value, onPick, addLabel, onAdd }) {
   return modal({ title, size: 'sm', body: html`<div class="search" style="max-width:none"><span>${I('search')}</span><input class="inp" placeholder="Ara…" autofocus data-q></div>
     ${addLabel ? html`<button class="btn sm" style="margin-top:10px" data-add>${I('plus')} ${addLabel}</button>` : ''}<div class="plist" data-l></div>`,
     onMount: m => {
-      const draw = q => { const f = trLower(q); const list = options.filter(o => !f || trLower(o.l + ' ' + (o.sub || '')).includes(f)).slice(0, 300);
+      const draw = q => { const f = trAra(q); const list = options.filter(o => !f || trAra(o.l + ' ' + (o.sub || '')).includes(f)).slice(0, 300);
         mount(m.$('[data-l]'), list.length ? list.map(o => html`<button data-v="${o.v}" class="${o.v === value ? 'on' : ''}"><span>${o.l}${o.sub ? html`<div class="muted sm">${o.sub}</div>` : ''}</span></button>`) : html`<div class="empty sm">Sonuç yok</div>`); };
       draw(''); m.$('[data-q]').addEventListener('input', e => draw(e.target.value));
       m.el.addEventListener('click', e => { const b = e.target.closest('[data-v]'); if (b) { m.close(); onPick(b.dataset.v); } if (e.target.closest('[data-add]')) { m.close(); onAdd(); } });
@@ -1125,12 +1336,34 @@ function renderShell() {
       <div class="sync" id="sync"></div>
       <button class="nav-item" data-act="toggleTheme" title="Karanlık Mod">${I('moon')}<span class="lbl">Karanlık Mod</span><span class="tgl ${S.theme === 'dark' ? 'on' : ''}" id="tgl"></span></button>
       <button class="nav-item" data-act="logout" title="Çıkış">${I('out')}<span class="lbl">Çıkış</span></button>
-    </div></aside><main class="main" id="main"></main>`);
+    </div></aside><main class="main" id="main"></main>
+    <nav class="cb" id="cb" aria-label="Alt menü">
+      <button class="cb-it" data-act="nav" data-v="teklifler">${I('doc')}<span>Teklifler</span></button>
+      <button class="cb-it" data-act="nav" data-v="musteriler">${I('users')}<span>Müşteriler</span></button>
+      <button class="cb-fab" data-act="cbYeni" aria-label="Yeni Teklif" title="Yeni Teklif">${I('plus')}</button>
+      <button class="cb-it" data-act="nav" data-v="urunler">${I('box')}<span>Ürünler</span></button>
+      <button class="cb-it" data-act="cbDaha" data-v="daha">${I('dots')}<span>Daha</span></button>
+    </nav>
+    <div class="cb-ov hidden" id="cbOv"><div class="cb-sheet" role="dialog" aria-label="Diğer">
+      <div class="cb-tut"></div>
+      <div class="cb-head"><div class="cb-logo">${brandInner()}</div><div class="sync" id="sync2"></div></div>
+      <div class="cb-grid">
+        <button class="cb-tile" data-act="cbGit" data-v="raporlar">${I('chart')}<span>Raporlar</span></button>
+        <button class="cb-tile" data-act="cbGit" data-v="personeller">${I('user')}<span>Personeller</span></button>
+        <button class="cb-tile" data-act="cbAyar" data-v="ayarlar">${I('gear')}<span>Ayarlar</span></button>
+        <button class="cb-tile" data-act="toggleTheme">${I('moon')}<span>Karanlık Mod</span><span class="tgl ${S.theme === 'dark' ? 'on' : ''}"></span></button>
+        <button class="cb-tile" data-act="cbCikis">${I('out')}<span>Çıkış</span></button>
+      </div></div></div>`);
   bindBrand(); setSync();
 }
 function brandInner() { const s = logoSrc(); return html`${s ? html`<img src="${s}" alt="">` : html`<div class="mark">P</div>`}<div class="brand-text">PRONTO SİPARİŞ</div>`; }
 function refreshBrand() { const br = $('#brand'); if (br) mount(br, brandInner()); }
-function markNav() { $$('#nav .nav-item').forEach(b => b.classList.toggle('active', navOf(state.view) === b.dataset.v)); }
+function markNav() {
+  $$('#nav .nav-item').forEach(b => b.classList.toggle('active', navOf(state.view) === b.dataset.v));
+  const n = state.view === 'ayarlar' ? 'ayarlar' : navOf(state.view), daha = ['raporlar', 'personeller', 'ayarlar'].includes(n) || !$('#cbOv')?.classList.contains('hidden');
+  $$('#cb .cb-it').forEach(b => b.classList.toggle('on', b.dataset.v === 'daha' ? daha : n === b.dataset.v));
+  $$('#cbOv .cb-tile[data-v]').forEach(b => b.classList.toggle('on', n === b.dataset.v));
+}
 const navOf = v => ({ teklifler:'teklifler', teklifForm:'teklifler', teklifDetay:'teklifler', musteriler:'musteriler', musteriDetay:'musteriler', personeller:'personeller', personelDetay:'personeller', urunler:'urunler', raporlar:'raporlar' }[v] || '');
 /* Logoya 3 sn basılı tutunca ayarlar açılır */
 function bindBrand() {
@@ -1155,8 +1388,16 @@ function openSettings() {
 /* ---------- global olay yönetimi ---------- */
 const A = {};
 document.addEventListener('click', e => { const el = e.target.closest('[data-act]'); if (!el || el.closest('.pin-ov')) return; const fn = A[el.dataset.act]; if (fn) fn(el, e); });
-A.nav = el => go(el.dataset.v);
-A.toggleTheme = () => { S.theme = S.theme === 'dark' ? 'light' : 'dark'; Local.set('theme', S.theme); applyTheme(); $('#tgl')?.classList.toggle('on', S.theme === 'dark'); };
+A.nav = el => { cbKapat(); go(el.dataset.v); };
+function cbKapat() { const o = $('#cbOv'); if (o && !o.classList.contains('hidden')) { o.classList.add('hidden'); o.classList.remove('acik'); markNav(); } }
+A.cbDaha = () => { const o = $('#cbOv'); if (!o) return; if (!o.classList.contains('hidden')) return cbKapat(); closePop(); o.classList.remove('hidden'); requestAnimationFrame(() => o.classList.add('acik')); setSync(); markNav(); };
+A.cbGit = el => { cbKapat(); go(el.dataset.v); };
+A.cbAyar = () => { cbKapat(); openSettings(); };
+A.cbCikis = () => { cbKapat(); A.logout(); };
+A.cbYeni = () => { cbKapat(); go('teklifForm', {}); };
+document.addEventListener('click', e => { if (e.target.id === 'cbOv') cbKapat(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#cbOv')?.classList.contains('hidden')) { e.stopPropagation(); cbKapat(); } }, true);
+A.toggleTheme = () => { S.theme = S.theme === 'dark' ? 'light' : 'dark'; Local.set('theme', S.theme); applyTheme(); $$('.tgl').forEach(x => x.classList.toggle('on', S.theme === 'dark')); };
 A.logout = async () => {
   const n = Sync.outbox.size;
   if (!await confirmBox({ title: 'Çıkış', body: html`<p>Bir sonraki girişte şifre istenecek.</p>${n ? html`<p class="b">${n} değişiklik henüz sunucuya gönderilmedi. İnternet gelince tekrar giriş yaptığınızda gönderilir.</p>` : ''}`, ok: 'Çıkış Yap' })) return;
@@ -1179,14 +1420,14 @@ function presetRange(p) {
 const TARIH_L = { bugun: 'Bugün', hafta: 'Bu Hafta', ay: 'Bu Ay', yil: 'Bu Yıl', ozel: 'Özel Tarih' };
 function rangeOf(f) { return f.tarih === 'ozel' ? [f.from || '0000-01-01', f.to || '9999-12-31'] : presetRange(f.tarih); }
 function listRows() {
-  const pm = payMap(); const f = LS.f; const q = trLower(LS.q.trim()); const rg = rangeOf(f);
+  const pm = payMap(); const f = LS.f; const q = trAra(LS.q); const rg = rangeOf(f);
   let rows = DB.teklif.all().filter(t => !t.deletedAt).map(t => ({ t, c: calc(t, pm[t.id]) }));
   rows = rows.filter(({ t, c }) => {
     if (f.cari && t.cariId !== f.cari) return false;
     if (f.durum && tkDurum(t) !== f.durum) return false;
     if (f.personel && t.personelId !== f.personel) return false;
     if (rg && (t.tarih < rg[0] || t.tarih > rg[1])) return false;
-    if (q) { const hay = trLower([t.no, t.cariSnap.unvan, t.personelAd, tkDurum(t), t.doviz, fmtDate(t.tarih), fmtDate(t.teslim), c.genel, NF.format(c.genel), c.adet, ...t.items.flatMap(i => [i.kategori, i.model, i.modul, i.olcu, i.renk, i.yon, i.aciklama])].join(' ')); if (!hay.includes(q)) return false; }
+    if (q) { const hay = trAra([t.no, t.cariSnap.unvan, t.personelAd, tkDurum(t), t.doviz, fmtDate(t.tarih), fmtDate(t.teslim), c.genel, NF.format(c.genel), c.adet, ...t.items.flatMap(i => [i.kategori, i.model, i.modul, i.olcu, i.renk, i.yon, i.aciklama])].join(' ')); if (!hay.includes(q)) return false; }
     return true;
   });
   const k = { tarih: r => r.t.tarih + r.t.no, tutar: r => r.c.genel, no: r => r.t.no, musteri: r => trLower(r.t.cariSnap.unvan) }[LS.sort];
@@ -1458,9 +1699,9 @@ A.newCariFromForm = () => cariForm(null, c => { state.draft.cariId = c.id; drawF
 A.newPersFromForm = () => personelForm(null, p => { state.draft.personelId = p.id; drawFormPers(); });
 function drawPickFilters() {
   const us = DB.urun.all(), kat = $('#pkat'), mod = $('#pmod'); if (!kat) return;
-  const kats = [...new Map(us.map(u => [trLower(u.kategori), u.kategori])).values()];
+  const kats = [...new Map(us.map(u => [trLower(u.kategori), u.kategori])).values()].sort((a, b) => a.localeCompare(b, 'tr'));
   mount($('#pkatList'), kats.map(k => html`<option value="${k}">`));
-  const mods = PK.kat ? [...new Map(us.filter(u => u.kategori === PK.kat).map(u => [trLower(u.model), u.model])).values()] : [];
+  const mods = PK.kat ? [...new Map(us.filter(u => u.kategori === PK.kat).map(u => [trLower(u.model), u.model])).values()].sort((a, b) => a.localeCompare(b, 'tr')) : [];
   mount($('#pmodList'), mods.map(m => html`<option value="${m}">`));
   if (document.activeElement !== kat) kat.value = PK.katQ || PK.kat || '';
   if (document.activeElement !== mod) mod.value = PK.modelQ || PK.model || '';
@@ -1468,9 +1709,9 @@ function drawPickFilters() {
 }
 function drawPick() {
   const box = $('#pres'); if (!box) return;
-  const modelQ = trLower(PK.modelQ || PK.model);
+  const modelQ = trAra(PK.modelQ || PK.model);
   if (!modelQ) { mount(box, html`<div class="empty sm">ÜRÜNLERİ GÖRMEK İÇİN MODEL SEÇİN VEYA MODEL ARAYIN.</div>`); return; }
-  const list = DB.urun.all().filter(u => (!PK.kat || u.kategori === PK.kat) && trLower(u.model).includes(modelQ)).slice(0, 60);
+  const list = DB.urun.all().filter(u => (!PK.kat || u.kategori === PK.kat) && trAra(u.model).includes(modelQ)).slice(0, 60);
   mount(box, list.length ? list.map(u => { const f = safeImg(modelFoto.get(u.kategori, u.model, u.modul)); return html`<button class="pr" data-act="addItem" data-id="${u.id}">
     ${f ? html`<img class="thumb" src="${f}" alt="">` : html`<span class="thumb">Fotoğraf Yok</span>`}
     <span class="t"><div class="b">${u.kategori} · ${u.model}</div><div class="muted sm">${[u.modul, u.olcu, u.renk, u.yon].filter(Boolean).join(' · ') || '—'}</div></span>${I('plus')}</button>`; })
@@ -1536,9 +1777,9 @@ const Sug = {
   el: null, inp: null, idx: -1, list: [],
   open(inp) {
     const it = state.draft?.items?.[+inp.dataset.i]; if (!it) return;
-    this.inp = inp; const f = inp.dataset.if, q = trLower(inp.value.trim());
+    this.inp = inp; const f = inp.dataset.if, q = trAra(inp.value);
     const all = getKatVariants(it)[f];
-    this.list = (q ? [...all.filter(x => trLower(x).startsWith(q)), ...all.filter(x => !trLower(x).startsWith(q) && trLower(x).includes(q))] : all).slice(0, 60);
+    this.list = (q ? [...all.filter(x => trAra(x).startsWith(q)), ...all.filter(x => !trAra(x).startsWith(q) && trAra(x).includes(q))] : all).slice(0, 60);
     if (!this.el) {
       this.el = document.createElement('div'); this.el.className = 'sug'; document.body.appendChild(this.el);
       this.el.addEventListener('mousedown', e => e.preventDefault());
@@ -1635,11 +1876,11 @@ A.formBack = async () => {
    Taslak YALNIZCA bu bilgisayarda saklanır (sunucuya trafik yok).
    ===================================================================== */
 IP.min = '<path d="M6 12h12"/>';
-const tkPanel = { el: null, mini: null, min: false };
+const tkPanel = { el: null, mini: null, min: false, sih: false };
 const TK_TASLAK = 'teklif_taslak';
 function tkDirty(d = state.draft) {
   if (!d) return false;
-  return d.id ? JSON.stringify(stripDraft(d)) !== d._orig : !!(d.items.length || d.cariId || d.personelId);
+  return d.id ? JSON.stringify(stripDraft(d)) !== d._orig : !!(d.items.length || d.cariId || (d.personelId && !(tkPanel.sih && d.personelId === Local.get('sih_pers', ''))));
 }
 let tkKotaUyari = false;
 function tkTaslakKaydet(simdi) {
@@ -1674,17 +1915,18 @@ function tkPanelKur(id, taslak) {
   const el = document.createElement('div'); el.id = 'tkPanel'; el.className = 'tkp'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Teklif formu');
   document.body.appendChild(el); tkPanel.el = el; tkPanel.min = false; state.draft = null;
   const mini = document.createElement('div'); mini.id = 'tkMini'; mini.className = 'tkm hidden'; document.body.appendChild(mini); tkPanel.mini = mini;
-  VIEWS.teklifForm(el, { id, taslak });
+  tkPanel.sih = sihMod(); el.classList.toggle('tkp-sih', tkPanel.sih);
+  (tkPanel.sih ? VIEWS.teklifSih : VIEWS.teklifForm)(el, { id, taslak });
   if (!state.draft) { tkPanelKaldir(); return false; }
   return true;
 }
 function tkPanelKaldir() {
   if (tkPanel.el) tkTaslakKaydet(true);
-  tkPanel.el?.remove(); tkPanel.mini?.remove(); tkPanel.el = tkPanel.mini = null; tkPanel.min = false; state.draft = null;
+  tkPanel.el?.remove(); tkPanel.mini?.remove(); tkPanel.el = tkPanel.mini = null; tkPanel.min = false; tkPanel.sih = false; state.draft = null;
 }
 function tkPanelKapat() {           /* kaydedildi ya da vazgeçildi: taslak silinir */
   clearTimeout(tkTaslakKaydet._t); Local.del(TK_TASLAK);
-  tkPanel.el?.remove(); tkPanel.mini?.remove(); tkPanel.el = tkPanel.mini = null; tkPanel.min = false; state.draft = null;
+  tkPanel.el?.remove(); tkPanel.mini?.remove(); tkPanel.el = tkPanel.mini = null; tkPanel.min = false; tkPanel.sih = false; state.draft = null;
 }
 function tkKucult() {
   if (!tkPanel.el || tkPanel.min) return;
@@ -1693,6 +1935,7 @@ function tkKucult() {
 function tkBuyut() {
   if (!tkPanel.el) return;
   tkPanel.min = false; tkPanel.el.classList.remove('min'); tkPanel.mini.classList.add('hidden');
+  if (tkPanel.sih) return sihCiz();
   drawPickFilters(); drawPick(); drawFormCari(); drawFormPers(); drawTots();
 }
 async function tkPanelAc(id) {
@@ -1808,6 +2051,381 @@ A.saveTeklif = async el => {
 };
 /* İşlem günlüğü yalnızca bu cihazda tutulur (sunucuya trafik yok) */
 function logAct(msg) { const l = Local.get('log', []); l.unshift({ ts: Date.now(), msg }); Local.set('log', l.slice(0, 50)); }
+/* =====================================================================
+   TELEFON / TABLET: 4 adımlı Yeni Teklif (Müşteri → Ürünler → Şartlar → Özet)
+   Masaüstü ve .exe eski formu kullanır. Taslak, küçültme, doğrulama ve kayıt
+   mevcut teklif formuyla aynı koddan geçer; sunucuya ek istek yoktur.
+   ===================================================================== */
+const sihMod = () => !desktop() && matchMedia('(max-width:1024px)').matches;
+const SIH = { adim: 1, en: 1, q: '', mq: '', kat: '', model: '', hata: [] };
+const SIH_ADIM = ['Müşteri', 'Ürünler', 'Şartlar', 'Özet'];
+const SIH_YON = [['sag', 'SAĞ'], ['sol', 'SOL'], ['cift', 'ÇİFT'], ['yok', 'YOK']];
+const SIH_SART = [['nakliye', 'Nakliye', [['dahil', 'Dahil'], ['haric', 'Hariç']]], ['montaj', 'Montaj', [['dahil', 'Dahil'], ['haric', 'Hariç']]], ['teslimYeri', 'Teslim yeri', [['adres', 'Adrese teslim'], ['fabrika', 'Fabrikadan']]]];
+const sihBas = s => clean(s, 80).split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toLocaleUpperCase('tr-TR') || '?';
+const sihUzun = iso => { if (!iso) return ''; const d = new Date(iso + 'T12:00:00'); return isNaN(d) ? '' : d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', weekday: 'long' }); };
+const sihMasa = it => trLower(itemTitle(it)).includes('masa');
+
+VIEWS.teklifSih = (main, { id, taslak }) => {
+  const edit = !!id; const src = id && DB.teklif.find(id);
+  if (edit && !src) return;
+  const d = state.draft = taslak ? { ...deep(taslak.d), _orig: taslak.orig || null } : edit ? deep(src) : newDraft();
+  if (edit && d.iskontoTip === '%' && d.iskontoDeger) { d.iskontoTutar = calc(d, []).isk; d.iskontoDeger = 0; d.iskontoTip = 'tutar'; }
+  if (!taslak) d._orig = edit ? JSON.stringify(src) : null;
+  if (!d.id) {
+    if (!CURS.includes(d.doviz)) d.doviz = CURS.includes(S.doviz) ? S.doviz : 'TRY';
+    if (!d.personelId) { const p = Local.get('sih_pers', ''); if (p && DB.personel.find(p)) d.personelId = p; }
+  }
+  Object.assign(SIH, { q: '', mq: '', kat: '', model: '', hata: [] });
+  SIH.adim = edit ? 4 : d.cariId && d.items.length ? 2 : 1;
+  SIH.en = edit ? 4 : SIH.adim;
+  if (!main.dataset.sih) {
+    main.dataset.sih = '1';
+    main.addEventListener('input', sihGirdi); main.addEventListener('change', sihGirdi);
+  }
+  sihCiz();
+};
+
+function sihCiz() {
+  const el = tkPanel.el, d = state.draft; if (!el || !tkPanel.sih || !d) return;
+  const a = SIH.adim, edit = !!d.id;
+  const baslik = [edit ? `Teklif ${d.no} — Düzenle` : 'Yeni Teklif', 'Ürün ekle', 'Teslim ve şartlar', 'Özet'][a - 1];
+  const alt = a === 1 ? (edit ? 'Müşteri ve personel değiştirilemez' : 'Teklif numarası kayıtta verilir') : `Adım ${a} / 4${sihCari() ? ' · ' + sihCari().unvan : ''}`;
+  mount(el, html`<div class="sih" data-adim="${a}">
+    <div class="sih-h"><button class="btn icon" data-act="sihGeri" aria-label="${a === 1 ? 'Kapat' : 'Geri'}">${I(a === 1 ? 'x' : 'back')}</button>
+      <div class="sih-ht"><b>${a === 1 ? baslik : baslik}</b><span>${alt}</span></div>
+      <button class="btn sm" data-act="tkMin" title="Küçült">${I('min')}<span class="sih-kl">Küçült</span></button></div>
+    <div class="sih-p" role="tablist">${SIH_ADIM.map((n, i) => html`<button type="button" class="${i < a ? 'on' : ''}${i + 1 === a ? ' cur' : ''}" data-act="sihGit" data-a="${i + 1}" ${i + 1 > SIH.en ? 'disabled' : ''}><i></i><span>${n}</span></button>`)}</div>
+    <div class="sih-b" id="sihB">${[sihAdim1, sihAdim2, sihAdim3, sihAdim4][a - 1]()}</div>
+    <div class="sih-f" id="sihF">${sihAlt()}</div></div>`);
+  const ilk = $('.sih-e', el); if (ilk) ilk.scrollIntoView({ block: 'center' });
+}
+const sihHataVar = (k) => SIH.hata.some(h => h.k === k);
+const sihHataMsg = (k) => { const h = SIH.hata.find(x => x.k === k); return h ? html`<div class="sih-e">${h.msg}</div>` : ''; };
+const sihCari = () => { const d = state.draft; return d.id ? d.cariSnap : DB.cari.find(d.cariId); };
+
+/* ---------- 1) Müşteri ---------- */
+function sihAdim1() {
+  const d = state.draft;
+  if (d.id) {
+    const c = d.cariSnap || {};
+    return html`<div class="sih-c"><div class="sih-l">Müşteri</div>
+      <div class="sih-r on" style="cursor:default"><span class="sih-av">${sihBas(c.unvan)}</span><span class="t"><b>${c.unvan}</b><span>${[[c.ilce, c.sehir].filter(Boolean).join(' / '), c.gsm].filter(Boolean).join(' · ')}</span></span></div>
+      <div class="sih-l">Personel</div><div class="sih-chips"><span class="sih-chip on">${d.personelAd || '—'}</span></div>
+      <p class="muted sm">Kayıtlı teklifte müşteri ve personel değiştirilemez.</p></div>`;
+  }
+  return html`<div class="sih-c">
+    <div class="search sih-ara"><span>${I('search')}</span><input class="inp" data-sq="cari" value="${SIH.mq}" placeholder="Müşteri adı, telefon veya şehir…" maxlength="60" enterkeyhint="search" autocomplete="off"></div>
+    <button type="button" class="sih-r sih-yeni" data-act="sihYeniCari"><span class="sih-av sih-arti">${I('plus')}</span><span class="t"><b>Yeni müşteri</b><span>Tam müşteri formu açılır</span></span></button>
+    ${sihHataMsg('cari')}
+    <div id="sihCari">${sihCariListe()}</div>
+    <div class="sih-l">Personel</div>
+    <div class="sih-chips ${sihHataVar('pers') ? 'bad' : ''}" id="sihPers">${DB.personel.all().slice().sort((a, b) => trLower(a.ad).localeCompare(trLower(b.ad), 'tr')).map(p => html`<button type="button" class="sih-chip ${d.personelId === p.id ? 'on' : ''}" data-act="sihPers" data-id="${p.id}">${p.ad}</button>`)}<button type="button" class="sih-chip sih-chip-ek" data-act="sihYeniPers">${I('plus')} Yeni</button></div>
+    ${sihHataMsg('pers')}
+    <p class="muted sm" style="margin:0">Seçilen personel bu cihazda hatırlanır.</p></div>`;
+}
+function sihCariListe() {
+  const d = state.draft, q = trAra(SIH.mq), sira = new Map();
+  DB.teklif.all().filter(t => !t.deletedAt).sort((a, b) => (b.created || 0) - (a.created || 0)).forEach(t => { if (t.cariId && !sira.has(t.cariId)) sira.set(t.cariId, sira.size); });
+  let list = DB.cari.all();
+  if (q) list = list.filter(c => trAra([c.unvan, c.gsm, c.sabit, c.sehir, c.ilce, c.yetkili].join(' ')).includes(q));
+  list = list.slice().sort((a, b) => (sira.has(a.id) ? sira.get(a.id) : 1e9) - (sira.has(b.id) ? sira.get(b.id) : 1e9) || a.unvan.localeCompare(b.unvan, 'tr')).slice(0, 40);
+  const sec = DB.cari.find(d.cariId);
+  if (sec && !list.some(c => c.id === sec.id) && !q) list.unshift(sec);
+  return html`<div class="sih-l">${q ? 'Sonuçlar' : 'Son müşteriler'}</div>${list.length ? list.map(c => html`<button type="button" class="sih-r ${d.cariId === c.id ? 'on' : ''}" data-act="sihCari" data-id="${c.id}">
+      <span class="sih-av">${sihBas(c.unvan)}</span><span class="t"><b>${c.unvan}</b><span>${[[c.ilce, c.sehir].filter(Boolean).join(' / '), c.gsm].filter(Boolean).join(' · ') || c.tur || ''}</span></span>${d.cariId === c.id ? html`<span class="sih-ok-i">✓</span>` : ''}</button>`)
+    : html`<div class="empty sm">${DB.cari.all().length ? 'Eşleşen müşteri yok. "Yeni müşteri" ile ekleyebilirsiniz.' : 'Henüz müşteri yok. "Yeni müşteri" ile ekleyin.'}</div>`}`;
+}
+A.sihCari = el => { const d = state.draft; if (d.id) return; d.cariId = el.dataset.id; SIH.hata = SIH.hata.filter(h => h.k !== 'cari'); sihYenile(); sihAltCiz(); };
+A.sihPers = el => { const d = state.draft; if (d.id) return; d.personelId = el.dataset.id; Local.set('sih_pers', d.personelId); SIH.hata = SIH.hata.filter(h => h.k !== 'pers'); sihCiz(); };
+A.sihYeniCari = () => cariForm(null, c => { if (!c || !state.draft) return; state.draft.cariId = c.id; SIH.mq = ''; SIH.hata = SIH.hata.filter(h => h.k !== 'cari'); sihCiz(); });
+A.sihYeniPers = () => personelForm(null, p => { if (!p || !state.draft) return; state.draft.personelId = p.id; Local.set('sih_pers', p.id); sihCiz(); });
+
+/* ---------- 2) Ürünler: genel arama + masaüstündeki sıra (Kategori → Model → çeşitler) ---------- */
+function sihAdim2() {
+  return html`<div class="sih-c sih-urun"><div class="sih-ul">
+    <div class="search sih-ara"><span>${I('search')}</span><input class="inp" data-sq="urun" value="${SIH.q}" placeholder="Ürün ara (tüm katalog)…" maxlength="60" enterkeyhint="search" autocomplete="off"><button type="button" class="btn ghost icon sm sih-ara-x ${SIH.q ? '' : 'hidden'}" data-act="sihAraTemizle" aria-label="Aramayı temizle">${I('x')}</button></div>
+    <div id="sihSecim" class="${SIH.q ? 'hidden' : ''}">${sihSecim()}</div>
+    ${sihHataMsg('items')}
+    <div id="sihUrun" class="sih-ug">${sihUrunListe()}</div>
+    <button type="button" class="sih-r sih-yeni" data-act="sihYeniUrun"><span class="sih-av sih-arti">${I('plus')}</span><span class="t"><b>Katalogda yok mu?</b><span>Yeni ürün oluştur ve teklife ekle</span></span></button>
+  </div><aside class="sih-sepet" id="sihSepet">${sihSepet()}</aside></div>`;
+}
+const sihKatlar = () => { const m = new Map(); for (const u of DB.urun.all()) { const k = trLower(u.kategori); const e = m.get(k) || { ad: u.kategori, n: 0 }; e.n++; m.set(k, e); } return [...m.values()].sort((a, b) => a.ad.localeCompare(b.ad, 'tr')); };
+const sihModeller = kat => { const m = new Map(); for (const u of DB.urun.all()) if (u.kategori === kat) { const k = trLower(u.model); const e = m.get(k) || { ad: u.model, n: 0 }; e.n++; m.set(k, e); } return [...m.values()].sort((a, b) => a.ad.localeCompare(b.ad, 'tr')); };
+function sihSecim() {
+  const k = SIH.kat, m = SIH.model;
+  const kut = (act, no, ad, deger, bos, acik = true) => html`<button type="button" class="sih-fb ${deger ? 'on' : ''}" data-act="${act}" ${acik ? '' : 'disabled'}>${I('search')}<span class="v"><small>${no} · ${ad}</small><b class="${deger ? '' : 'bos'}">${deger || bos}</b></span>${I('down')}</button>`;
+  return html`<div class="sih-or">VEYA</div><div class="sih-fbg">${kut('sihKatSec', 1, 'KATEGORİ', k, 'Kategori seçin')}${kut('sihModelSec', 2, 'MODEL', m, k ? 'Model seçin' : 'Önce kategori', !!k)}</div>`;
+}
+function sihUrunSatir(u) {
+  const d = state.draft, f = safeImg(modelFoto.get(u.kategori, u.model, u.modul)), n = d.items.filter(i => i.urunId === u.id).reduce((s, i) => s + (+i.adet || 0), 0);
+  return html`<button type="button" class="sih-r sih-u ${n ? 'var' : ''}" data-act="sihUrun" data-id="${u.id}">
+      ${f ? html`<img class="sih-img" src="${f}" alt="">` : html`<span class="sih-img bos">${I('img')}</span>`}
+      <span class="t"><b>${u.model}</b><span>${[SIH.q ? u.kategori : '', u.modul, u.olcu, u.renk, u.yon].filter(Boolean).join(' · ') || u.kategori}</span>${u.fiyat ? html`<em>${money(u.fiyat, u.doviz)}</em>` : ''}</span>
+      <span class="sih-ekle ${n ? 'var' : ''}">${n ? `${n} ✓` : I('plus')}</span></button>`;
+}
+function sihUrunListe() {
+  const q = trAra(SIH.q), hepsi = DB.urun.all();
+  if (!hepsi.length) return html`<div class="sih-bos"><b>Katalogda ürün yok</b>Aşağıdan yeni ürün ekleyebilirsiniz.</div>`;
+  let list, baslik;
+  if (q) {
+    list = hepsi.filter(u => trAra([u.kod, u.kategori, u.model, u.modul, u.olcu, u.renk].join(' ')).includes(q));
+    list.sort((a, b) => a.kategori.localeCompare(b.kategori, 'tr') || a.model.localeCompare(b.model, 'tr'));
+    baslik = `Arama sonuçları · ${list.length}`;
+    if (!list.length) return html`<div class="sih-bos">Eşleşen ürün yok.<br>Aramayı temizleyip Kategori / Model ile bakabilirsiniz.</div>`;
+  } else {
+    if (!SIH.kat) return html`<div class="sih-bos">Ürünleri görmek için önce kategori, sonra model seçin.</div>`;
+    if (!SIH.model) return html`<div class="sih-bos">Şimdi <b>${SIH.kat}</b> içinden bir model seçin.</div>`;
+    list = hepsi.filter(u => u.kategori === SIH.kat && u.model === SIH.model);
+    baslik = `${list.length} çeşit`;
+  }
+  const fazla = list.length > 60;
+  return html`<div class="sih-l sih-ub">${baslik}</div>${list.slice(0, 60).map(sihUrunSatir)}${fazla ? html`<div class="muted sm" style="text-align:center;padding:6px">İlk 60 sonuç gösteriliyor. Aramayı daraltın.</div>` : ''}`;
+}
+/* dokunmatik ekranda liste açılınca klavye kendiliğinden açılmasın (listeyi kapatmasın) */
+function sihKlavyesiz(m) { if (m && matchMedia('(pointer:coarse)').matches) m.el.querySelector('[autofocus]')?.removeAttribute('autofocus'); return m; }
+function sihSecimCiz() { const s = $('#sihSecim'); if (s) { mount(s, sihSecim()); s.classList.toggle('hidden', !!SIH.q); } const u = $('#sihUrun'); if (u) mount(u, sihUrunListe()); }
+A.sihKatSec = () => sihKlavyesiz(picker({ title: 'Kategori seç', value: SIH.kat, options: sihKatlar().map(k => ({ v: k.ad, l: k.ad, sub: `${k.n} ürün` })),
+  onPick: v => {
+    const degisti = v !== SIH.kat; SIH.kat = v; if (degisti) SIH.model = '';
+    const ms = sihModeller(v); if (ms.length === 1) SIH.model = ms[0].ad;
+    sihSecimCiz(); if (!SIH.model && ms.length > 1) setTimeout(A.sihModelSec, 60);
+  } }));
+A.sihModelSec = () => { if (!SIH.kat) return; sihKlavyesiz(picker({ title: `Model seç · ${SIH.kat}`, value: SIH.model, options: sihModeller(SIH.kat).map(m => ({ v: m.ad, l: m.ad, sub: `${m.n} çeşit` })), onPick: v => { SIH.model = v; sihSecimCiz(); } })); };
+A.sihAraTemizle = () => { SIH.q = ''; const i = $('[data-sq="urun"]'); if (i) i.value = ''; $('.sih-ara-x')?.classList.add('hidden'); sihSecimCiz(); };
+function sihSepet() {
+  const d = state.draft, c = calc(d, []);
+  return html`<div class="sih-sh"><b>Teklifteki ürünler (${d.items.length})</b></div>
+    ${d.items.length ? d.items.map((it, i) => { const f = safeImg(offerFotoGet(it)), bad = SIH.hata.some(h => h.k === 'it' + i);
+      return html`<div class="sih-ki ${bad ? 'bad' : ''}">${f ? html`<img class="sih-img sm" src="${f}" alt="">` : html`<span class="sih-img sm bos">${I('img')}</span>`}
+        <div class="t"><b>${it.model || itemTitle(it)}</b><span>${it.adet || 0} × ${money(it.fiyat, d.doviz)}${[it.olcu, it.renk, ({ sag: 'SAĞ', sol: 'SOL', cift: 'ÇİFT', yok: 'YOK' }[normYon(it.yon)] || it.yon)].filter(Boolean).map(x => ' · ' + x).join('')}</span>${bad ? html`<span class="sih-e" style="margin:2px 0 0">${SIH.hata.find(h => h.k === 'it' + i).msg}</span>` : ''}</div>
+        <button type="button" class="btn ghost icon sm" data-act="sihKalem" data-i="${i}" aria-label="Düzenle">${I('edit')}</button><button type="button" class="btn ghost icon sm" data-act="sihSil" data-i="${i}" aria-label="Kaldır">${I('x')}</button></div>`; })
+      : html`<div class="empty sm">Henüz ürün eklenmedi. Listeden bir ürüne dokunun.</div>`}
+    <div class="sih-st-row"><span>Ana para</span><b>${money(c.ana, d.doviz)}</b></div>`;
+}
+A.sihUrun = el => { const u = DB.urun.find(el.dataset.id); if (u) sihKalemAc(u, -1); };
+A.sihKalem = el => { closeSihSepet(); sihKalemAc(null, +el.dataset.i); };
+A.sihSil = el => { const d = state.draft, i = +el.dataset.i, it = d.items[i]; if (!it) return; d.items.splice(i, 1); SIH.hata = []; sihYenile(); sihAltCiz(); toast(`${it.model || 'Ürün'} çıkarıldı`); };
+A.sihYeniUrun = () => {
+  urunForm(null, u => { if (u && state.draft) { if (!SIH.q) { SIH.kat = u.kategori; SIH.model = u.model; } sihYenile(); sihKalemAc(u, -1); } });
+  /* seçili kategori/model ve teklifin dövizi forma hazır gelir */
+  const ov = [...document.querySelectorAll('.ov')].pop(); if (!ov) return;
+  const yaz = (k, v) => { const el = ov.querySelector(`[data-u="${k}"]`); if (el && v) { el.value = v; el.dispatchEvent(new Event(el.tagName === 'SELECT' ? 'change' : 'input', { bubbles: true })); } };
+  if (!SIH.q) { yaz('kategori', SIH.kat); yaz('model', SIH.model); }
+  yaz('doviz', state.draft?.doviz);
+};
+A.sihSepet = () => {
+  if (SIH.adim !== 2 || matchMedia('(min-width:700px)').matches) return;
+  modal({ title: 'Teklifteki ürünler', cls: 'sih-ov sih-sepet-ov', body: html`<div id="sihSepetM">${sihSepet()}</div>` });
+};
+function closeSihSepet() { $('.sih-sepet-ov')?.remove(); }
+
+/* Ürün penceresi: adet, fiyat, ölçü, renk, yön, not */
+function sihKalemAc(u, i) {
+  const d = state.draft; if (!d) return;
+  const ed = i >= 0, it = ed ? deep(d.items[i]) : { uid: uid(), urunId: u.id, kod: u.kod, kategori: u.kategori, model: u.model, modul: u.modul, olcu: u.olcu || '', renk: u.renk || '', yon: u.yon || '', fotoCustom: false, fiyat: u.doviz === d.doviz ? (+u.fiyat || 0) : 0, adet: 1, aciklama: '' };
+  if (!it) return;
+  const ur = DB.urun.find(it.urunId), f = safeImg(offerFotoGet(it)), kv = getKatVariants(it);
+  const sec = (k, ozel) => { const s = new Set(), out = []; [ozel, ...(kv[k] || [])].forEach(v => { const c = clean(v, 80); if (c && !s.has(trAra(c))) { s.add(trAra(c)); out.push(c); } }); return out.slice(0, 12); };
+  const chips = k => html`${sec(k, ur ? ur[k] : '').map(v => html`<button type="button" class="sih-chip ${trAra(v) === trAra(it[k]) ? 'on' : ''}" data-ch="${k}" data-v="${v}">${v}</button>`)}`;
+  const toplam = () => money((+it.fiyat || 0) * (+it.adet || 0), d.doviz);
+  modal({ title: null, cls: 'sih-ov', body: html`<div class="sih-pu">${f ? html`<img class="sih-img" src="${f}" alt="">` : html`<span class="sih-img bos">${I('img')}</span>`}<div><b>${it.model || itemTitle(it)}</b><span>${[it.kategori, it.modul, it.kod].filter(Boolean).join(' · ')}</span></div><button class="btn ghost icon sm" data-x aria-label="Kapat">${I('x')}</button></div>
+    <div class="sih-g2">
+      <div class="field"><label>Adet</label><div class="sih-step"><button type="button" data-st="-1" aria-label="Azalt">−</button><input class="inp" data-f="adet" inputmode="numeric" value="${it.adet || 1}" maxlength="5"><button type="button" data-st="1" aria-label="Artır">+</button></div></div>
+      <div class="field"><label>Birim fiyat (${SYM[d.doviz] || d.doviz})</label><input class="inp sih-fiyat" data-f="fiyat" inputmode="decimal" value="${numStr(it.fiyat)}" placeholder="0,00" maxlength="16">${ur && ur.fiyat ? html`<div class="muted sm">Liste: ${money(ur.fiyat, ur.doviz)}${ur.doviz !== d.doviz ? ' (döviz farklı, fiyatı elle girin)' : ''}</div>` : ''}</div>
+    </div>
+    <div class="field"><label>Ölçü <span class="req">*</span></label><div class="sih-chips" data-chs="olcu">${chips('olcu')}</div><input class="inp" data-f="olcu" value="${it.olcu || ''}" placeholder="Başka ölçü yazın" maxlength="80" autocomplete="off"></div>
+    <div class="field"><label>Renk <span class="req">*</span></label><div class="sih-chips" data-chs="renk">${chips('renk')}</div><input class="inp" data-f="renk" value="${it.renk || ''}" placeholder="Başka renk yazın" maxlength="80" autocomplete="off"></div>
+    <div class="field"><label>Yön ${sihMasa(it) ? html`<span class="req">*</span>` : ''}</label><div class="sih-chips" data-chs="yon">${SIH_YON.map(([v, l]) => html`<button type="button" class="sih-chip ${normYon(it.yon) === v ? 'on' : ''}" data-ch="yon" data-v="${v}">${l}</button>`)}</div></div>
+    <div class="field"><label>Not</label><textarea class="inp" data-f="aciklama" rows="2" maxlength="1000" placeholder="Örn. kapaklar soft-close olacak">${it.aciklama || ''}</textarea></div>
+    <div class="sih-e" data-hata hidden></div>`,
+    foot: html`<button class="btn" data-x>Vazgeç</button><button class="btn primary sih-ekle-b" data-ok>${ed ? 'Kaydet' : 'Teklife ekle'} · <span data-top>${toplam()}</span></button>`,
+    onMount: m => {
+      const h = m.$('[data-hata]');
+      const yaz = () => { m.$('[data-top]').textContent = toplam(); };
+      const chipYak = k => $$(`[data-ch="${k}"]`, m.el).forEach(b => b.classList.toggle('on', k === 'yon' ? normYon(it.yon) === b.dataset.v : trAra(b.dataset.v) === trAra(it[k])));
+      m.el.addEventListener('input', e => {
+        const t = e.target, k = t.dataset.f; if (!k) return; h.hidden = true; t.classList.remove('bad');
+        if (k === 'adet') { t.value = t.value.replace(/\D/g, '').slice(0, 5); const v = Math.floor(num(t.value)); it.adet = v >= 1 ? Math.min(v, 99999) : 0; }
+        else if (k === 'fiyat') { t.value = t.value.replace(/[^0-9.,]/g, ''); const v = num(t.value); it.fiyat = v >= 0 ? r2(v) : 0; }
+        else if (k === 'aciklama') it.aciklama = cleanML(t.value, 1000);
+        else { it[k] = clean(t.value, 80); chipYak(k); }
+        yaz();
+      });
+      m.el.addEventListener('click', e => {
+        const st = e.target.closest('[data-st]');
+        if (st) { it.adet = Math.max(1, Math.min(99999, (+it.adet || 0) + +st.dataset.st)); m.$('[data-f="adet"]').value = it.adet; yaz(); return; }
+        const ch = e.target.closest('[data-ch]');
+        if (ch) { const k = ch.dataset.ch; h.hidden = true; if (k === 'yon') it.yon = normYon(it.yon) === ch.dataset.v ? '' : ch.dataset.v; else { it[k] = ch.dataset.v; m.$(`[data-f="${k}"]`).value = ch.dataset.v; } chipYak(k); return; }
+        if (e.target.closest('[data-ok]')) {
+          const E = [];
+          if (!(it.adet >= 1)) E.push(['adet', 'Adet en az 1 olmalı.']);
+          if (!(it.fiyat >= 0)) E.push(['fiyat', 'Fiyat geçersiz.']);
+          if (!clean(it.olcu, 80)) E.push(['olcu', 'Ölçü seçin veya yazın.']);
+          if (!clean(it.renk, 80)) E.push(['renk', 'Renk seçin veya yazın.']);
+          if (sihMasa(it) && !SIH_YON.some(([v]) => v === normYon(it.yon))) E.push(['yon', 'Masa için yön seçin.']);
+          if (E.length) { h.textContent = E.map(x => x[1]).join(' '); h.hidden = false; E.forEach(([k]) => m.$(`[data-f="${k}"]`)?.classList.add('bad')); return; }
+          it.olcu = clean(it.olcu, 80); it.renk = clean(it.renk, 80);
+          if (ed) d.items[i] = it; else d.items.push(it);
+          saveVariants([it]);
+          SIH.hata = SIH.hata.filter(x => x.k !== 'items' && !String(x.k).startsWith('it'));
+          m.close(); sihYenile(); sihAltCiz(); tkTaslakKaydet();
+          toast(ed ? 'Ürün güncellendi' : `${it.model || 'Ürün'} teklife eklendi`, 'ok', 1600);
+          if (!ed && !it.fiyat && ur && ur.fiyat && ur.doviz !== d.doviz) toast(`Liste fiyatı ${ur.doviz}; teklif ${d.doviz}. Fiyatı elle girin.`, 'err');
+        }
+      });
+    } });
+}
+
+/* ---------- 3) Şartlar ---------- */
+function sihAdim3() {
+  const d = state.draft, edit = !!d.id;
+  const gun = n => { const t = new Date((d.tarih || todayISO()) + 'T12:00:00'); t.setDate(t.getDate() + n); return isoOf(t); };
+  return html`<div class="sih-c">
+    <div class="sih-l">Teslim tarihi <span class="req">*</span></div>
+    <div class="sih-chips">${[15, 30, 45].map(n => html`<button type="button" class="sih-chip ${d.teslim === gun(n) ? 'on' : ''}" data-act="sihGun" data-g="${n}">${n} gün</button>`)}</div>
+    <div class="sih-g2"><div class="field"><label>Teklif tarihi</label><input type="date" class="inp" data-sd="tarih" value="${d.tarih}"></div>
+      <div class="field"><label>Teslim tarihi</label><input type="date" class="inp ${sihHataVar('teslim') ? 'bad' : ''}" data-sd="teslim" value="${d.teslim}" min="${d.tarih}"></div></div>
+    <div class="muted sm" id="sihTeslimY">${d.teslim ? '→ ' + sihUzun(d.teslim) : ''}</div>${sihHataMsg('teslim')}${sihHataMsg('tarih')}
+    ${SIH_SART.map(([k, l, o]) => html`<div class="sih-l">${l} <span class="req">*</span></div><div class="sih-tg">${o.map(([v, t]) => html`<button type="button" class="${d[k] === v ? 'on' : ''} ${sihHataVar(k) ? 'bad' : ''}" data-act="sihSec" data-k="${k}" data-v="${v}">${t}</button>`)}</div>${sihHataMsg(k)}`)}
+    <div class="sih-l">Döviz</div>
+    <div class="sih-chips">${CURS.map(c => html`<button type="button" class="sih-chip ${d.doviz === c ? 'on' : ''}" data-act="sihDoviz" data-v="${c}" ${edit ? 'disabled' : ''}>${SYM[c]} ${c}</button>`)}</div>${sihHataMsg('doviz')}
+    ${edit ? html`<p class="muted sm" style="margin:0">Kayıtlı teklifin dövizi değiştirilemez.</p>` : ''}</div>`;
+}
+A.sihGun = el => { const d = state.draft, t = new Date((d.tarih || todayISO()) + 'T12:00:00'); t.setDate(t.getDate() + +el.dataset.g); d.teslim = isoOf(t); SIH.hata = SIH.hata.filter(h => h.k !== 'teslim'); sihCiz(); };
+A.sihSec = el => { state.draft[el.dataset.k] = el.dataset.v; SIH.hata = SIH.hata.filter(h => h.k !== el.dataset.k); sihCiz(); };
+A.sihDoviz = el => {
+  const d = state.draft; if (d.id || d.doviz === el.dataset.v) return;
+  d.doviz = el.dataset.v; SIH.hata = SIH.hata.filter(h => h.k !== 'doviz'); sihCiz();
+  if (d.items.length) toast('Döviz değişti. Ürün fiyatlarını kontrol edin; çevrim yapılmaz.', 'err', 5000);
+};
+
+/* ---------- 4) Özet ---------- */
+function sihAdim4() {
+  const d = state.draft, c = sihCari(), edit = !!d.id;
+  const per = edit ? d.personelAd : DB.personel.find(d.personelId)?.ad;
+  const sart = SIH_SART.map(([k, , o]) => (o.find(x => x[0] === d[k]) || [, '—'])[1] + (k === 'nakliye' ? ' nakliye' : k === 'montaj' ? ' montaj' : '')).join(' · ');
+  const num2 = (k, l, extra = '') => html`<div class="field"><label>${l}</label><input class="inp ${sihHataVar(k) ? 'bad' : ''}" inputmode="decimal" data-sd="${k}" value="${k === 'kdv' ? (numStr(d.kdv) || '0') : numStr(d[k])}" placeholder="0,00" maxlength="16" ${extra}>${sihHataMsg(k)}</div>`;
+  return html`<div class="sih-c">
+    <button type="button" class="sih-r" data-act="sihGit" data-a="1"><span class="sih-av">${sihBas(c?.unvan)}</span><span class="t"><b>${c?.unvan || 'Müşteri seçilmedi'}</b><span>${per || 'Personel seçilmedi'}</span></span>${edit ? '' : I('edit')}</button>
+    <button type="button" class="sih-r" data-act="sihGit" data-a="3"><span class="sih-av sih-arti">${I('doc')}</span><span class="t"><b>Teslim ${d.teslim ? fmtDate(d.teslim) : '—'} · ${d.doviz}</b><span>${sart}</span></span>${I('edit')}</button>
+    <div class="sih-kart"><div class="sih-kart-h"><b>Ürünler (${d.items.length})</b><button type="button" class="btn ghost sm" data-act="sihGit" data-a="2">Düzenle</button></div>
+      ${d.items.map(it => html`<div class="sih-sat"><span>${it.adet} × ${it.model || itemTitle(it)} <i>${[it.olcu, it.renk].filter(Boolean).join(' · ')}</i></span><b>${money((it.fiyat || 0) * (it.adet || 0), d.doviz)}</b></div>`)}</div>
+    <div class="sih-g2">${num2('iskontoTutar', `İskonto (${SYM[d.doviz] || ''})`)}${num2('kdv', 'KDV %')}</div>
+    <div class="sih-g2">${num2('pesinat', `Alınan peşinat (${SYM[d.doviz] || ''})`)}
+      <div class="field"><label>Peşinat tarihi ${d.pesinat > 0 ? html`<span class="req">*</span>` : ''}</label><input type="date" class="inp ${sihHataVar('pesinatTarih') ? 'bad' : ''}" data-sd="pesinatTarih" value="${d.pesinatTarih || ''}" ${d.pesinat > 0 ? '' : 'disabled'}>${sihHataMsg('pesinatTarih')}</div></div>
+    <div class="sih-kart" id="sihTots">${totsHTML(calc(d, d.id ? payMap()[d.id] : []), d)}</div></div>`;
+}
+
+/* ---------- alt çubuk ---------- */
+function sihAlt() {
+  const d = state.draft, a = SIH.adim, c = calc(d, d.id ? payMap()[d.id] : []), n = d.items.length;
+  let b = '', s = '', go = '';
+  if (a === 1) { const cr = sihCari(); b = cr ? cr.unvan : 'Müşteri seçin'; s = (d.id ? d.personelAd : DB.personel.find(d.personelId)?.ad) ? 'Personel: ' + (d.id ? d.personelAd : DB.personel.find(d.personelId).ad) : 'Personel seçin'; go = 'Ürünler'; }
+  else if (a === 2) { b = `${n} ürün · ${money(c.ana, d.doviz)}`; s = !n ? 'Ürüne dokunarak ekleyin' : matchMedia('(min-width:700px)').matches ? 'KDV ve iskonto hariç' : 'Listeyi görmek için dokunun'; go = 'Şartlar'; }
+  else if (a === 3) { b = `${n} ürün · ${money(c.ana, d.doviz)}`; s = 'KDV ve iskonto hariç'; go = 'Özet'; }
+  else { b = money(c.genel, d.doviz); s = `Kalan ${money(c.kalan, d.doviz)}`; }
+  return html`<button type="button" class="sih-fs" data-act="sihSepet"><b>${b}</b><span>${s}</span></button>
+    ${a < 4 ? html`<button type="button" class="btn primary sih-go" data-act="sihIleri">${go} →</button>` : html`<button type="button" class="btn primary sih-go" data-act="sihKaydet">${d.id ? 'Değişiklikleri kaydet' : 'Teklifi kaydet'}</button>`}`;
+}
+function sihAltCiz() {
+  /* Yerinde güncellenir: düğme yeniden çizilirse dokunuş (click) kaybolabilir */
+  const f = $('#sihF'); if (!f) return;
+  const tmp = document.createElement('div'); mount(tmp, sihAlt());
+  const yb = tmp.querySelector('.sih-fs'), eb = f.querySelector('.sih-fs');
+  if (eb && yb) eb.innerHTML = yb.innerHTML; else mount(f, sihAlt());
+}
+function sihYenile() {
+  if (!tkPanel.el || !tkPanel.sih || !state.draft) return;
+  const c = $('#sihCari'); if (c) mount(c, sihCariListe());
+  const sc = $('#sihSecim'); if (sc) mount(sc, sihSecim());
+  const u = $('#sihUrun'); if (u) mount(u, sihUrunListe());
+  const s = $('#sihSepet'); if (s) mount(s, sihSepet());
+  const sm = $('#sihSepetM'); if (sm) mount(sm, sihSepet());
+}
+
+/* ---------- girişler ---------- */
+function sihGirdi(e) {
+  const t = e.target, d = state.draft; if (!d || !tkPanel.sih) return;
+  if (t.dataset.sq === 'cari') { if (e.type !== 'input') return; SIH.mq = clean(t.value, 60); mount($('#sihCari'), sihCariListe()); return; }
+  if (t.dataset.sq === 'urun') { if (e.type !== 'input') return; SIH.q = clean(t.value, 60); $('.sih-ara-x')?.classList.toggle('hidden', !SIH.q); $('#sihSecim')?.classList.toggle('hidden', !!SIH.q); mount($('#sihUrun'), sihUrunListe()); return; }
+  const k = t.dataset.sd; if (!k) return;
+  t.classList.remove('bad'); SIH.hata = SIH.hata.filter(h => h.k !== k); t.closest('.field')?.querySelector('.sih-e')?.remove();
+  if (['iskontoTutar', 'pesinat', 'kdv'].includes(k)) {
+    t.value = t.value.replace(/[^0-9.,]/g, ''); const v = num(t.value);
+    t.classList.toggle('bad', !(v >= 0) || (k === 'kdv' && v > 100));
+    d[k] = v >= 0 ? v : 0;
+    if (k === 'iskontoTutar') { d.iskontoTip = 'tutar'; d.iskontoDeger = 0; }
+    if (k === 'pesinat') { const de = $('[data-sd="pesinatTarih"]'); if (de) { de.disabled = !(d.pesinat > 0); if (d.pesinat > 0 && !d.pesinatTarih) { d.pesinatTarih = todayISO(); de.value = d.pesinatTarih; } } }
+    const tt = $('#sihTots'); if (tt) mount(tt, totsHTML(calc(d, d.id ? payMap()[d.id] : []), d));
+  } else {
+    d[k] = /^\d{4}-\d{2}-\d{2}$/.test(t.value) ? t.value : '';
+    if (k === 'tarih') { const te = $('[data-sd="teslim"]'); if (te) te.min = d.tarih; }
+    if (k === 'teslim' || k === 'tarih') { const y = $('#sihTeslimY'); if (y) y.textContent = d.teslim ? '→ ' + sihUzun(d.teslim) : ''; $$('[data-act="sihGun"]').forEach(b => { const x = new Date((d.tarih || todayISO()) + 'T12:00:00'); x.setDate(x.getDate() + +b.dataset.g); b.classList.toggle('on', isoOf(x) === d.teslim); }); }
+  }
+  sihAltCiz();
+}
+
+/* ---------- gezinme, doğrulama, kayıt ---------- */
+function sihHatalar(d) {
+  const ADIM = { doviz: 3, tarih: 3, teslim: 3, nakliye: 3, montaj: 3, teslimYeri: 3, kdv: 4, pesinatTarih: 4, pesinat: 4, iskontoTutar: 4 };
+  return validateTeklif(d).map(({ sel, msg }) => {
+    if (sel === '#fCari') return { adim: 1, k: 'cari', msg };
+    if (sel === '#fPers') return { adim: 1, k: 'pers', msg };
+    if (sel === '#items') return { adim: 2, k: 'items', msg };
+    const mi = /data-idx="(\d+)"/.exec(sel); if (mi) return { adim: 2, k: 'it' + mi[1], msg: `${(state.draft.items[+mi[1]]?.model || 'Ürün')}: ${msg} Düzenlemek için ✎` };
+    const md = /data-d="(\w+)"/.exec(sel); if (md) return { adim: ADIM[md[1]] || 4, k: md[1], msg };
+    return { adim: 4, k: 'genel', msg };
+  });
+}
+function sihGoster(hatalar, adim) {
+  SIH.hata = hatalar.filter(h => h.adim === adim);
+  // ürün satırı hatalarında aynı ürünün tek mesajı kalsın
+  const gor = new Set(); SIH.hata = SIH.hata.filter(h => { if (gor.has(h.k)) return false; gor.add(h.k); return true; });
+  SIH.adim = adim; SIH.en = Math.max(SIH.en, adim); sihCiz();
+  toast(SIH.hata[0]?.msg?.split(' Düzenlemek')[0] || 'Eksik bilgi var', 'err');
+}
+A.sihIleri = () => {
+  const d = state.draft, a = SIH.adim, h = sihHatalar(d).filter(x => x.adim === a);
+  if (h.length) return sihGoster(h, a);
+  SIH.hata = []; SIH.adim = a + 1; SIH.en = Math.max(SIH.en, SIH.adim); sihCiz(); $('#sihB')?.scrollTo(0, 0);
+};
+A.sihGeri = () => { if (SIH.adim > 1) { SIH.hata = []; SIH.adim--; sihCiz(); } else A.formBack(); };
+A.sihGit = el => { const n = +el.dataset.a; if (!(n >= 1 && n <= 4) || n > SIH.en || n === SIH.adim) return; SIH.hata = []; SIH.adim = n; sihCiz(); };
+A.sihKaydet = async el => {
+  const d = state.draft, h = sihHatalar(d);
+  if (h.length) { const ilk = Math.min(...h.map(x => x.adim)); return sihGoster(h, ilk); }
+  if (!d.id) Local.set('sih_pers', d.personelId);
+  await A.saveTeklif(el);
+  if (!tkPanel.el && state.view === 'teklifDetay' && state.params?.id) sihBitti(state.params.id);
+};
+
+/* ---------- kaydedildi: PDF göster / paylaş / siparişe gönder ---------- */
+function sihBitti(id) {
+  const t = DB.teklif.find(id); if (!t) return;
+  const c = calc(t, payMap()[t.id] || []), paylasVar = !!navigator.share && !desktop();
+  let dosya = null;
+  const hazir = paylasVar ? tkPdfBlob(t, curPdfOpts()).then(b => { dosya = new File([b], teklifFileName(t), { type: 'application/pdf' }); const p = $('.sih-done [data-k="paylas"] .t span'); if (p) p.textContent = 'WhatsApp, e-posta… telefonun paylaş menüsü'; return dosya; }).catch(() => null) : null;
+  modal({ title: null, cls: 'sih-ov sih-done', body: html`<div class="sih-okk"><div class="ci">✓</div><b>Teklif ${t.no} kaydedildi</b><span>${t.cariSnap?.unvan || ''} · ${money(c.genel, t.doviz)}</span>${durumTag(t)}</div>
+    <div class="sih-acts">
+      <button type="button" class="sih-r" data-k="pdf"><span class="sih-av sih-arti">${I('pdf')}</span><span class="t"><b>PDF göster</b><span>Teklifi ekranda aç</span></span></button>
+      ${paylasVar ? html`<button type="button" class="sih-r sih-vurgu" data-k="paylas"><span class="sih-av sih-arti">${I('share')}</span><span class="t"><b>PDF'i paylaş</b><span>PDF hazırlanıyor…</span></span></button>` : ''}
+      ${!sipBag(t) ? html`<button type="button" class="sih-r" data-k="sip" data-id="${t.id}"><span class="sih-av sih-arti">${I('box')}</span><span class="t"><b>Siparişe gönder</b><span>Müşteri onayladıysa Sipariş Takibi'ne gönderir</span></span></button>` : ''}
+    </div>
+    <div class="sih-g2" style="margin-top:12px"><button type="button" class="btn" data-k="kapat">Teklif detayına git</button><button type="button" class="btn" data-k="yeni">${I('plus')} Yeni teklif</button></div>`,
+    onMount: m => m.el.addEventListener('click', async e => {
+      const b = e.target.closest('[data-k]'); if (!b) return; const k = b.dataset.k;
+      if (k === 'kapat') return m.close();
+      if (k === 'yeni') { m.close(); return go('teklifForm', {}); }
+      if (k === 'pdf') return pdfPreview(t.id);
+      if (k === 'paylas') {
+        if (dosya) { try { await navigator.share({ title: `Teklif ${t.no}`, files: [dosya] }); } catch (er) { if (!er || er.name !== 'AbortError') shareTeklif(t); } return; }
+        toast('PDF hazırlanıyor, birkaç saniye sonra tekrar dokunun.'); await hazir; if (!dosya) shareTeklif(t); return;
+      }
+      if (k === 'sip') { await A.sipGonder(b); if (sipBag(DB.teklif.find(t.id))) b.remove(); }
+    }) });
+}
+
 
 /* =====================================================================
    TEKLİF DETAY + ÖDEMELER
@@ -1940,8 +2558,7 @@ function custSatirlar(cs, L) {
 const FOTO_PX = { s: 56, m: 88, l: 130 }, LOGO_PX = { s: 34, m: 52, l: 76 };
 function pdfDoc(t, o) {
   const L = PL[o.lang] || PL.tr, cs = t.cariSnap, pays = (payMap()[t.id] || []).sort((a, b) => a.tarih.localeCompare(b.tarih)), c = calc(t, pays), fp = FOTO_PX[o.foto] || 88;
-  const order = catOrder(); const idx = k => { const i = order.indexOf(trLower(k)); return i < 0 ? 999 : i; };
-  const items = t.items.map((it, n) => ({ it, n })).sort((a, b) => idx(a.it.kategori) - idx(b.it.kategori) || a.n - b.n);
+  const items = t.items.map((it, n) => ({ it, n }));   /* girildiği sıra */
   let lastCat = null, zi = 0; const logo = logoSrc();
   const radio = (k, opts) => html`<span>${L[k === 'teslimYeri' ? 'yer' : k]}</span><span>${opts.map(v => html`<span class="rd"><i class="${t[k] === v ? 'on' : ''}"></i>${L[v]}</span>`)}</span>`;
   return html`<div class="pdoc ${o.size} ${o.orient === 'landscape' ? 'land' : ''}">
@@ -2047,8 +2664,7 @@ async function tkPdfBlob(t, o) {
   await tkEnsurePdfmake();
   const L = PL[o.lang] || PL.tr, cs = t.cariSnap || {}, pays = (payMap()[t.id] || []).sort((a, b) => a.tarih.localeCompare(b.tarih)), c = calc(t, pays);
   const INK = '#1a1d24', MUT = '#6b707c', px = v => v * 0.75, fp = px(FOTO_PX[o.foto] || 88), lh = px(LOGO_PX[o.logoSize] || 52);
-  const order = catOrder(), idx = k => { const i = order.indexOf(trLower(k)); return i < 0 ? 999 : i; };
-  const items = t.items.map((it, n) => ({ it, n })).sort((a, b) => idx(a.it.kategori) - idx(b.it.kategori) || a.n - b.n);
+  const items = t.items.map((it, n) => ({ it, n }));   /* girildiği sıra */
   const logo = await tkImg(logoSrc(), 900, 'png');
   const fotos = new Map();
   for (const { it } of items) { const f = safeImg(offerFotoGet(it)); if (f && !fotos.has(f)) fotos.set(f, await tkImg(f, 600, 'jpeg')); }
@@ -2436,8 +3052,8 @@ VIEWS.musteriler = main => {
 };
 function drawCari() {
   if (!$('#tw')) return;
-  const st = cariStats(), q = trLower(MQ.q);
-  const rows = DB.cari.all().filter(c => !q || trLower([c.unvan, c.tur, c.sehir, c.ilce, c.mahalle, c.adres, c.ulke, c.gsm, c.eposta, c.yetkili, c.vkn].join(' ')).includes(q)).sort((a, b) => a.unvan.localeCompare(b.unvan, 'tr'));
+  const st = cariStats(), q = trAra(MQ.q);
+  const rows = DB.cari.all().filter(c => !q || trAra([c.unvan, c.tur, c.sehir, c.ilce, c.mahalle, c.adres, c.ulke, c.gsm, c.eposta, c.yetkili, c.vkn].join(' ')).includes(q)).sort((a, b) => a.unvan.localeCompare(b.unvan, 'tr'));
   $('#cnt').textContent = `${rows.length} cari`;
   mount($('#tw'), rows.length ? html`<table class="tbl resp"><thead><tr>${['Cari Ünvanı', 'Tür', 'Şehir / Ülke', 'GSM', 'E-Posta', 'Döviz', 'Teklif', 'Toplam', ''].map(h => html`<th><div class="thi">${h}</div></th>`)}</tr></thead><tbody>
     ${rows.map(c => html`<tr data-act="openCari" data-id="${c.id}"><td class="b">${c.unvan}</td><td>${c.tur}</td><td>${c.sehir || c.ulke}</td><td>${c.gsm}</td><td>${c.eposta || '—'}</td><td>${c.doviz}</td><td>${st[c.id]?.n || 0}</td><td>${fmtMulti(st[c.id]?.top || {})}</td>
@@ -2484,9 +3100,9 @@ function personelForm(p, onSaved) {
 }
 const PQ = { q: '' };
 function personelListHTML() {
-  const pm = payMap(), q = trLower(PQ.q), st = {};
+  const pm = payMap(), q = trAra(PQ.q), st = {};
   for (const t of DB.teklif.all()) { if (t.deletedAt) continue; const s = st[t.personelId] ||= { n: 0, top: {} }; s.n++; addTo(s.top, t.doviz, calc(t, pm[t.id]).genel); }
-  const rows = DB.personel.all().filter(p => !q || trLower(p.ad).includes(q)).sort((a, b) => a.ad.localeCompare(b.ad, 'tr'));
+  const rows = DB.personel.all().filter(p => !q || trAra(p.ad).includes(q)).sort((a, b) => a.ad.localeCompare(b.ad, 'tr'));
   return rows.length ? html`<table class="tbl resp"><thead><tr>${['Ad Soyad', 'Teklif Sayısı', 'Toplam Teklif Tutarı', ''].map(h => html`<th><div class="thi">${h}</div></th>`)}</tr></thead><tbody>
     ${rows.map(p => html`<tr data-act="openPers" data-id="${p.id}"><td class="b">${p.ad}</td><td>${st[p.id]?.n || 0}</td><td>${fmtMulti(st[p.id]?.top || {})}</td><td><button class="btn ghost icon sm" data-act="persMenu" data-id="${p.id}" aria-label="İşlemler">${I('dots')}</button></td></tr>`)}</tbody></table>
     <div class="cards">${rows.map(p => html`<div class="lcard" data-act="openPers" data-id="${p.id}"><div class="row"><span class="ttl">${p.ad}</span><button class="btn ghost icon sm" data-act="persMenu" data-id="${p.id}" aria-label="İşlemler">${I('dots')}</button></div><div class="row sm"><span class="muted">${st[p.id]?.n || 0} teklif</span><span>${fmtMulti(st[p.id]?.top || {})}</span></div></div>`)}</div>`
@@ -2525,21 +3141,21 @@ VIEWS.urunler = main => {
 };
 function drawUrun() {
   if (!$('#tw') || !$('#ukat')) return;
-  const all = DB.urun.all(), kats = [...new Map(all.map(u => [trLower(u.kategori), u.kategori])).values()];
+  const all = DB.urun.all(), kats = [...new Map(all.map(u => [trLower(u.kategori), u.kategori])).values()].sort((a, b) => a.localeCompare(b, 'tr'));
   mount($('#ukat'), html`<option value="">Tüm kategoriler</option>${kats.map(k => html`<option ${UQ.kat === k ? 'selected' : ''}>${k}</option>`)}`);
-  const q = trLower(UQ.q), rows = all.filter(u => (!UQ.kat || u.kategori === UQ.kat) && (!q || trLower([u.kod, u.kategori, u.model, u.modul, u.olcu, u.renk, u.yon].join(' ')).includes(q)));
+  const q = trAra(UQ.q), rows = all.filter(u => (!UQ.kat || u.kategori === UQ.kat) && (!q || trAra([u.kod, u.kategori, u.model, u.modul, u.olcu, u.renk, u.yon].join(' ')).includes(q)));
   $('#cnt').textContent = `${rows.length} ürün`;
   const th = u => { const f = safeImg(modelFoto.get(u.kategori, u.model, u.modul)); return f ? html`<img class="thumb" src="${f}" alt="">` : html`<span class="thumb">Fotoğraf Yok</span>`; };
   mount($('#tw'), rows.length ? html`<table class="tbl resp"><thead><tr>${['', 'Kod', 'Kategori', 'Model', 'Modül', 'Ölçü', 'Renk', 'Yön', 'Liste Fiyatı', ''].map(h => html`<th><div class="thi">${h}</div></th>`)}</tr></thead><tbody>
     ${rows.map(u => html`<tr data-act="openUrun" data-id="${u.id}"><td>${th(u)}</td><td class="muted">${u.kod}</td><td>${u.kategori}</td><td class="b">${u.model}</td><td>${u.modul || '—'}</td><td>${u.olcu || '—'}</td><td>${u.renk || '—'}</td><td>${u.yon || '—'}</td><td>${u.fiyat ? money(u.fiyat, u.doviz) : '—'}</td>
       <td><button class="btn ghost icon sm" data-act="urunMenu" data-id="${u.id}" aria-label="İşlemler">${I('dots')}</button></td></tr>`)}</tbody></table>
-    <div class="cards">${rows.map(u => html`<div class="lcard" data-act="openUrun" data-id="${u.id}"><div class="row" style="justify-content:flex-start">${th(u)}<div style="min-width:0;flex:1"><div class="ttl">${u.kategori} · ${u.model}</div><div class="muted sm">${[u.modul, u.olcu, u.renk, u.yon].filter(Boolean).join(' · ')}</div></div><button class="btn ghost icon sm" data-act="urunMenu" data-id="${u.id}" aria-label="İşlemler">${I('dots')}</button></div></div>`)}</div>`
+    <div class="cards">${rows.map(u => html`<div class="lcard" data-act="openUrun" data-id="${u.id}"><div class="row" style="justify-content:flex-start">${th(u)}<div style="min-width:0;flex:1"><div class="ttl ttl-tam">${u.model}</div><div class="muted sm">${[u.kategori, u.modul, u.olcu, u.renk, u.yon].filter(Boolean).join(' · ')}</div></div><button class="btn ghost icon sm" data-act="urunMenu" data-id="${u.id}" aria-label="İşlemler">${I('dots')}</button></div></div>`)}</div>`
     : html`<div class="empty"><b>${all.length ? 'Eşleşen ürün yok' : 'Katalog boş'}</b>${all.length ? '' : 'Yeni Ürün ile kategori, model ve varyant bilgilerini girin.'}</div>`);
 }
 function urunForm(u, onSaved) {
   const v = u ? { ...u } : { kategori: '', model: '', modul: '', olcu: '', renk: '', yon: '', fiyat: '', doviz: S.doviz };
   let foto = u ? modelFoto.get(u.kategori, u.model, u.modul) : '', fotoChanged = false;
-  const all = DB.urun.all(); const kats = [...new Set(all.map(x => x.kategori))];
+  const all = DB.urun.all(); const kats = [...new Set(all.map(x => x.kategori))].sort((a, b) => a.localeCompare(b, 'tr'));
   modal({ title: u ? `Ürünü düzenle — ${u.kod}` : 'Yeni ürün', size: 'lg', body: html`<datalist id="dlKat">${kats.map(k => html`<option value="${k}">`)}</datalist><datalist id="dlMod"></datalist>
       <div class="grid g2"><div class="field"><label>1. Kategori <span class="req">*</span></label><input class="inp" data-u="kategori" list="dlKat" value="${v.kategori}" maxlength="60" autofocus></div>
       <div class="field"><label>2. Model <span class="req">*</span></label><input class="inp" data-u="model" list="dlMod" value="${v.model}" maxlength="60"></div>
@@ -2549,7 +3165,7 @@ function urunForm(u, onSaved) {
       <div class="field span2"><label>Model fotoğrafı <span class="muted">(aynı kategori + modeldeki tüm ürünlerde kullanılır · JPG, PNG, WEBP · CTRL+V ile yapıştırabilirsiniz)</span></label><div style="display:flex;gap:10px;align-items:center" data-fw></div></div></div>`,
     foot: html`<button class="btn" data-x>Vazgeç</button><button class="btn primary" data-s>${u ? 'Değişiklikleri Kaydet' : 'Ürünü Kaydet'}</button>`,
     onMount: m => {
-      const dl = () => mount(m.$('#dlMod'), [...new Set(all.filter(x => trLower(x.kategori) === trLower(v.kategori)).map(x => x.model))].map(x => html`<option value="${x}">`));
+      const dl = () => mount(m.$('#dlMod'), [...new Set(all.filter(x => trLower(x.kategori) === trLower(v.kategori)).map(x => x.model))].sort((a, b) => a.localeCompare(b, 'tr')).map(x => html`<option value="${x}">`));
       const fw = () => { const f = safeImg(foto); mount(m.$('[data-fw]'), html`${f ? html`<img class="thumb" style="width:64px;height:64px" src="${f}" alt="" data-act="img">` : html`<span class="thumb" style="width:64px;height:64px">Fotoğraf Yok</span>`}<button type="button" class="btn sm" data-up>${I('img')} ${f ? 'Değiştir' : 'Yükle'}</button>${f ? html`<button type="button" class="btn sm danger" data-rm>Kaldır</button>` : ''}`); };
       dl(); fw();
       m.el.addEventListener('paste', async e => {
@@ -2601,7 +3217,7 @@ VIEWS.raporlar = main => {
       <div class="ph-act"><button class="btn" data-act="repXls">${I('xls')} Excel</button><button class="btn" data-act="repPrint">${I('print')} PDF / Yazdır</button></div></div>
     <div class="toolbar"><div class="chips">${[['', 'Tümü'], ...Object.entries(TARIH_L)].map(([k, l]) => html`<button class="chip ${RQ.p === k ? 'on' : ''}" data-act="repP" data-k="${k}">${l}</button>`)}</div>
       <div class="${RQ.p === 'ozel' ? '' : 'hidden'}" style="display:flex;gap:8px"><input type="date" class="inp" id="rf" value="${RQ.from}" style="width:auto"><input type="date" class="inp" id="rt" value="${RQ.to}" style="width:auto"></div></div>
-    <div class="tabs">${[['genel', 'Genel Bakış'], ['teklif', 'Teklif'], ['musteri', 'Müşteri'], ['personel', 'Personel'], ['urun', 'Ürün'], ['finans', 'Finansal Özet']].map(([k, l]) => html`<button class="${RQ.tab === k ? 'on' : ''}" data-act="repTab" data-k="${k}">${l}</button>`)}</div>
+    <div class="tabs rep-tabs">${[['genel', 'Genel Bakış'], ['teklif', 'Teklif'], ['musteri', 'Müşteri'], ['personel', 'Personel'], ['urun', 'Ürün'], ['finans', 'Finansal Özet']].map(([k, l]) => html`<button class="${RQ.tab === k ? 'on' : ''}" data-act="repTab" data-k="${k}">${l}</button>`)}</div>
     <div id="rep"></div></div>`);
   ['rf', 'rt'].forEach(i => $('#' + i).addEventListener('change', e => { RQ[i === 'rf' ? 'from' : 'to'] = e.target.value; drawRep(); }));
   drawRep();
@@ -2637,7 +3253,7 @@ function drawRep() {
     const up = all.filter(t => t.teslim >= t0 && t.teslim <= t7 && tkDurum(t) !== 'Teslim Edildi' && tkDurum(t) !== 'SSH' && tkDurum(t) !== 'İptal').sort((a, b) => a.teslim.localeCompare(b.teslim));
     const bek = all.filter(t => t.durum === 'Beklemede').sort((a, b) => b.tarih.localeCompare(a.tarih)).slice(0, 8);
     const log = Local.get('log', []).slice(0, 10);
-    const mini = (arr, f) => arr.length ? html`<div class="tw"><table class="tbl"><tbody>${arr.map(t => html`<tr data-act="openTeklif" data-id="${t.id}"><td class="b">${t.no}</td><td>${t.cariSnap.unvan}</td><td>${f(t)}</td><td class="r">${money(calc(t, pm[t.id]).genel, t.doviz)}</td></tr>`)}</tbody></table></div>` : html`<div class="empty card" style="padding:24px">Kayıt yok</div>`;
+    const mini = (arr, f) => arr.length ? html`<div class="tw"><table class="tbl"><tbody>${arr.map(t => html`<tr data-act="openTeklif" data-id="${t.id}"><td class="mn-td"><div class="mn1"><b>${t.no}</b> · ${t.cariSnap.unvan}</div><div class="mn2"><span>${f(t)}</span><b>${money(calc(t, pm[t.id]).genel, t.doviz)}</b></div></td></tr>`)}</tbody></table></div>` : html`<div class="empty card" style="padding:24px">Kayıt yok</div>`;
     mount(box, html`<div class="stats"><div class="stat"><div class="muted sm">Teklif sayısı</div><div class="v">${D.ts.length}</div></div><div class="stat"><div class="muted sm">Teklif toplamı</div><div class="v">${fmtMulti(top)}</div></div><div class="stat"><div class="muted sm">Tahsilat</div><div class="v">${fmtMulti(pes)}</div></div><div class="stat"><div class="muted sm">Kalan</div><div class="v">${fmtMulti(kal)}</div></div></div>
       <div class="dgrid"><div><h3 style="margin-bottom:10px">Önümüzdeki 7 gün teslimatlar</h3>${mini(up, t => fmtDate(t.teslim))}</div><div><h3 style="margin-bottom:10px">Bekleyen teklifler</h3>${mini(bek, t => fmtDate(t.tarih))}</div>
       <div><h3 style="margin-bottom:10px">Bu cihazdaki son işlemler</h3>${log.length ? html`<div class="card" style="padding:6px 14px">${log.map(l => html`<div style="padding:8px 0;border-bottom:1px solid var(--border)"><div>${l.msg}</div><div class="muted sm">${fmtDT(l.ts)}</div></div>`)}</div>` : html`<div class="empty card" style="padding:24px">Kayıt yok</div>`}</div></div>`);
@@ -2728,10 +3344,10 @@ function setGenel(b) {
 function setGuv(b) {
   mount(b, html`<div class="card"><div class="card-h"><h3>Ortak şifre</h3></div>
       <p class="muted sm" style="margin-top:0">Tüm bilgisayarlar giriş ve ayarlar için aynı şifreyi kullanır. Şifre değişince diğer bilgisayarlarda oturum kapanır ve yeni şifre istenir. En az 6 karakter.</p>
-      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" data-chg>Şifreyi değiştir</button><button class="btn" data-others>Diğer tüm bilgisayarlarda oturumu kapat</button></div></div>
+      <div class="guv-btns" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" data-chg>Şifreyi değiştir</button><button class="btn" data-others>Diğer tüm bilgisayarlarda oturumu kapat</button></div></div>
     <div class="card"><div class="card-h"><h3>Sunucu bağlantısı</h3></div>
       <dl class="kv"><dt>Supabase adresi</dt><dd>${CFG.url}</dd><dt>Ekip hesabı</dt><dd>${CFG.email}</dd></dl>
-      ${window.PRONTO_CONFIG?.url ? '' : html`<button class="btn sm danger" style="margin-top:12px" data-cfg>Bağlantı ayarlarını değiştir</button>`}</div>`);
+      ${window.PRONTO_CONFIG?.url ? '' : html`<button class="btn sm danger guv-cfg" style="margin-top:12px" data-cfg>Bağlantı ayarlarını değiştir</button>`}</div>`);
   b.addEventListener('click', async e => {
     if (e.target.closest('[data-chg]')) changePassword();
     if (e.target.closest('[data-others]')) {

@@ -575,6 +575,8 @@ table.pd-t{width:100%;border-collapse:collapse;font-size:9pt}
 .sih-yeni{border:1.5px dashed var(--accent);background:color-mix(in srgb,var(--accent) 7%,var(--surface))}
 .sih-ok-i{color:var(--accent);font-weight:900;font-size:18px}
 .sih-chips{display:flex;flex-wrap:wrap;gap:7px}
+.sih-mc,.sih-mp{display:flex;flex-direction:column;gap:10px;min-width:0}
+.sih-fb.bad{outline:2px solid #e5484d;outline-offset:3px}
 .sih-chips.bad{outline:2px solid #e5484d;outline-offset:4px;border-radius:12px}
 .sih-chip{min-height:40px;padding:8px 14px;border-radius:999px;border:1px solid var(--border-2);background:var(--surface);color:var(--text);font:650 13.5px var(--font);cursor:pointer;display:inline-flex;align-items:center;gap:6px;-webkit-tap-highlight-color:transparent}
 .sih-chip.on{background:var(--text);color:var(--bg);border-color:transparent}
@@ -664,6 +666,7 @@ table.pd-t{width:100%;border-collapse:collapse;font-size:9pt}
 /* tablet: ürünler ızgara, sağda teklif listesi */
 @media (min-width:700px){
  .sih-c{max-width:none}
+ .sih-m2{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:20px;align-items:start}
  .sih-urun{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
  .sih-ul{display:flex;flex-direction:column;gap:10px;min-width:0}
  .sih-ug{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
@@ -2130,30 +2133,32 @@ function sihAdim1() {
       <div class="sih-l">Personel</div><div class="sih-chips"><span class="sih-chip on">${d.personelAd || '—'}</span></div>
       <p class="muted sm">Kayıtlı teklifte müşteri ve personel değiştirilemez.</p></div>`;
   }
-  return html`<div class="sih-c">
+  const per = DB.personel.find(d.personelId);
+  return html`<div class="sih-c sih-m2"><div class="sih-mc">
     <div class="search sih-ara"><span>${I('search')}</span><input class="inp" data-sq="cari" value="${SIH.mq}" placeholder="Müşteri adı, telefon veya şehir…" maxlength="60" enterkeyhint="search" autocomplete="off"></div>
     <button type="button" class="sih-r sih-yeni" data-act="sihYeniCari"><span class="sih-av sih-arti">${I('plus')}</span><span class="t"><b>Yeni müşteri</b><span>Tam müşteri formu açılır</span></span></button>
     ${sihHataMsg('cari')}
     <div id="sihCari">${sihCariListe()}</div>
-    <div class="sih-l">Personel</div>
-    <div class="sih-chips ${sihHataVar('pers') ? 'bad' : ''}" id="sihPers">${DB.personel.all().slice().sort((a, b) => trLower(a.ad).localeCompare(trLower(b.ad), 'tr')).map(p => html`<button type="button" class="sih-chip ${d.personelId === p.id ? 'on' : ''}" data-act="sihPers" data-id="${p.id}">${p.ad}</button>`)}<button type="button" class="sih-chip sih-chip-ek" data-act="sihYeniPers">${I('plus')} Yeni</button></div>
+    </div><div class="sih-mp">
+    <button type="button" class="sih-fb ${per ? 'on' : ''} ${sihHataVar('pers') ? 'bad' : ''}" id="sihPers" data-act="sihPersSec">${I('user')}<span class="v"><small>PERSONEL</small><b class="${per ? '' : 'bos'}">${per ? per.ad : 'Personel seçin'}</b></span>${I('down')}</button>
     ${sihHataMsg('pers')}
-    <p class="muted sm" style="margin:0">Seçilen personel bu cihazda hatırlanır.</p></div>`;
+    <p class="muted sm" style="margin:0">Seçilen personel bu cihazda hatırlanır.</p></div></div>`;
 }
 function sihCariListe() {
   const d = state.draft, q = trAra(SIH.mq), sira = new Map();
   DB.teklif.all().filter(t => !t.deletedAt).sort((a, b) => (b.created || 0) - (a.created || 0)).forEach(t => { if (t.cariId && !sira.has(t.cariId)) sira.set(t.cariId, sira.size); });
   let list = DB.cari.all();
   if (q) list = list.filter(c => trAra([c.unvan, c.gsm, c.sabit, c.sehir, c.ilce, c.yetkili].join(' ')).includes(q));
-  list = list.slice().sort((a, b) => (sira.has(a.id) ? sira.get(a.id) : 1e9) - (sira.has(b.id) ? sira.get(b.id) : 1e9) || a.unvan.localeCompare(b.unvan, 'tr')).slice(0, 40);
+  list = list.slice().sort((a, b) => (sira.has(a.id) ? sira.get(a.id) : 1e9) - (sira.has(b.id) ? sira.get(b.id) : 1e9) || a.unvan.localeCompare(b.unvan, 'tr')).slice(0, q ? 40 : 4);
   const sec = DB.cari.find(d.cariId);
-  if (sec && !list.some(c => c.id === sec.id) && !q) list.unshift(sec);
+  if (sec && !list.some(c => c.id === sec.id) && !q) { list.unshift(sec); list.length = Math.min(list.length, 4); }
   return html`<div class="sih-l">${q ? 'Sonuçlar' : 'Son müşteriler'}</div>${list.length ? list.map(c => html`<button type="button" class="sih-r ${d.cariId === c.id ? 'on' : ''}" data-act="sihCari" data-id="${c.id}">
       <span class="sih-av">${sihBas(c.unvan)}</span><span class="t"><b>${c.unvan}</b><span>${[[c.ilce, c.sehir].filter(Boolean).join(' / '), c.gsm].filter(Boolean).join(' · ') || c.tur || ''}</span></span>${d.cariId === c.id ? html`<span class="sih-ok-i">✓</span>` : ''}</button>`)
     : html`<div class="empty sm">${DB.cari.all().length ? 'Eşleşen müşteri yok. "Yeni müşteri" ile ekleyebilirsiniz.' : 'Henüz müşteri yok. "Yeni müşteri" ile ekleyin.'}</div>`}`;
 }
 A.sihCari = el => { const d = state.draft; if (d.id) return; d.cariId = el.dataset.id; SIH.hata = SIH.hata.filter(h => h.k !== 'cari'); sihYenile(); sihAltCiz(); };
 A.sihPers = el => { const d = state.draft; if (d.id) return; d.personelId = el.dataset.id; Local.set('sih_pers', d.personelId); SIH.hata = SIH.hata.filter(h => h.k !== 'pers'); sihCiz(); };
+A.sihPersSec = () => { const d = state.draft; if (d.id) return; sihKlavyesiz(picker({ title: 'Personel seç', value: d.personelId, options: DB.personel.all().slice().sort((a, b) => trLower(a.ad).localeCompare(trLower(b.ad), 'tr')).map(p => ({ v: p.id, l: p.ad })), addLabel: 'Yeni personel', onAdd: () => A.sihYeniPers(), onPick: v => A.sihPers({ dataset: { id: v } }) })); };
 A.sihYeniCari = () => cariForm(null, c => { if (!c || !state.draft) return; state.draft.cariId = c.id; SIH.mq = ''; SIH.hata = SIH.hata.filter(h => h.k !== 'cari'); sihCiz(); });
 A.sihYeniPers = () => personelForm(null, p => { if (!p || !state.draft) return; state.draft.personelId = p.id; Local.set('sih_pers', p.id); sihCiz(); });
 

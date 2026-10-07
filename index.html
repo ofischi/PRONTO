@@ -1202,10 +1202,19 @@ function modal({ title, body, foot, size = '', cls = '', onMount, closeOnBg = tr
     ${title != null ? html`<div class="mdl-h"><h3>${title}</h3><button class="btn ghost icon sm" data-x aria-label="Kapat">${I('x')}</button></div>` : ''}
     <div class="mdl-b">${body || ''}</div>${foot ? html`<div class="mdl-f">${foot}</div>` : ''}</div>`);
   document.body.appendChild(ov);
-  const onKey = e => { if (e.key === 'Escape' && document.body.lastElementChild === ov) close(); };
+  let kirli = false, soruyor = false;
+  const yazildi = e => { if (!e.target.closest('[data-q],.search')) kirli = true; };
+  ov.addEventListener('input', yazildi); ov.addEventListener('change', yazildi);
+  const kapatSor = async () => {
+    if (!kirli) return close();
+    if (soruyor) return; soruyor = true;
+    const tamam = await confirmBox({ title: 'Kaydedilmemiş değişiklikler', body: html`<p>Yazdıklarınız silinecek. Çıkmak istiyor musunuz?</p>`, ok: 'Çık', cancel: 'Devam et', danger: true });
+    soruyor = false; if (tamam && ov.isConnected) close();
+  };
+  const onKey = e => { if (e.key === 'Escape' && document.body.lastElementChild === ov) kapatSor(); };
   const close = () => { document.removeEventListener('keydown', onKey); ov.remove(); };
-  ov.addEventListener('mousedown', e => { if (closeOnBg && e.target === ov) close(); });
-  ov.addEventListener('click', e => { if (e.target.closest('[data-x]')) close(); });
+  ov.addEventListener('mousedown', e => { if (closeOnBg && e.target === ov) kapatSor(); });
+  ov.addEventListener('click', e => { if (e.target.closest('[data-x]')) kapatSor(); });
   document.addEventListener('keydown', onKey);
   const m = { el: ov, close, $: s => $(s, ov) };
   onMount && onMount(m);

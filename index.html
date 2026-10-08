@@ -1873,6 +1873,7 @@ function drawItems() {
     </div></div>`; })}</div>`
     : html`<div class="empty"><b>Ürün eklenmedi</b>Soldaki listeden ürün seçin.</div>`);
 }
+function odYon(p, L) { const y = DB.yontem.find(p.yontemId)?.ad || ''; return p.pesinat ? (y ? L.pes + ' · ' + y : L.pes) : y; }
 function drawTots() { const d = state.draft; mount($('#tots'), totsHTML(calc(d, d.id ? payMap()[d.id] : []), d)); }
 function totsHTML(c, t) { return html`<div class="tots">
   <div class="row"><span>Ana Para</span><span>${money(c.ana, t.doviz)}</span></div>
@@ -2606,7 +2607,7 @@ function pdfDoc(t, o) {
           <td><div class="nm">${itemTitle(it)}</div></td><td>${it.olcu || '—'}</td><td>${it.renk || '—'}</td><td>${it.yon || '—'}</td>
           <td class="r nowrap">${money(it.fiyat, t.doviz)}</td><td class="r">${it.adet}</td><td class="r nowrap"><b>${money(it.fiyat * it.adet, t.doviz)}</b></td></tr>
           ${it.aciklama ? html`<tr><td></td><td colspan="7" class="ds">${it.aciklama}</td></tr>` : ''}</tbody>`; })}</table>
-    <div class="pd-sum"><div class="pd-pay">${(pays.length || t.pesinat > 0) ? html`<b>${L.odemeler}</b><table>${t.pesinat > 0 ? html`<tr><td>${t.pesinatTarih ? fmtDate(t.pesinatTarih) : '—'}</td><td class="nowrap">${money(t.pesinat, t.doviz)}</td><td>${L.pes}</td></tr>` : ''}${pays.map(p => html`<tr><td>${fmtDate(p.tarih)}</td><td class="nowrap">${money(p.cevrilmis, t.doviz)}</td><td></td></tr>`)}</table>` : ''}</div>
+    <div class="pd-sum"><div class="pd-pay">${(pays.length || t.pesinat > 0) ? html`<b>${L.odemeler}</b><table>${t.pesinat > 0 ? html`<tr><td>${t.pesinatTarih ? fmtDate(t.pesinatTarih) : '—'}</td><td class="nowrap">${money(t.pesinat, t.doviz)}</td><td>${L.pes}</td></tr>` : ''}${pays.map(p => html`<tr><td>${fmtDate(p.tarih)}</td><td class="nowrap">${money(p.cevrilmis, t.doviz)}</td><td>${odYon(p, L)}</td></tr>`)}</table>` : ''}</div>
       <div class="pd-tot"><div><span>${L.ana}</span><span>${money(c.ana, t.doviz)}</span></div><div><span>${L.isk}</span><span>${c.isk ? '-' + money(c.isk, t.doviz) : money(0, t.doviz)}</span></div>
         <div><span>${L.ara}</span><span>${money(c.ara, t.doviz)}</span></div><div><span>${L.kdv} %${NF.format(t.kdv).replace(',00', '')}</span><span>${money(c.kdv, t.doviz)}</span></div>
         <div class="g"><span>${L.genel}</span><span>${money(c.genel, t.doviz)}</span></div><div><span>${L.pes}</span><span>${money(c.pes, t.doviz)}</span></div><div><span>${L.kalan}</span><span>${money(c.kalan, t.doviz)}</span></div></div></div>
@@ -2730,7 +2731,7 @@ async function tkPdfBlob(t, o) {
     layout: { hLineWidth: (i) => (i === 0 ? 0 : kinds[i] === 'desc' ? 0 : kinds[i - 1] === 'cat' ? 1.1 : 0.5), hLineColor: (i) => (kinds[i - 1] === 'cat' ? INK : '#dfe2e6'), vLineWidth: () => 0, paddingLeft: () => 5, paddingRight: () => 5, paddingTop: () => 5, paddingBottom: () => 5 } };
   const payRows = [];
   if (t.pesinat > 0) payRows.push([t.pesinatTarih ? fmtDate(t.pesinatTarih) : '—', m(t.pesinat), L.pes]);
-  for (const p of pays) payRows.push([fmtDate(p.tarih), m(p.cevrilmis), '']);
+  for (const p of pays) payRows.push([fmtDate(p.tarih), m(p.cevrilmis), odYon(p, L)]);
   const payNode = payRows.length ? { width: '*', stack: [{ text: L.odemeler, bold: true, fontSize: 8, margin: [0, 0, 0, 3] }, { table: { body: payRows.map(r => r.map((x, i) => ({ text: x, fontSize: 8, noWrap: i === 1 }))) }, layout: { hLineWidth: () => 0, vLineWidth: () => 0, paddingLeft: () => 0, paddingRight: () => 12, paddingTop: () => 1.5, paddingBottom: () => 1.5 } }] } : { width: '*', text: '' };
   const kdvL = `${L.kdv} %${NF.format(t.kdv).replace(',00', '')}`;
   const totRows = [[L.ana, m(c.ana)], [L.isk, c.isk ? '-' + m(c.isk) : m(0)], [L.ara, m(c.ara)], [kdvL, m(c.kdv)], [L.genel, m(c.genel), true], [L.pes, m(c.pes)], [L.kalan, m(c.kalan)]];

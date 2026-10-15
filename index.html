@@ -1034,10 +1034,16 @@ const Sync = {
     } finally { this.busy = false; setSync(); }
   },
   /* Son eşitlemeden beri değişenleri çek (tam tarama yok) */
-  async delta() {
+  delta() {
+    if (this._dp) { this._again = true; return this._dp; }
+    this._dp = (async () => { let ch = false, tekrar = 0; do { this._again = false; ch = (await this._delta1(tekrar++ > 0)) || ch; } while (this._again); return ch; })()
+      .finally(() => { this._dp = null; });
+    return this._dp;
+  },
+  async _delta1(bitisik) {
     if (!Auth.s) return false;
     /* 5 sn geriye taşma: aynı anda kaydedilen ama geç biten işlemler kaçmasın */
-    let changed = false, since = this.last ? new Date(Date.parse(this.last) - 5000).toISOString() : null;
+    let changed = false, since = this.last ? (bitisik ? this.last : new Date(Date.parse(this.last) - 5000).toISOString()) : null;
     try {
       for (;;) {
         const q = 'pt_rows?select=tbl,id,data,deleted,updated_at&order=updated_at.asc&limit=1000' + (since ? '&updated_at=gt.' + encodeURIComponent(since) : '');

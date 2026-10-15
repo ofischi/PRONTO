@@ -181,7 +181,7 @@ tr.gonder-yok>td:first-child{box-shadow:inset 3px 0 0 #ef4444}
 .st-Sevkiyata{color:var(--vio);border-color:color-mix(in srgb,var(--vio) 40%,transparent);background:color-mix(in srgb,var(--vio) 10%,transparent)}
 .st-SSH{color:#c2410c;border-color:color-mix(in srgb,#c2410c 45%,transparent);background:color-mix(in srgb,#c2410c 10%,transparent)}
 .st-Teslim{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 40%,transparent);background:color-mix(in srgb,var(--ok) 10%,transparent)}
-.st-Onay{color:var(--warn);border-color:var(--warn);border-style:dashed;background:transparent}.st-Reddedildi{color:var(--err);border-color:color-mix(in srgb,var(--err) 40%,transparent);background:color-mix(in srgb,var(--err) 10%,transparent)}.sipbox{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--surface);box-shadow:var(--shadow);margin:0 0 14px}.sipbox b{font-weight:700}.sipbox .grow{flex:1;min-width:200px}.sipbox.ok{border-color:color-mix(in srgb,var(--ok) 45%,transparent)}.sipbox.wait{border-color:color-mix(in srgb,var(--warn) 55%,transparent)}.sipbox.err{border-color:color-mix(in srgb,var(--err) 50%,transparent)}.sipbox .note{font-size:12.5px;color:var(--err)}.siptag{display:inline-flex;gap:6px;align-items:center;font-size:11.5px;font-weight:600;color:var(--muted);white-space:nowrap}.st-İptal{color:var(--err);border-color:color-mix(in srgb,var(--err) 40%,transparent);background:color-mix(in srgb,var(--err) 10%,transparent)}
+.st-Silme{color:var(--err);border-color:var(--err);border-style:dashed;background:transparent}.st-Onay{color:var(--warn);border-color:var(--warn);border-style:dashed;background:transparent}.st-Reddedildi{color:var(--err);border-color:color-mix(in srgb,var(--err) 40%,transparent);background:color-mix(in srgb,var(--err) 10%,transparent)}.sipbox{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--surface);box-shadow:var(--shadow);margin:0 0 14px}.sipbox b{font-weight:700}.sipbox .grow{flex:1;min-width:200px}.sipbox.ok{border-color:color-mix(in srgb,var(--ok) 45%,transparent)}.sipbox.wait{border-color:color-mix(in srgb,var(--warn) 55%,transparent)}.sipbox.err{border-color:color-mix(in srgb,var(--err) 50%,transparent)}.sipbox .note{font-size:12.5px;color:var(--err)}.siptag{display:inline-flex;gap:6px;align-items:center;font-size:11.5px;font-weight:600;color:var(--muted);white-space:nowrap}.st-İptal{color:var(--err);border-color:color-mix(in srgb,var(--err) 40%,transparent);background:color-mix(in srgb,var(--err) 10%,transparent)}
 
 /* ---------- tablolar ---------- */
 .tw{flex:1;min-height:0;overflow:auto;border-radius:var(--r-lg)}
@@ -797,6 +797,7 @@ const SIP_SIRA = ['Beklemede', 'Üretimde', 'Sevkiyata Hazır', 'Teslim Edildi']
 const sipBag = t => (t && mem('siparis').get(t.id)) || null;
 function tkDurum(t) {
   const b = sipBag(t); if (!b) return t.durum || 'Beklemede';
+  if (b.bekleyen === 'silme' && !t.deletedAt) return 'Silme Bekliyor';
   if (b.bag === 'bekliyor') return 'Onay Bekliyor';
   if (b.bag === 'reddedildi') return 'Reddedildi';
   const ds = (t.items || []).map(i => b.kalemler?.[i.uid]?.durum).filter(Boolean);
@@ -824,6 +825,7 @@ function sipFotoKeys(t) {
   return o;
 }
 async function sipGonder(t, { sessiz = false } = {}) {
+  if (sipBag(t)?.bekleyen === 'silme') { toast('Silme talebi Sipariş Takibi\'nde onay bekliyor; şu an gönderilemez.', 'err'); return null; }
   if (!navigator.onLine) { toast('İnternet bağlantısı yok. Bağlantı gelince tekrar deneyin.', 'err'); return null; }
   await Sync.flush();
   if ([...Sync.outbox.values()].some(o => (o.tbl === 'teklifler' && o.id === t.id) || o.tbl === 'photo')) { toast('Teklif henüz sunucuya kaydedilmedi, birkaç saniye sonra tekrar deneyin.', 'err'); return null; }
@@ -840,6 +842,7 @@ function sipPanel(t) {
   if (b.bag === 'reddedildi') return html`<div class="sipbox err"><div class="grow"><b>Sipariş Takibi reddetti</b><div class="note">${b.ret_notu || ''}</div><div class="muted sm">Düzeltip tekrar gönderebilirsiniz.</div></div><button class="btn primary sm" data-act="sipGonder" data-id="${t.id}">Tekrar Gönder</button></div>`;
   return html`<div class="sipbox ok"><div class="grow"><b>Siparişe dönüştü</b> · durumlar Sipariş Takibi'nden yönetilir
     ${b.bekleyen === 'guncelleme' ? html`<div class="muted sm" style="color:var(--warn)">Yaptığınız değişiklikler Sipariş Takibi'nde onay bekliyor.</div>` : ''}
+    ${b.bekleyen === 'silme' ? html`<div class="muted sm" style="color:var(--err)"><b>Silme talebi</b> Sipariş Takibi'nde onay bekliyor. Onaylanınca açık siparişler İptal olur, teklif Geri Dönüşüm Kutusu'na taşınır.</div>` : ''}
     ${b.ret_notu ? html`<div class="note">${b.ret_notu}</div>` : ''}</div></div>`;
 }
 
@@ -1595,10 +1598,45 @@ A.openFilter = el => {
 function teklifOzet(t) { const c = calc(t, payMap()[t.id]); return html`<dl class="kv"><dt>Teklif No</dt><dd class="b">${t.no}</dd><dt>Müşteri</dt><dd>${t.cariSnap.unvan}</dd><dt>Tarih</dt><dd>${fmtDate(t.tarih)}</dd><dt>Ürün adedi</dt><dd>${c.adet}</dd><dt>Genel Toplam</dt><dd class="b">${money(c.genel, t.doviz)}</dd><dt>Alınan</dt><dd>${money(c.pes, t.doviz)}</dd></dl>`; }
 async function deleteTeklif(id) {
   const t = DB.teklif.find(id); if (!t) return;
-  { const b = sipBag(t); if (b && b.bag !== 'reddedildi') return toast('Bu teklif Sipariş Takibi\'ne bağlı; silinemez. Gerekirse siparişleri orada iptal edin.', 'err', 6000); }
+  { const b = sipBag(t); if (b && b.bag !== 'reddedildi') return tkSilIste(t, b); }
   if (!await confirmBox({ title: 'Teklifi sil', body: html`${teklifOzet(t)}<p style="margin:14px 0 0">Bu teklifi silmek istediğinize emin misiniz? Teklif ödemeleriyle birlikte Geri Dönüşüm Kutusu'na taşınır ve 7 gün sonra kalıcı olarak silinir.</p>`, ok: 'Sil', danger: true })) return;
   DB.teklif.upsert({ ...t, deletedAt: Date.now() }); toast('Teklif Geri Dönüşüm Kutusu\'na taşındı');
   if (state.view === 'teklifler') drawList(); else go('teklifler');
+}
+
+/* Sipariş Takibi'ne bağlı teklif: onay bekliyorsa talep geri çekilir; siparişe dönüştüyse silme talebi gider (Sipariş onaylar) */
+async function tkSilIste(t, b) {
+  if (b.bekleyen === 'silme') return toast('Bu teklifin silme talebi zaten Sipariş Takibi\'nde onay bekliyor.', 'err', 6000);
+  const tes = Object.values(b.kalemler || {}).filter(k => k.durum === 'Teslim Edildi' || k.durum === 'SSH');
+  if (b.bag === 'onaylandi' && tes.length) return toast(`Bu teklifin teslim edilmiş siparişleri var (${tes.map(k => sipNo(k.no)).join(', ')}). Teslim edilmiş iş kaydı silinemez.`, 'err', 8000);
+  if (!navigator.onLine) return toast('İnternet bağlantısı yok. Bağlı teklif silinirken Sipariş Takibi\'ne haber verilmesi gerekir.', 'err');
+  const onayli = b.bag === 'onaylandi';
+  let neden = '';
+  const yaz = e => { if (e.target && e.target.id === 'tkSilNeden') neden = e.target.value; };
+  document.addEventListener('input', yaz, true);
+  let evet;
+  try {
+    evet = await confirmBox(onayli
+      ? { title: 'Silme talebi gönder', ok: 'Silme Talebi Gönder', danger: true, body: html`${teklifOzet(t)}<p style="margin:14px 0 8px">Bu teklif <b>siparişe dönüştü</b>. Silinmesi için Sipariş Takibi'ne <b>silme talebi</b> gönderilir.</p><p class="muted sm" style="margin:0 0 10px">Sipariş onaylarsa açık siparişler İptal olur (silinmez) ve teklif Geri Dönüşüm Kutusu'na taşınır. Reddederse hiçbir şey değişmez.</p><label class="muted sm" for="tkSilNeden">Neden (Sipariş Takibi'nde görünür)</label><textarea id="tkSilNeden" class="inp" rows="2" maxlength="300" placeholder="Örn. Müşteri vazgeçti" style="width:100%;margin-top:4px"></textarea>` }
+      : { title: 'Teklifi sil', ok: 'Sil', danger: true, body: html`${teklifOzet(t)}<p style="margin:14px 0 0">Bu teklif Sipariş Takibi'nde <b>onay bekliyor</b>. Silerseniz onay talebi geri çekilir ve teklif Geri Dönüşüm Kutusu'na taşınır (7 gün içinde geri alınabilir).</p>` });
+  } finally { document.removeEventListener('input', yaz, true); }
+  if (!evet) return;
+  let r;
+  try { r = await api('rpc/pronto_teklif_sil_iste', { method: 'POST', body: { p_teklif_id: t.id, p_neden: String(neden || '').replace(/[\u0000-\u001f\u007f<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300) } }); }
+  catch (e) {
+    const m = String(e.message || e);
+    return toast(/pronto_teklif_sil_iste|Could not find the function|schema cache/i.test(m) ? 'Sipariş Takibi tarafında silme kurulumu (pronto-silme.sql) henüz yapılmamış.' : 'Silinemedi: ' + m, 'err', 8000);
+  }
+  const s = r && r.sonuc;
+  if (s === 'serbest' || s === 'geri_cekildi') {
+    const g = DB.teklif.find(t.id) || t;
+    DB.teklif.upsert({ ...g, deletedAt: Date.now() });
+    toast(s === 'geri_cekildi' ? 'Onay talebi geri çekildi, teklif Geri Dönüşüm Kutusu\'na taşındı' : 'Teklif Geri Dönüşüm Kutusu\'na taşındı');
+    if (state.view === 'teklifler') drawList(); else go('teklifler');
+    return;
+  }
+  if (s === 'zaten') return toast('Silme talebi zaten Sipariş Takibi\'nde onay bekliyor.', 'ok', 6000);
+  toast('Silme talebi Sipariş Takibi\'ne gönderildi. Onaylanınca teklif Geri Dönüşüm Kutusu\'na taşınır.', 'ok', 7000);
 }
 
 /* =====================================================================
@@ -2502,7 +2540,7 @@ VIEWS.teklifDetay = (main, { id, tab = 'urunler' }) => {
       <button class="btn sm mob" data-act="totDetail" data-id="${t.id}">Detay</button></div></div>`);
 };
 A.dTab = el => go('teklifDetay', { id: el.dataset.id, tab: el.dataset.t });
-A.editTeklif = el => go('teklifForm', { id: el.dataset.id });
+A.editTeklif = el => { const t = DB.teklif.find(el.dataset.id); if (sipBag(t)?.bekleyen === 'silme') return toast('Silme talebi Sipariş Takibi\'nde onay bekliyor; bu sırada teklif düzenlenemez.', 'err', 6000); go('teklifForm', { id: el.dataset.id }); };
 A.pdf = el => pdfPreview(el.dataset.id);
 A.sipGonder = async el => {
   const t = DB.teklif.find(el.dataset.id); if (!t) return;

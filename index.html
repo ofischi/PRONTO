@@ -3545,13 +3545,25 @@ async function setYedek(b) {
 function setCop(b) {
   purgeBin();
   const ts = DB.teklif.all().filter(t => t.deletedAt).sort((a, c) => c.deletedAt - a.deletedAt), pm = payMap();
-  mount(b, html`<div class="card"><div class="card-h"><h3>Geri Dönüşüm Kutusu (${ts.length})</h3></div><p class="muted sm" style="margin-top:0">Silinen teklifler ödemeleriyle birlikte 7 gün burada kalır, sonra otomatik olarak kalıcı silinir.</p>
+  mount(b, html`<div class="card"><div class="card-h"><h3>Geri Dönüşüm Kutusu (${ts.length})</h3>${ts.length ? html`<button class="btn sm danger" data-bos>Kutuyu Boşalt</button>` : ''}</div><p class="muted sm" style="margin-top:0">Silinen teklifler ödemeleriyle birlikte 7 gün burada kalır, sonra otomatik olarak kalıcı silinir.</p>
     ${ts.length ? html`<div class="tw"><table class="tbl static resp"><thead><tr>${['No', 'Müşteri', 'Genel Toplam', 'Silinme', 'Kalan süre', ''].map(h => html`<th><div class="thi">${h}</div></th>`)}</tr></thead><tbody>
       ${ts.map(t => html`<tr><td class="b">${t.no}</td><td>${t.cariSnap.unvan}</td><td>${money(calc(t, pm[t.id]).genel, t.doviz)}</td><td>${fmtDT(t.deletedAt)}</td><td>${Math.max(0, Math.ceil((t.deletedAt + 7 * 864e5 - Date.now()) / 864e5))} gün</td>
         <td class="nowrap"><button class="btn sm" data-rs="${t.id}">Geri Yükle</button> <button class="btn sm danger" data-pd="${t.id}">Kalıcı Sil</button></td></tr>`)}</tbody></table>
       <div class="cards">${ts.map(t => html`<div class="lcard" style="cursor:default"><div class="row"><span class="ttl">#${t.no} · ${t.cariSnap.unvan}</span></div><div class="row sm muted"><span>${fmtDT(t.deletedAt)}</span><span>${money(calc(t, pm[t.id]).genel, t.doviz)}</span></div><div class="row" style="justify-content:flex-end"><button class="btn sm" data-rs="${t.id}">Geri Yükle</button><button class="btn sm danger" data-pd="${t.id}">Kalıcı Sil</button></div></div>`)}</div></div>`
       : html`<div class="empty">Geri dönüşüm kutusu boş</div>`}</div>`);
   b.addEventListener('click', async e => {
+    if (e.target.closest('[data-bos]')) {
+      const L = DB.teklif.all().filter(t => t.deletedAt); if (!L.length) return;
+      const ids = new Set(L.map(t => t.id)), O = DB.odeme.all().filter(p => ids.has(p.teklifId));
+      if (!await confirmBox({ title: 'Geri Dönüşüm Kutusunu Boşalt', danger: true, ok: 'Yedeği İndir ve Devam Et',
+        body: html`<p style="margin:0"><b>${L.length} teklif</b> ve bunlara ait <b>${O.length} ödeme</b> kalıcı olarak silinecek.</p><p class="muted sm" style="margin:10px 0 0">Önce bu kayıtlar bilgisayarınıza yedek dosyası (JSON) olarak indirilir; dosyayı saklayın. Sonra son onay istenir.</p>` })) return;
+      const d = new Date(), p2 = n => String(n).padStart(2, '0'), stamp = `${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}`;
+      downloadBlob(new Blob([JSON.stringify({ tur: 'PRONTO Teklif - geri donusum kutusu yedegi', tarih: d.toISOString(), teklifler: L, odemeler: O }, null, 1)], { type: 'application/json' }), `PRONTO-Teklif-cop-yedek-${stamp}.json`);
+      if (!await confirmBox({ title: 'Son onay', danger: true, ok: 'Kalıcı Sil',
+        body: html`<p style="margin:0">Yedek dosyası indirildi (İndirilenler klasörü).</p><p style="margin:10px 0 0">Şimdi <b>${L.length} teklif</b> ve ödemeleri kalıcı silinsin mi? <b>Bu işlem geri alınamaz.</b></p>` })) return;
+      L.forEach(t => DB.teklif.remove(t.id)); O.forEach(p => DB.odeme.remove(p.id));
+      logAct(`Geri dönüşüm kutusu boşaltıldı (${L.length} teklif)`); toast(`${L.length} teklif kalıcı olarak silindi`); go('ayarlar', { sec: 'cop' }); return;
+    }
     const rs = e.target.closest('[data-rs]'); if (rs) { const t = DB.teklif.find(rs.dataset.rs); DB.teklif.upsert({ ...t, deletedAt: null, durum: 'Beklemede' }); logAct(`Teklif ${t.no} geri yüklendi`); toast(`Teklif ${t.no} geri yüklendi`); go('ayarlar', { sec: 'cop' }); }
     const pd = e.target.closest('[data-pd]'); if (pd) { const t = DB.teklif.find(pd.dataset.pd); if (!await confirmBox({ title: 'Kalıcı olarak sil', danger: true, ok: 'Kalıcı Sil', body: html`${teklifOzet(t)}<p style="margin:14px 0 0">Bu teklif ve ödemeleri kalıcı olarak silinecek. Bu işlem geri alınamaz.</p>` })) return;
       DB.teklif.remove(t.id); DB.odeme.all().filter(p => p.teklifId === t.id).forEach(p => DB.odeme.remove(p.id)); toast('Teklif kalıcı olarak silindi'); go('ayarlar', { sec: 'cop' }); }

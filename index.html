@@ -827,6 +827,10 @@ function sipFotoKeys(t) {
 async function sipGonder(t, { sessiz = false } = {}) {
   if (sipBag(t)?.bekleyen === 'silme') { toast('Silme talebi Sipariş Takibi\'nde onay bekliyor; şu an gönderilemez.', 'err'); return null; }
   if (!navigator.onLine) { toast('İnternet bağlantısı yok. Bağlantı gelince tekrar deneyin.', 'err'); return null; }
+  if (!sessiz) {
+    const k = await kimSor('Siparişe gönder'); if (k === null) return null;
+    if (k) { const g = DB.teklif.find(t.id) || t; t = { ...g, gonderen: k, gonderenAt: Date.now() }; DB.teklif.upsert(t); logAct(`Teklif ${t.no} siparişe gönderildi`); }
+  }
   await Sync.flush();
   if ([...Sync.outbox.values()].some(o => (o.tbl === 'teklifler' && o.id === t.id) || o.tbl === 'photo')) { toast('Teklif henüz sunucuya kaydedilmedi, birkaç saniye sonra tekrar deneyin.', 'err'); return null; }
   try {
@@ -898,7 +902,7 @@ const Auth = {
 async function api(path, { method = 'GET', body, prefer } = {}) {
   const t = await Auth.token();
   let r;
-  try { r = await fetch(`${CFG.url}/rest/v1/${path}`, { method, headers: { apikey: CFG.key, Authorization: 'Bearer ' + t, 'Content-Type': 'application/json', ...(prefer ? { Prefer: prefer } : {}) }, body: body ? JSON.stringify(body) : undefined }); }
+  try { r = await fetch(`${CFG.url}/rest/v1/${path}`, { method, headers: { apikey: CFG.key, Authorization: 'Bearer ' + t, 'Content-Type': 'application/json', ...(prefer ? { Prefer: prefer } : {}), ...kimBaslik() }, body: body ? JSON.stringify(body) : undefined }); }
   catch { throw new NetError('Çevrimdışı'); }
   if (r.status === 401) { await Auth.refresh(); return api(path, { method, body, prefer }); }
   if (!r.ok) { const j = await r.json().catch(() => ({})); throw Object.assign(new Error(j.message || `Sunucu hatası (${r.status})`), { status: r.status, code: j.code }); }
@@ -1604,9 +1608,10 @@ A.openFilter = el => {
 function teklifOzet(t) { const c = calc(t, payMap()[t.id]); return html`<dl class="kv"><dt>Teklif No</dt><dd class="b">${t.no}</dd><dt>Müşteri</dt><dd>${t.cariSnap.unvan}</dd><dt>Tarih</dt><dd>${fmtDate(t.tarih)}</dd><dt>Ürün adedi</dt><dd>${c.adet}</dd><dt>Genel Toplam</dt><dd class="b">${money(c.genel, t.doviz)}</dd><dt>Alınan</dt><dd>${money(c.pes, t.doviz)}</dd></dl>`; }
 async function deleteTeklif(id) {
   const t = DB.teklif.find(id); if (!t) return;
+  if (await kimSor('Teklif silme') === null) return;
   { const b = sipBag(t); if (b && b.bag !== 'reddedildi') return tkSilIste(t, b); }
   if (!await confirmBox({ title: 'Teklifi sil', body: html`${teklifOzet(t)}<p style="margin:14px 0 0">Bu teklifi silmek istediğinize emin misiniz? Teklif ödemeleriyle birlikte Geri Dönüşüm Kutusu'na taşınır ve 7 gün sonra kalıcı olarak silinir.</p>`, ok: 'Sil', danger: true })) return;
-  DB.teklif.upsert({ ...t, deletedAt: Date.now() }); toast('Teklif Geri Dönüşüm Kutusu\'na taşındı');
+  DB.teklif.upsert({ ...t, deletedAt: Date.now(), silen: Local.get('kisi', '') }); logAct(`Teklif ${t.no} silindi (Geri Dönüşüm Kutusu)`); toast('Teklif Geri Dönüşüm Kutusu\'na taşındı');
   if (state.view === 'teklifler') drawList(); else go('teklifler');
 }
 
@@ -1636,7 +1641,7 @@ async function tkSilIste(t, b) {
   const s = r && r.sonuc;
   if (s === 'serbest' || s === 'geri_cekildi') {
     const g = DB.teklif.find(t.id) || t;
-    DB.teklif.upsert({ ...g, deletedAt: Date.now() });
+    DB.teklif.upsert({ ...g, deletedAt: Date.now(), silen: Local.get('kisi', '') }); logAct(`Teklif ${g.no} silindi (Geri Dönüşüm Kutusu)`);
     toast(s === 'geri_cekildi' ? 'Onay talebi geri çekildi, teklif Geri Dönüşüm Kutusu\'na taşındı' : 'Teklif Geri Dönüşüm Kutusu\'na taşındı');
     if (state.view === 'teklifler') drawList(); else go('teklifler');
     return;
@@ -2092,6 +2097,8 @@ A.saveTeklif = async el => {
     $('.validation-error')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;
   }
+  if (!tkKisi) { const k = await kimSor(d.id ? 'Teklif düzenleme' : 'Yeni teklif'); if (k === null) return; tkKisi = k; }
+  if (tkKisi) Local.set('kisi', tkKisi);
   if (d.id) {
     const cur = DB.teklif.find(d.id);
     if (!cur || cur.deletedAt) { toast('Bu teklif siz düzenlerken silinmiş; kaydedilemedi.', 'err', 6000); return; }
@@ -2118,6 +2125,7 @@ A.saveTeklif = async el => {
   });
   t.iskontoTip = 'tutar'; t.iskontoDeger = 0; t.iskontoTutar = r2(Math.max(0, +t.iskontoTutar || 0)); t.pesinat = r2(+t.pesinat || 0); t.pesinatTarih = t.pesinat > 0 ? (t.pesinatTarih || '') : '';
   t.updated = Date.now();
+  if (tkKisi) { if (!d.id) { t.olusturan = tkKisi; t.olusturanAt = t.updated; } t.duzenleyen = tkKisi; t.duzenleyenAt = t.updated; }
   DB.teklif.upsert(t); saveVariants(t.items);
   logAct(d.id ? `Teklif ${t.no} düzenlendi` : `Teklif ${t.no} oluşturuldu`);
   tkPanelKapat(); toast(d.id ? 'Değişiklikler kaydedildi' : `Teklif ${t.no} kaydedildi`); go('teklifDetay', { id: t.id });
@@ -2519,7 +2527,7 @@ VIEWS.teklifDetay = (main, { id, tab = 'urunler' }) => {
     <div class="ph-act"><button class="btn" data-act="editTeklif" data-id="${t.id}">${I('edit')} Düzenle</button><button class="btn primary" data-act="pdf" data-id="${t.id}">${I('pdf')} PDF</button>${!sipBag(t) ? html`<button class="btn${gonderilmedi(t) ? ' btn-gonder' : ''}" data-act="sipGonder" data-id="${t.id}">${I('share')} Siparişe Gönder</button>` : ''}<button class="btn icon" data-act="rowMenu" data-id="${t.id}" aria-label="Diğer">${I('dots')}</button></div></div>
     <div class="dgrid">
       <div class="card"><div class="card-h"><h3>Müşteri</h3></div><dl class="kv"><dt>Ünvan</dt><dd>${cs.unvan}</dd>${cs.yetkili ? html`<dt>Yetkili</dt><dd>${cs.yetkili}</dd>` : ''}<dt>Telefon</dt><dd>${cs.gsm || '—'}</dd>${cs.sabit ? html`<dt>Sabit No</dt><dd>${cs.sabit}</dd>` : ''}<dt>E-posta</dt><dd>${cs.eposta || '—'}</dd><dt>Adres</dt><dd>${[cs.adres, cs.ilce, cs.sehir, cs.ulke].filter(Boolean).join(', ')}</dd>${cs.vd ? html`<dt>Vergi Dairesi</dt><dd>${cs.vd}</dd>` : ''}${cs.vkn ? html`<dt>${String(cs.vkn).length === 11 ? 'TCKN' : 'VKN'}</dt><dd>${cs.vkn}</dd>` : ''}</dl></div>
-      <div class="card"><div class="card-h"><h3>Teklif</h3></div><dl class="kv"><dt>Teklif Tarihi</dt><dd>${fmtDate(t.tarih)}</dd><dt>Teslim Tarihi</dt><dd>${fmtDate(t.teslim)}</dd><dt>Döviz</dt><dd>${t.doviz}</dd><dt>Personel</dt><dd>${t.personelAd}</dd>
+      <div class="card"><div class="card-h"><h3>Teklif</h3></div><dl class="kv"><dt>Teklif Tarihi</dt><dd>${fmtDate(t.tarih)}</dd><dt>Teslim Tarihi</dt><dd>${fmtDate(t.teslim)}</dd><dt>Döviz</dt><dd>${t.doviz}</dd><dt>Personel</dt><dd>${t.personelAd}</dd>${kimKV(t)}
         <dt>Montaj</dt><dd>${LBL[t.montaj]}</dd><dt>Nakliye</dt><dd>${LBL[t.nakliye]}</dd><dt>Teslim Yeri</dt><dd>${LBL[t.teslimYeri]}</dd></dl></div>
       <div class="card"><div class="card-h"><h3>Ödeme özeti</h3><button class="btn sm" data-act="addPay" data-id="${t.id}">${I('plus')} Ödeme</button></div>
         <dl class="kv"><dt>Genel Toplam</dt><dd class="b">${money(c.genel, t.doviz)}</dd>
@@ -2563,6 +2571,7 @@ A.addPay = el => payForm(DB.teklif.find(el.dataset.id), null);
 A.editPay = el => { const p = DB.odeme.find(el.dataset.id); payForm(DB.teklif.find(p.teklifId), p); };
 A.delPay = async el => {
   const p = DB.odeme.find(el.dataset.id), t = DB.teklif.find(p.teklifId);
+  if (await kimSor('Ödeme silme') === null) return;
   if (!await confirmBox({ title: 'Ödemeyi sil', danger: true, ok: 'Sil', body: html`<dl class="kv"><dt>Tarih</dt><dd>${fmtDate(p.tarih)}</dd><dt>Tutar</dt><dd class="b">${money(p.tutar, p.doviz)}</dd><dt>Karşılığı</dt><dd>${money(p.cevrilmis, t.doviz)}</dd><dt>Yöntem</dt><dd>${DB.yontem.find(p.yontemId)?.ad || '—'}</dd><dt>Açıklama</dt><dd>${p.aciklama || '—'}</dd></dl><p style="margin:14px 0 0">Bu ödeme silinecek ve kalan tutar yeniden hesaplanacak.</p>` })) return;
   DB.odeme.remove(p.id); logAct(`Teklif ${t.no}: ödeme silindi`); toast('Ödeme silindi'); go('teklifDetay', { id: t.id, tab: 'odemeler' });
 };
@@ -2595,7 +2604,9 @@ function payForm(t, p) {
           const er = []; if (!v.tarih) er.push('Tarih girin'); if (!(tu > 0)) er.push('Geçerli bir tutar girin'); if (diff && !(ku > 0)) er.push('Kuru girin'); if (!DB.yontem.find(v.yontemId)) er.push('Ödeme yöntemi seçin');
           if (er.length) return toast(er.join(' · '), 'err');
           if (p && !await confirmBox({ title: 'Kaydet', body: html`<p>Değişikliği kaydetmek istiyor musunuz?</p>`, ok: 'Kaydet' })) return;
-          const row = { id: p?.id || uid(), teklifId: t.id, tarih: v.tarih, tutar: tu, doviz: v.doviz, kur: diff ? ku : 1, cevrilmis: convert(tu, v.doviz, t.doviz, ku), yontemId: v.yontemId, aciklama: clean(v.aciklama, 300), created: p?.created || Date.now() };
+          const _k = await kimSor(p ? 'Ödeme düzenleme' : 'Ödeme ekleme'); if (_k === null) return;
+          const row = { id: p?.id || uid(), teklifId: t.id, tarih: v.tarih, tutar: tu, doviz: v.doviz, kur: diff ? ku : 1, cevrilmis: convert(tu, v.doviz, t.doviz, ku), yontemId: v.yontemId, aciklama: clean(v.aciklama, 300), created: p?.created || Date.now(),
+            giren: p ? (p.giren || '') : _k, ...(p ? { duzenleyen: _k, duzenleyenAt: Date.now() } : {}) };
           DB.odeme.upsert(row); logAct(`Teklif ${t.no}: ${money(tu, v.doviz)} ödeme ${p ? 'düzenlendi' : 'eklendi'}`);
           m.close(); toast(p ? 'Ödeme güncellendi' : 'Ödeme eklendi'); go('teklifDetay', { id: t.id, tab: 'odemeler' });
         }
@@ -3142,9 +3153,9 @@ A.newCari = () => cariForm(null, () => drawCari());
 A.openCari = el => go('musteriDetay', { id: el.dataset.id });
 A.cariMenu = (el, e) => { e.stopPropagation(); const c = DB.cari.find(el.dataset.id); popMenu(el, [
   { label: 'Düzenle', icon: 'edit', run: () => cariForm(c, () => state.view === 'musteriler' ? drawCari() : go('musteriDetay', { id: c.id })) }, '-',
-  { label: 'Sil', icon: 'trash', danger: true, run: async () => { const n = DB.teklif.all().filter(t => t.cariId === c.id && !t.deletedAt).length;
+  { label: 'Sil', icon: 'trash', danger: true, run: async () => { if (await kimSor('Müşteri (cari) silme') === null) return; const n = DB.teklif.all().filter(t => t.cariId === c.id && !t.deletedAt).length;
     if (!await confirmBox({ title: 'Cariyi sil', danger: true, ok: 'Sil', body: html`<p><b>${c.unvan}</b> silinecek.${n ? ` Bu cariye ait ${n} teklif korunur; tekliflerde müşteri bilgisi kayıtlı kalır.` : ''}</p>` })) return;
-    DB.cari.remove(c.id); toast('Cari silindi'); go('musteriler'); } }]); };
+    DB.cari.remove(c.id); logAct(`Cari silindi: ${c.unvan}`); toast('Cari silindi'); go('musteriler'); } }]); };
 VIEWS.musteriDetay = (main, { id }) => {
   const c = DB.cari.find(id); if (!c) return go('musteriler');
   const pm = payMap(), ts = DB.teklif.all().filter(t => t.cariId === id && !t.deletedAt).sort((a, b) => b.tarih.localeCompare(a.tarih)), top = {}, kal = {};
@@ -3554,6 +3565,7 @@ function setCop(b) {
   b.addEventListener('click', async e => {
     if (e.target.closest('[data-bos]')) {
       const L = DB.teklif.all().filter(t => t.deletedAt); if (!L.length) return;
+      if (await kimSor('Geri dönüşüm kutusunu boşalt') === null) return;
       const ids = new Set(L.map(t => t.id)), O = DB.odeme.all().filter(p => ids.has(p.teklifId));
       if (!await confirmBox({ title: 'Geri Dönüşüm Kutusunu Boşalt', danger: true, ok: 'Yedeği İndir ve Devam Et',
         body: html`<p style="margin:0"><b>${L.length} teklif</b> ve bunlara ait <b>${O.length} ödeme</b> kalıcı olarak silinecek.</p><p class="muted sm" style="margin:10px 0 0">Önce bu kayıtlar bilgisayarınıza yedek dosyası (JSON) olarak indirilir; dosyayı saklayın. Sonra son onay istenir.</p>` })) return;
@@ -3565,7 +3577,7 @@ function setCop(b) {
       logAct(`Geri dönüşüm kutusu boşaltıldı (${L.length} teklif)`); toast(`${L.length} teklif kalıcı olarak silindi`); go('ayarlar', { sec: 'cop' }); return;
     }
     const rs = e.target.closest('[data-rs]'); if (rs) { const t = DB.teklif.find(rs.dataset.rs); DB.teklif.upsert({ ...t, deletedAt: null, durum: 'Beklemede' }); logAct(`Teklif ${t.no} geri yüklendi`); toast(`Teklif ${t.no} geri yüklendi`); go('ayarlar', { sec: 'cop' }); }
-    const pd = e.target.closest('[data-pd]'); if (pd) { const t = DB.teklif.find(pd.dataset.pd); if (!await confirmBox({ title: 'Kalıcı olarak sil', danger: true, ok: 'Kalıcı Sil', body: html`${teklifOzet(t)}<p style="margin:14px 0 0">Bu teklif ve ödemeleri kalıcı olarak silinecek. Bu işlem geri alınamaz.</p>` })) return;
+    const pd = e.target.closest('[data-pd]'); if (pd) { const t = DB.teklif.find(pd.dataset.pd); if (await kimSor('Teklifi kalıcı sil') === null) return; if (!await confirmBox({ title: 'Kalıcı olarak sil', danger: true, ok: 'Kalıcı Sil', body: html`${teklifOzet(t)}<p style="margin:14px 0 0">Bu teklif ve ödemeleri kalıcı olarak silinecek. Bu işlem geri alınamaz.</p>` })) return;
       DB.teklif.remove(t.id); DB.odeme.all().filter(p => p.teklifId === t.id).forEach(p => DB.odeme.remove(p.id)); toast('Teklif kalıcı olarak silindi'); go('ayarlar', { sec: 'cop' }); }
   });
 }
@@ -3643,6 +3655,60 @@ document.addEventListener('focusout',function(){setTimeout(planla,250)});
 document.addEventListener('focusin',function(e){var t=e.target;if(!t||!t.scrollIntoView||!/INPUT|TEXTAREA|SELECT/.test(t.tagName))return;
  setTimeout(function(){try{t.scrollIntoView({block:'center',behavior:'smooth'})}catch(_){}},320)});
 })();
+</script>
+<style id="kim-css">
+.kim-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.kim-g .btn{justify-content:center;padding:14px 8px;font-weight:700}
+.kim-is{display:inline-block;background:var(--bg2,#f3f4f6);border-radius:8px;padding:3px 9px;font-weight:700;margin-bottom:10px}
+</style>
+<script id="kim-js">
+/* ===== Bu cihazı kim kullanıyor? (kritik işlemler) ===== */
+let tkKisi = '';
+const kimTemiz = s => String(s == null ? '' : s).replace(/[\u0000-\u001f\u007f<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 40);
+function kimBaslik() {
+  const k = kimTemiz(Local.get('kisi', '')); if (!k) return {};
+  return { 'x-pronto-kisi': Array.from(new TextEncoder().encode(k)).map(b => b.toString(16).padStart(2, '0')).join('') };
+}
+/* Seçilen adı döndürür; Vazgeç → null. Personel listesi boşsa sormadan '' döner (iş durmaz). */
+function kimSor(islem) {
+  const L = [...new Set(DB.personel.all().filter(p => !p.deletedAt).map(p => kimTemiz(p.ad)).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'tr'));
+  if (!L.length) return Promise.resolve(kimTemiz(Local.get('kisi', '')));
+  const son = kimTemiz(Local.get('kisi', '')); let sec = L.includes(son) ? son : '';
+  return new Promise(res => {
+    let bitti = false, iv = 0, m = null;
+    const tus = e => { if (e.key === 'Enter' && sec && m && document.body.lastElementChild === m.el) { e.preventDefault(); bit(sec); } };
+    const bit = v => { if (bitti) return; bitti = true; clearInterval(iv); document.removeEventListener('keydown', tus, true);
+      if (v != null) { Local.set('kisi', v); } if (m && m.el.isConnected) m.close(); res(v); };
+    m = modal({ title: 'Bu cihazı kim kullanıyor?', size: 'sm', closeOnBg: false,
+      body: html`<div class="kim-is">${islem}</div><p class="muted sm" style="margin:0 0 12px">Bu işlem seçtiğiniz adla kaydedilir. Adınıza dokunun.</p>
+        <div class="kim-g">${L.map(a => html`<button type="button" class="btn ${a === sec ? 'primary' : ''}" data-kim="${a}">${a === sec ? '✓ ' : ''}${a}</button>`)}</div>
+        <p class="muted sm" style="margin:12px 0 0">${son && sec ? html`Son kullanan: <b>${son}</b> — Enter ile devam.` : 'Listede yoksanız Personeller sayfasından ekleyin.'}</p>`,
+      foot: html`<button class="btn" data-no>Vazgeç</button><button class="btn primary" data-ok ${sec ? '' : 'disabled'}>Devam</button>`,
+      onMount: mm => mm.el.addEventListener('click', e => {
+        const b = e.target.closest('[data-kim]'); if (b) return bit(b.dataset.kim);
+        if (e.target.closest('[data-ok]') && sec) return bit(sec);
+        if (e.target.closest('[data-no]')) return bit(null);
+      }) });
+    document.addEventListener('keydown', tus, true);
+    iv = setInterval(() => { if (!m.el.isConnected) bit(null); }, 250);
+  });
+}
+/* Açılan teklif formu: yeni ya da başka bir teklife geçerken sorulur */
+const _kimPanelAc = tkPanelAc;
+tkPanelAc = async function (id) {
+  const ayni = tkPanel.el && (state.draft?.id || null) === (id || null);
+  if (!ayni) { const k = await kimSor(id ? 'Teklif düzenleme' : 'Yeni teklif'); if (k === null) return; tkKisi = k; }
+  return _kimPanelAc.apply(this, arguments);
+};
+const _kimPanelKapat = tkPanelKapat;
+tkPanelKapat = function () { tkKisi = ''; return _kimPanelKapat.apply(this, arguments); };
+/* İşlem günlüğünde kişi */
+const _kimLog = logAct;
+logAct = function (msg) { const k = kimTemiz(Local.get('kisi', '')); return _kimLog(k ? `${k}: ${msg}` : msg); };
+function kimKV(t) {
+  const z = ms => ms ? fmtDT(ms) : '';
+  return html`${t.olusturan ? html`<dt>Oluşturan</dt><dd>${t.olusturan}<span class="muted sm"> · ${z(t.olusturanAt)}</span></dd>` : ''}${t.duzenleyen && t.duzenleyenAt !== t.olusturanAt ? html`<dt>Son düzenleyen</dt><dd>${t.duzenleyen}<span class="muted sm"> · ${z(t.duzenleyenAt)}</span></dd>` : ''}${t.gonderen ? html`<dt>Siparişe gönderen</dt><dd>${t.gonderen}<span class="muted sm"> · ${z(t.gonderenAt)}</span></dd>` : ''}`;
+}
 </script>
 </body>
 </html>

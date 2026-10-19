@@ -784,6 +784,7 @@ const IP = {
   img:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/>',
   xls:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 12l5 6M14 12l-5 6"/>'
 };
+IP.pf = '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h3" stroke-dasharray="2 2"/>';
 const I = (n, cls = '') => raw(`<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${IP[n] || ''}</svg>`);
 
 /* ---------- sabit listeler ---------- */
@@ -808,8 +809,8 @@ function tkDurum(t) {
 }
 const sipNo = id => 'PR-' + String(id).padStart(5, '0');
 /* Siparişe hiç gönderilmemiş, beklemedeki teklif (unutulmasın diye renkli ve hareketli gösterilir) */
-const gonderilmedi = t => !!t && !t.deletedAt && !sipBag(t) && (t.durum || 'Beklemede') === 'Beklemede';
-const durumTag = t => gonderilmedi(t) ? html`<span class="st st-gonder" title="Siparişe gönderilmedi"><i class="st-dot"></i>Beklemede</span>` : stTag(tkDurum(t));
+const gonderilmedi = t => !!t && !t.deletedAt && t.tur !== 'proforma' && !sipBag(t) && (t.durum || 'Beklemede') === 'Beklemede';
+const durumTag = t => t && t.tur === 'proforma' ? pfTag(t) : gonderilmedi(t) ? html`<span class="st st-gonder" title="Siparişe gönderilmedi"><i class="st-dot"></i>Beklemede</span>` : stTag(tkDurum(t));
 function sipKalemTag(t, it) {
   const k = sipBag(t)?.kalemler?.[it.uid]; if (!k) return '';
   return html`<div class="siptag">${sipNo(k.no)} ${stTag(k.durum)}</div>`;
@@ -1364,7 +1365,7 @@ function applyTheme() {
 }
 
 /* ---------- kabuk ---------- */
-const NAV = [['teklifler','Teklifler','doc'],['musteriler','Müşteriler','users'],['personeller','Personeller','user'],['urunler','Ürünler','box'],['raporlar','Raporlar','chart']];
+const NAV = [['teklifler','Teklifler','doc'],['proformalar','Proformalar','pf'],['musteriler','Müşteriler','users'],['personeller','Personeller','user'],['urunler','Ürünler','box'],['raporlar','Raporlar','chart']];
 function renderShell() {
   mount(app, html`<aside class="side" id="side" aria-label="Ana menü">
     <div class="side-top"><div class="brand" id="brand">${brandInner()}</div></div>
@@ -1385,6 +1386,7 @@ function renderShell() {
       <div class="cb-tut"></div>
       <div class="cb-head"><div class="cb-logo" id="cbLogo" title="Ayarlar için 2 saniye basılı tutun">${brandInner()}</div><div class="sync" id="sync2"></div></div>
       <div class="cb-grid">
+        <button class="cb-tile" data-act="cbGit" data-v="proformalar">${I('pf')}<span>Proformalar</span><b class="pf-say" hidden></b></button>
         <button class="cb-tile" data-act="cbGit" data-v="raporlar">${I('chart')}<span>Raporlar</span></button>
         <button class="cb-tile" data-act="cbGit" data-v="personeller">${I('user')}<span>Personeller</span></button>
         <button class="cb-tile" data-act="toggleTheme">${I('moon')}<span>Karanlık Mod</span><span class="tgl ${S.theme === 'dark' ? 'on' : ''}"></span></button>
@@ -1396,11 +1398,11 @@ function brandInner() { const s = logoSrc(); return html`${s ? html`<img src="${
 function refreshBrand() { const br = $('#brand'); if (br) mount(br, brandInner()); const cl = $('#cbLogo'); if (cl) mount(cl, brandInner()); }
 function markNav() {
   $$('#nav .nav-item').forEach(b => b.classList.toggle('active', navOf(state.view) === b.dataset.v));
-  const n = state.view === 'ayarlar' ? 'ayarlar' : navOf(state.view), daha = ['raporlar', 'personeller', 'ayarlar'].includes(n) || !$('#cbOv')?.classList.contains('hidden');
+  const n = state.view === 'ayarlar' ? 'ayarlar' : navOf(state.view), daha = ['raporlar', 'personeller', 'ayarlar', 'proformalar'].includes(n) || !$('#cbOv')?.classList.contains('hidden');
   $$('#cb .cb-it').forEach(b => b.classList.toggle('on', b.dataset.v === 'daha' ? daha : n === b.dataset.v));
   $$('#cbOv .cb-tile[data-v]').forEach(b => b.classList.toggle('on', n === b.dataset.v));
 }
-const navOf = v => ({ teklifler:'teklifler', teklifForm:'teklifler', teklifDetay:'teklifler', musteriler:'musteriler', musteriDetay:'musteriler', personeller:'personeller', personelDetay:'personeller', urunler:'urunler', raporlar:'raporlar' }[v] || '');
+const navOf = v => ({ teklifler:'teklifler', teklifForm:'teklifler', teklifDetay:'teklifler', proformalar:'proformalar', musteriler:'musteriler', musteriDetay:'musteriler', personeller:'personeller', personelDetay:'personeller', urunler:'urunler', raporlar:'raporlar' }[v] || '');
 /* Logoya 2 sn basılı tutunca ayarlar açılır */
 function bindBrand() {
   const b = $('#brand'); let t = null;
@@ -1463,7 +1465,7 @@ const TARIH_L = { bugun: 'Bugün', hafta: 'Bu Hafta', ay: 'Bu Ay', yil: 'Bu Yıl
 function rangeOf(f) { return f.tarih === 'ozel' ? [f.from || '0000-01-01', f.to || '9999-12-31'] : presetRange(f.tarih); }
 function listRows() {
   const pm = payMap(); const f = LS.f; const q = trAra(LS.q); const rg = rangeOf(f);
-  let rows = DB.teklif.all().filter(t => !t.deletedAt).map(t => ({ t, c: calc(t, pm[t.id]) }));
+  let rows = DB.teklif.all().filter(t => !t.deletedAt && t.tur !== 'proforma').map(t => ({ t, c: calc(t, pm[t.id]) }));
   rows = rows.filter(({ t, c }) => {
     if (f.cari && t.cariId !== f.cari) return false;
     if (f.durum && tkDurum(t) !== f.durum) return false;
@@ -1482,7 +1484,7 @@ VIEWS.teklifler = main => {
   mount(main, html`<div class="page fill">
     <div class="ph"><div><h1>Teklifler</h1><div class="muted sm" id="cnt"></div></div>
       <div class="ph-act"><button class="btn primary" data-act="newTeklif">${I('plus')} Yeni Teklif</button><button class="btn" data-act="refreshList" aria-label="Yenile">${I('refresh')} Yenile</button><button class="btn icon" data-act="listMore" aria-label="Diğer işlemler">${I('dots')}</button></div></div>
-    <div class="offer-kpis" id="offerKpis"></div>
+    <div id="pfBanner"></div><div class="offer-kpis" id="offerKpis"></div>
     <div class="toolbar"><div class="search"><span>${I('search')}</span><input class="inp" id="q" placeholder="Tüm teklif alanlarında ara" value="${LS.q}" maxlength="80"></div>
       <button class="btn" data-act="openFilter">${I('filter')} Filtre</button><button class="btn" data-act="sortMenu">${I('sort')} <span id="sortLbl"></span></button></div>
     <div class="tags" id="tags"></div>
@@ -1513,7 +1515,7 @@ function drawList(keepScroll) {
   if (f.tarih) tg.push(['tarih', 'Tarih: ' + (f.tarih === 'ozel' ? `${fmtDate(f.from)} – ${fmtDate(f.to)}` : TARIH_L[f.tarih])]);
   mount($('#tags'), tg.map(([k, l]) => html`<button class="ftag" data-act="openFilter" data-k="${k}">${l}</button>`));
   const tw = $('#tw'); const st = tw.scrollTop;
-  const any = DB.teklif.all().some(t => !t.deletedAt);
+  const any = DB.teklif.all().some(t => !t.deletedAt && t.tur !== 'proforma'); pfBannerCiz();
   if (!rows.length) { mount(tw, html`<div class="empty"><b>${any ? 'Aramayla eşleşen teklif yok' : 'Henüz teklif yok'}</b>${any ? 'Arama metnini veya filtreleri değiştirin.' : html`İlk teklifi oluşturmak için <button class="btn sm primary" data-act="newTeklif">+ Yeni Teklif</button>`}</div>`); return; }
   const cols = [['Teklif No'], ['Müşteri Ünvanı'], ['Adet'], ['Ana Para', 'İskonto'], ['Ara Toplam', 'KDV'], ['Toplam Tutar'], ['Alınan Peşinat', 'Kalan Tutar'], ['Teklif Tarihi', 'Teslim Tarihi'], ['Personel', 'Döviz'], ['Durumu'], ['']];
   const R = new Set([2, 3, 4, 5, 6]);
@@ -1574,11 +1576,13 @@ A.rowMenu = (el, e) => { e.stopPropagation(); const id = el.dataset.id; popMenu(
   { label: 'Düzenle', icon: 'edit', run: () => go('teklifForm', { id }) },
   { label: 'PDF', icon: 'pdf', run: () => pdfPreview(id) },
   ...(gonderilmedi(DB.teklif.find(id)) ? [{ label: 'Siparişe Gönder', icon: 'share', run: () => A.sipGonder({ dataset: { id }, disabled: false }) }] : []), '-',
+  ...(gonderilmedi(DB.teklif.find(id)) ? [{ label: 'Proformaya taşı', icon: 'pf', run: () => pfTasi([id]) }] : []),
   { label: 'Sil', icon: 'trash', danger: true, run: () => deleteTeklif(id) }]); };
 const EMPTY_F = () => ({ cari: '', durum: '', personel: '', tarih: '', from: '', to: '' });
 A.listMore = el => popMenu(el, [
   { label: 'Filtreler', icon: 'filter', run: () => A.openFilter({ dataset: {} }) },
-  { label: 'Tüm filtreleri temizle', icon: 'x', run: () => { LS.f = EMPTY_F(); LS.q = ''; $('#q').value = ''; drawList(); } }]);
+  { label: 'Tüm filtreleri temizle', icon: 'x', run: () => { LS.f = EMPTY_F(); LS.q = ''; $('#q').value = ''; drawList(); } },
+  { label: 'Proformaya taşı (seçerek)', icon: 'pf', run: () => pfTasiSec() }]);
 A.sortMenu = el => popMenu(el, [
   ...Object.entries(SORT_L).map(([k, l]) => ({ label: l + (LS.sort === k ? (LS.dir === 'desc' ? '  ↓' : '  ↑') : ''), on: LS.sort === k, run: () => { if (LS.sort === k) LS.dir = LS.dir === 'desc' ? 'asc' : 'desc'; else { LS.sort = k; LS.dir = 'desc'; } drawList(); } })), '-',
   { label: 'Yeni → Eski', run: () => { LS.sort = 'tarih'; LS.dir = 'desc'; drawList(); } },
@@ -2110,9 +2114,9 @@ A.saveTeklif = async el => {
   const t = stripDraft(d);
   if (!t.id) {
     el && (el.disabled = true);
-    let no; try { no = await nextSeq('teklif'); } catch { el && (el.disabled = false); return; }
+    let no; try { no = await nextSeq(t.tur === 'proforma' ? 'proforma' : 'teklif'); } catch { el && (el.disabled = false); return; }
     const cari = DB.cari.find(t.cariId), per = DB.personel.find(t.personelId);
-    Object.assign(t, { id: uid(), no: pad(no), created: Date.now(), durum: 'Beklemede', personelAd: per.ad,
+    Object.assign(t, { id: uid(), no: t.tur === 'proforma' ? 'P-' + pad(no, 4) : pad(no), created: Date.now(), durum: 'Beklemede', personelAd: per.ad, ...(t.tur === 'proforma' ? { pfDurum: 'acik', gecerlilik: t.gecerlilik || pfGunEkle(t.tarih, PF_GUN) } : {}),
       cariSnap: { unvan: cari.unvan, gsm: cari.gsm, sabit: cari.sabit, eposta: cari.eposta, adres: cari.adres, ilce: cari.ilce, sehir: cari.sehir, ulke: cari.ulke, vkn: cari.vkn, vd: cari.vd, yetkili: cari.yetkili } });
   }
   const U = s => clean(s, 80).toLocaleUpperCase('tr-TR');
@@ -2127,8 +2131,8 @@ A.saveTeklif = async el => {
   t.updated = Date.now();
   if (tkKisi) { if (!d.id) { t.olusturan = tkKisi; t.olusturanAt = t.updated; } t.duzenleyen = tkKisi; t.duzenleyenAt = t.updated; }
   DB.teklif.upsert(t); saveVariants(t.items);
-  logAct(d.id ? `Teklif ${t.no} düzenlendi` : `Teklif ${t.no} oluşturuldu`);
-  tkPanelKapat(); toast(d.id ? 'Değişiklikler kaydedildi' : `Teklif ${t.no} kaydedildi`); go('teklifDetay', { id: t.id });
+  logAct(`${t.tur === 'proforma' ? 'Proforma' : 'Teklif'} ${t.no} ${d.id ? 'düzenlendi' : 'oluşturuldu'}`);
+  tkPanelKapat(); toast(d.id ? 'Değişiklikler kaydedildi' : `${t.tur === 'proforma' ? 'Proforma' : 'Teklif'} ${t.no} kaydedildi`); go('teklifDetay', { id: t.id });
   { const b = sipBag(t); if (d.id && b && (b.bag === 'onaylandi' || b.bag === 'bekliyor')) sipGonder(t, { sessiz: true }); }
 };
 /* İşlem günlüğü yalnızca bu cihazda tutulur (sunucuya trafik yok) */
@@ -2522,9 +2526,9 @@ VIEWS.teklifDetay = (main, { id, tab = 'urunler' }) => {
   /* Teklifte girilen peşinat da bir ödeme olarak listelenir (teklif kaydında durur, Düzenle ile değişir) */
   const pesRow = t.pesinat > 0 ? { pesinat: true, tarih: t.pesinatTarih || t.tarih, tutar: t.pesinat, doviz: t.doviz, cevrilmis: t.pesinat, aciklama: 'Teklifte alınan peşinat' } : null;
   const payRows = pesRow ? [...pays, pesRow] : pays, payCount = payRows.length;
-  mount(main, html`<div class="page detail"><div class="ph"><div class="ph-l"><button class="btn icon" data-act="nav" data-v="teklifler" aria-label="Geri">${I('back')}</button>
-      <div><h1 style="display:flex;gap:10px;align-items:center">Teklif ${t.no} ${durumTag(t)}</h1><div class="muted sm">${cs.unvan}</div></div></div>
-    <div class="ph-act"><button class="btn" data-act="editTeklif" data-id="${t.id}">${I('edit')} Düzenle</button><button class="btn primary" data-act="pdf" data-id="${t.id}">${I('pdf')} PDF</button>${!sipBag(t) ? html`<button class="btn${gonderilmedi(t) ? ' btn-gonder' : ''}" data-act="sipGonder" data-id="${t.id}">${I('share')} Siparişe Gönder</button>` : ''}<button class="btn icon" data-act="rowMenu" data-id="${t.id}" aria-label="Diğer">${I('dots')}</button></div></div>
+  mount(main, html`<div class="page detail"><div class="ph"><div class="ph-l"><button class="btn icon" data-act="nav" data-v="${t.tur === 'proforma' ? 'proformalar' : 'teklifler'}" aria-label="Geri">${I('back')}</button>
+      <div><h1 style="display:flex;gap:10px;align-items:center">${t.tur === 'proforma' ? 'Proforma' : 'Teklif'} ${t.no} ${durumTag(t)}</h1><div class="muted sm">${cs.unvan}</div></div></div>
+    <div class="ph-act"><button class="btn" data-act="editTeklif" data-id="${t.id}">${I('edit')} Düzenle</button><button class="btn primary" data-act="pdf" data-id="${t.id}">${I('pdf')} PDF</button>${!sipBag(t) && t.tur !== 'proforma' ? html`<button class="btn${gonderilmedi(t) ? ' btn-gonder' : ''}" data-act="sipGonder" data-id="${t.id}">${I('share')} Siparişe Gönder</button>` : ''}<button class="btn icon" data-act="rowMenu" data-id="${t.id}" aria-label="Diğer">${I('dots')}</button></div></div>
     <div class="dgrid">
       <div class="card"><div class="card-h"><h3>Müşteri</h3></div><dl class="kv"><dt>Ünvan</dt><dd>${cs.unvan}</dd>${cs.yetkili ? html`<dt>Yetkili</dt><dd>${cs.yetkili}</dd>` : ''}<dt>Telefon</dt><dd>${cs.gsm || '—'}</dd>${cs.sabit ? html`<dt>Sabit No</dt><dd>${cs.sabit}</dd>` : ''}<dt>E-posta</dt><dd>${cs.eposta || '—'}</dd><dt>Adres</dt><dd>${[cs.adres, cs.ilce, cs.sehir, cs.ulke].filter(Boolean).join(', ')}</dd>${cs.vd ? html`<dt>Vergi Dairesi</dt><dd>${cs.vd}</dd>` : ''}${cs.vkn ? html`<dt>${String(cs.vkn).length === 11 ? 'TCKN' : 'VKN'}</dt><dd>${cs.vkn}</dd>` : ''}</dl></div>
       <div class="card"><div class="card-h"><h3>Teklif</h3></div><dl class="kv"><dt>Teklif Tarihi</dt><dd>${fmtDate(t.tarih)}</dd><dt>Teslim Tarihi</dt><dd>${fmtDate(t.teslim)}</dd><dt>Döviz</dt><dd>${t.doviz}</dd><dt>Personel</dt><dd>${t.personelAd}</dd>${kimKV(t)}
@@ -2535,7 +2539,7 @@ VIEWS.teklifDetay = (main, { id, tab = 'urunler' }) => {
           ${pays.length ? html`<dt>Diğer ödemeler</dt><dd>${money(r2(c.pes - (+t.pesinat || 0)), t.doviz)}</dd>` : ''}
           <dt>Toplam alınan</dt><dd>${money(c.pes, t.doviz)}</dd><dt>Kalan</dt><dd class="b">${money(c.kalan, t.doviz)}</dd><dt>Ödeme sayısı</dt><dd>${payCount}</dd></dl>
         <div class="prog"><i style="width:${pct.toFixed(1)}%"></i></div></div></div>
-    ${sipPanel(t)}<div class="tabs" role="tablist"><button class="${tab === 'urunler' ? 'on' : ''}" data-act="dTab" data-id="${t.id}" data-t="urunler">Ürünler (${t.items.length})</button><button class="${tab === 'odemeler' ? 'on' : ''}" data-act="dTab" data-id="${t.id}" data-t="odemeler">Ödemeler (${payCount})</button></div>
+    ${pfBant(t)}${sipPanel(t)}<div class="tabs" role="tablist"><button class="${tab === 'urunler' ? 'on' : ''}" data-act="dTab" data-id="${t.id}" data-t="urunler">Ürünler (${t.items.length})</button><button class="${tab === 'odemeler' ? 'on' : ''}" data-act="dTab" data-id="${t.id}" data-t="odemeler">Ödemeler (${payCount})</button></div>
     ${tab === 'urunler' ? html`<div class="tw"><table class="tbl static resp"><thead><tr>${['', 'Ürün', ...(sipBag(t) ? ['Sipariş'] : []), 'Ölçü', 'Renk', 'Yön', 'Adet', 'Birim Fiyat', 'Toplam', 'Açıklama'].map((h, i, a) => html`<th class="${i >= a.length - 4 && i <= a.length - 2 ? 'r' : ''}"><div class="thi">${h}</div></th>`)}</tr></thead><tbody>
         ${t.items.map(it => { const f = safeImg(offerFotoGet(it)); return html`<tr><td>${f ? html`<img class="thumb" src="${f}" alt="" data-act="img">` : html`<span class="thumb">Fotoğraf Yok</span>`}</td><td class="b">${itemTitle(it)}</td>${sipBag(t) ? html`<td class="nowrap">${sipKalemTag(t, it) || html`<span class="muted sm">—</span>`}</td>` : ''}<td>${it.olcu || '—'}</td><td>${it.renk || '—'}</td><td>${it.yon || '—'}</td><td class="r">${it.adet}</td><td class="r">${money(it.fiyat, t.doviz)}</td><td class="r b">${money(it.fiyat * it.adet, t.doviz)}</td><td class="wrap" style="min-width:180px">${it.aciklama || ''}</td></tr>`; })}</tbody></table>
         <div class="cards">${t.items.map(it => { const f = safeImg(offerFotoGet(it)); return html`<div class="lcard" style="cursor:default"><div class="row" style="justify-content:flex-start">${f ? html`<img class="thumb" src="${f}" alt="" data-act="img">` : html`<span class="thumb">Fotoğraf Yok</span>`}<div style="min-width:0"><div class="ttl">${itemTitle(it)}</div><div class="muted sm">${[it.olcu, it.renk, it.yon].filter(Boolean).join(' · ')}</div></div></div>
@@ -2652,16 +2656,16 @@ function pdfDoc(t, o) {
     <div class="pd-head"><div style="flex:1;min-width:0">
         <div class="pd-logo ${o.logoPos}">${logo ? html`<img src="${logo}" alt="" style="height:${LOGO_PX[o.logoSize] || 52}px">` : html`<span class="fn">${S.firma.ad || 'PRONTO'}</span>`}</div>
         <div class="pd-cust"><b>${cs.unvan}</b>${custSatirlar(cs, L).map(sat => html`<div>${sat.map(([k, d], i) => html`${i ? ' · ' : ''}${k ? html`<span style="color:#6b707c">${k}:</span> ` : ''}${d}`)}</div>`)}</div></div>
-      <div class="pd-right"><div style="font-size:8.5pt;color:#6b707c;letter-spacing:.12em">${L.teklif}</div><div class="pd-no">${L.no} ${t.no}</div>
+      <div class="pd-right"><div style="font-size:8.5pt;color:#6b707c;letter-spacing:.12em">${pfBaslik(t, L)}</div><div class="pd-no">${pfNoEt(t, L)} ${t.no}</div>
         <table class="pd-kv"><tr><td>${L.tarih}</td><td>${fmtDate(t.tarih)}</td></tr><tr><td>${L.teslim}</td><td>${fmtDate(t.teslim)}</td></tr><tr><td>${L.doviz}</td><td>${t.doviz}</td></tr></table>
         <div class="pd-dl">${radio('montaj', ['dahil', 'haric'])}${radio('nakliye', ['dahil', 'haric'])}${radio('teslimYeri', ['fabrika', 'adres'])}</div></div></div>
     <table class="pd-t"><thead><tr><th style="width:${fp + 16}px">${L.foto}</th><th>${L.urun}</th><th>${L.olcu}</th><th>${L.renk}</th><th>${L.yon}</th><th class="r">${L.birim}</th><th class="r">${L.adet}</th><th class="r">${L.toplam}</th></tr></thead>
       ${items.map(({ it }) => { const f = safeImg(offerFotoGet(it)); const cat = trLower(it.kategori); const head = cat !== lastCat; lastCat = cat;
-        return html`${head ? html`<tbody class="cat"><tr><td colspan="8">${it.kategori || '—'}</td></tr></tbody>` : ''}<tbody class="${zi++ % 2 ? 'z' : ''}"><tr>
+        return html`${head ? html`<tbody class="cat"><tr><td colspan="8">${enT(L, it.kategori) || '—'}</td></tr></tbody>` : ''}<tbody class="${zi++ % 2 ? 'z' : ''}"><tr>
           <td class="pcell">${f ? html`<img src="${f}" alt="" style="width:${fp}px;max-height:${fp}px">` : html`<span class="nofoto" style="width:${fp}px;height:${Math.round(fp * .7)}px">${L.yok}</span>`}</td>
-          <td><div class="nm">${itemTitle(it)}</div></td><td>${it.olcu || '—'}</td><td>${it.renk || '—'}</td><td>${it.yon || '—'}</td>
+          <td><div class="nm">${enT(L, itemTitle(it))}</div></td><td>${enT(L, it.olcu) || '—'}</td><td>${enT(L, it.renk) || '—'}</td><td>${enT(L, it.yon) || '—'}</td>
           <td class="r nowrap">${money(it.fiyat, t.doviz)}</td><td class="r">${it.adet}</td><td class="r nowrap"><b>${money(it.fiyat * it.adet, t.doviz)}</b></td></tr>
-          ${it.aciklama ? html`<tr><td></td><td colspan="7" class="ds">${it.aciklama}</td></tr>` : ''}</tbody>`; })}</table>
+          ${it.aciklama ? html`<tr><td></td><td colspan="7" class="ds">${enT(L, it.aciklama)}</td></tr>` : ''}</tbody>`; })}</table>
     <div class="pd-sum"><div class="pd-pay">${(pays.length || t.pesinat > 0) ? html`<b>${L.odemeler}</b><table>${t.pesinat > 0 ? html`<tr><td>${t.pesinatTarih ? fmtDate(t.pesinatTarih) : '—'}</td><td class="nowrap">${money(t.pesinat, t.doviz)}</td><td>${L.pes}</td></tr>` : ''}${pays.map(p => html`<tr><td>${fmtDate(p.tarih)}</td><td class="nowrap">${money(p.cevrilmis, t.doviz)}</td><td>${odYon(p, L)}</td></tr>`)}</table>` : ''}</div>
       <div class="pd-tot"><div><span>${L.ana}</span><span>${money(c.ana, t.doviz)}</span></div><div><span>${L.isk}</span><span>${c.isk ? '-' + money(c.isk, t.doviz) : money(0, t.doviz)}</span></div>
         <div><span>${L.ara}</span><span>${money(c.ara, t.doviz)}</span></div><div><span>${L.kdv} %${NF.format(t.kdv).replace(',00', '')}</span><span>${money(c.kdv, t.doviz)}</span></div>
@@ -2762,8 +2766,8 @@ async function tkPdfBlob(t, o) {
   const cust = [{ text: cs.unvan || '', bold: true, fontSize: 9.5, margin: [0, 0, 0, 2] }];
   for (const sat of custSatirlar(cs, L)) cust.push({ fontSize: 8, text: sat.flatMap(([k, d], i) => [...(i ? [{ text: '  ·  ', color: MUT }] : []), ...(k ? [{ text: k + ': ', color: MUT }] : []), { text: d }]) });
   const right = { width: 190, stack: [
-    { text: L.teklif, fontSize: 7, color: MUT, characterSpacing: 0.3, alignment: 'right' },
-    { text: `${L.no} ${t.no}`, fontSize: 12.5, bold: true, alignment: 'right', margin: [0, 1, 0, 4] },
+    { text: pfBaslik(t, L), fontSize: 7, color: MUT, characterSpacing: 0.3, alignment: 'right' },
+    { text: `${pfNoEt(t, L)} ${t.no}`, fontSize: 12.5, bold: true, alignment: 'right', margin: [0, 1, 0, 4] },
     { alignment: 'right', table: { widths: ['*', 'auto'], body: [[L.tarih, fmtDate(t.tarih)], [L.teslim, fmtDate(t.teslim)], [L.doviz, t.doviz]].map(([a, b]) => [{ text: a, color: MUT, fontSize: 8, alignment: 'right' }, { text: b, fontSize: 8 }]) }, layout: { hLineWidth: () => 0, vLineWidth: () => 0, paddingLeft: i => (i ? 9 : 0), paddingRight: () => 0, paddingTop: () => 1, paddingBottom: () => 1 } },
     { margin: [0, 6, 0, 0], table: { widths: ['*', 'auto'], body: [radio('montaj', ['dahil', 'haric']), radio('nakliye', ['dahil', 'haric']), radio('teslimYeri', ['fabrika', 'adres'])].map(r => [Object.assign(r[0], { alignment: 'right' }), r[1]]) }, layout: { hLineWidth: () => 0, vLineWidth: () => 0, paddingLeft: i => (i ? 8 : 0), paddingRight: () => 0, paddingTop: () => 1.5, paddingBottom: () => 1.5 } }
   ] };
@@ -2772,14 +2776,14 @@ async function tkPdfBlob(t, o) {
   let lastCat = null, zi = 0;
   for (const { it } of items) {
     const cat = trLower(it.kategori);
-    if (cat !== lastCat) { lastCat = cat; body.push([{ text: it.kategori || '—', colSpan: 8, bold: true, fontSize: 8, margin: [0, 4, 0, 0] }, {}, {}, {}, {}, {}, {}, {}]); zebra.push('cat'); }
+    if (cat !== lastCat) { lastCat = cat; body.push([{ text: enT(L, it.kategori) || '—', colSpan: 8, bold: true, fontSize: 8, margin: [0, 4, 0, 0] }, {}, {}, {}, {}, {}, {}, {}]); zebra.push('cat'); }
     const z = zi++ % 2 ? '#f6f7f9' : null;
     const f = fotos.get(safeImg(offerFotoGet(it)));
     body.push([f ? { image: f.data, fit: [fp, fp] } : { text: L.yok, fontSize: 6.5, color: '#8a8f99', alignment: 'center', margin: [0, fp * 0.25, 0, fp * 0.25] },
-      { text: itemTitle(it), bold: true, fontSize: 8 }, { text: it.olcu || '—', fontSize: 8 }, { text: it.renk || '—', fontSize: 8 }, { text: it.yon || '—', fontSize: 8 },
+      { text: enT(L, itemTitle(it)), bold: true, fontSize: 8 }, { text: enT(L, it.olcu) || '—', fontSize: 8 }, { text: enT(L, it.renk) || '—', fontSize: 8 }, { text: enT(L, it.yon) || '—', fontSize: 8 },
       { text: m(it.fiyat), fontSize: 8, alignment: 'right', noWrap: true }, { text: String(it.adet), fontSize: 8, alignment: 'right' }, { text: m(it.fiyat * it.adet), bold: true, fontSize: 8, alignment: 'right', noWrap: true }].map(x => (z ? Object.assign(x, { fillColor: z }) : x)));
     zebra.push('item');
-    if (it.aciklama) { body.push([{ text: '', fillColor: z || undefined }, { text: it.aciklama, colSpan: 7, fontSize: 7.5, color: '#4a4f5a', fillColor: z || undefined }, {}, {}, {}, {}, {}, {}]); zebra.push('desc'); }
+    if (it.aciklama) { body.push([{ text: '', fillColor: z || undefined }, { text: enT(L, it.aciklama), colSpan: 7, fontSize: 7.5, color: '#4a4f5a', fillColor: z || undefined }, {}, {}, {}, {}, {}, {}]); zebra.push('desc'); }
   }
   const kinds = ['head'].concat(zebra);
   const table = { table: { headerRows: 1, dontBreakRows: true, widths: [fp + 8, '*', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'], body },
@@ -2794,7 +2798,7 @@ async function tkPdfBlob(t, o) {
     layout: { hLineWidth: (i) => (i === 4 ? 1.1 : 0), hLineColor: () => INK, vLineWidth: () => 0, paddingLeft: () => 0, paddingRight: () => 0, paddingTop: (i) => (i === 4 ? 5 : 2), paddingBottom: () => 2 } };
   const firma = [S.firma.ad, S.firma.tel, S.firma.adres, S.firma.eposta].filter(Boolean).join('  |  ');
   const dd = {
-    info: { title: `${L.teklif} ${t.no}`, author: S.firma.ad || 'PRONTO', creator: 'PRONTO', producer: 'PRONTO' },
+    info: { title: `${pfBaslik(t, L)} ${t.no}`, author: S.firma.ad || 'PRONTO', creator: 'PRONTO', producer: 'PRONTO' },
     pageSize: o.size === 'A3' ? 'A3' : 'A4', pageOrientation: o.orient === 'landscape' ? 'landscape' : 'portrait',
     pageMargins: [34, 34, 34, 50],
     defaultStyle: { font: 'Roboto', fontSize: 8, color: INK, lineHeight: 1.2 },
@@ -2841,7 +2845,7 @@ function pdfPreview(id) {
       <button class="btn ghost icon sm" data-x aria-label="Kapat">${I('x')}</button></div><div class="pdf-stage" data-stage><div class="pdf-zoom" data-zoom></div></div>`);
     // Sayfa ölçeklenir, kutu ölçekli boyuta ayarlanır: dar ekranda kaymadan ortalanır, gerekirse kaydırılır
     let fitted = false;
-    const render = () => { mount(m.$('[data-zoom]'), pdfDoc(t, o)); if (!fitted) { fitted = true; const d = m.$('.pdoc'), st = m.$('[data-stage]'); if (d && st) { const cs = getComputedStyle(st); const w = st.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight); zoom = Math.min(zoom, Math.max(.25, w / d.offsetWidth)); } } applyZoom(); };
+    const render = () => { mount(m.$('[data-zoom]'), pdfDoc(t, o)); try { enEksikCiz(m, t, o, render); } catch (_) {} if (!fitted) { fitted = true; const d = m.$('.pdoc'), st = m.$('[data-stage]'); if (d && st) { const cs = getComputedStyle(st); const w = st.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight); zoom = Math.min(zoom, Math.max(.25, w / d.offsetWidth)); } } applyZoom(); };
     const applyZoom = () => { const z = m.$('[data-zoom]'), d = m.$('.pdoc'); if (!d) return; d.style.transform = `scale(${zoom})`; z.style.width = (d.offsetWidth * zoom) + 'px'; z.style.height = (d.offsetHeight * zoom) + 'px'; };
     const setZoom = z => { zoom = Math.min(2.5, Math.max(.25, z)); applyZoom(); };
     const stage = m.$('[data-stage]');
@@ -3129,7 +3133,7 @@ function cariTuruForm(old, onSaved) {
       if (old) { S.cariTurleri = S.cariTurleri.map(x => x === old ? n : x); DB.cari.save(DB.cari.all().map(c => c.tur === old ? { ...c, tur: n } : c)); } else S.cariTurleri.push(n);
       saveS(); m.close(); onSaved && onSaved(n); }) });
 }
-const cariStats = () => { const pm = payMap(), o = {}; for (const t of DB.teklif.all()) { if (t.deletedAt) continue; const s = o[t.cariId] ||= { n: 0, top: {}, kalan: {} }; const c = calc(t, pm[t.id]); s.n++; addTo(s.top, t.doviz, c.genel); addTo(s.kalan, t.doviz, c.kalan); } return o; };
+const cariStats = () => { const pm = payMap(), o = {}; for (const t of DB.teklif.all()) { if (t.deletedAt || t.tur === 'proforma') continue; const s = o[t.cariId] ||= { n: 0, top: {}, kalan: {} }; const c = calc(t, pm[t.id]); s.n++; addTo(s.top, t.doviz, c.genel); addTo(s.kalan, t.doviz, c.kalan); } return o; };
 const MQ = { q: '' };
 VIEWS.musteriler = main => {
   mount(main, html`<div class="page fill"><div class="ph"><div><h1>Müşteriler</h1><div class="muted sm" id="cnt"></div></div><div class="ph-act"><button class="btn primary" data-act="newCari">${I('plus')} Yeni Cari</button></div></div>
@@ -3158,7 +3162,7 @@ A.cariMenu = (el, e) => { e.stopPropagation(); const c = DB.cari.find(el.dataset
     DB.cari.remove(c.id); logAct(`Cari silindi: ${c.unvan}`); toast('Cari silindi'); go('musteriler'); } }]); };
 VIEWS.musteriDetay = (main, { id }) => {
   const c = DB.cari.find(id); if (!c) return go('musteriler');
-  const pm = payMap(), ts = DB.teklif.all().filter(t => t.cariId === id && !t.deletedAt).sort((a, b) => b.tarih.localeCompare(a.tarih)), top = {}, kal = {};
+  const pm = payMap(), ts = DB.teklif.all().filter(t => t.cariId === id && !t.deletedAt && t.tur !== 'proforma').sort((a, b) => b.tarih.localeCompare(a.tarih)), top = {}, kal = {};
   ts.forEach(t => { const x = calc(t, pm[t.id]); addTo(top, t.doviz, x.genel); addTo(kal, t.doviz, x.kalan); });
   mount(main, html`<div class="page"><div class="ph"><div class="ph-l"><button class="btn icon" data-act="nav" data-v="musteriler" aria-label="Geri">${I('back')}</button><div><h1>${c.unvan}</h1><div class="muted sm">${c.tur} · ${c.doviz}</div></div></div>
     <div class="ph-act"><button class="btn" data-act="cariMenu" data-id="${c.id}">${I('dots')}</button></div></div>
@@ -3188,7 +3192,7 @@ function personelForm(p, onSaved) {
 const PQ = { q: '' };
 function personelListHTML() {
   const pm = payMap(), q = trAra(PQ.q), st = {};
-  for (const t of DB.teklif.all()) { if (t.deletedAt) continue; const s = st[t.personelId] ||= { n: 0, top: {} }; s.n++; addTo(s.top, t.doviz, calc(t, pm[t.id]).genel); }
+  for (const t of DB.teklif.all()) { if (t.deletedAt || t.tur === 'proforma') continue; const s = st[t.personelId] ||= { n: 0, top: {} }; s.n++; addTo(s.top, t.doviz, calc(t, pm[t.id]).genel); }
   const rows = DB.personel.all().filter(p => !q || trAra(p.ad).includes(q)).sort((a, b) => a.ad.localeCompare(b.ad, 'tr'));
   return rows.length ? html`<table class="tbl resp"><thead><tr>${['Ad Soyad', 'Teklif Sayısı', 'Toplam Teklif Tutarı', ''].map(h => html`<th><div class="thi">${h}</div></th>`)}</tr></thead><tbody>
     ${rows.map(p => html`<tr data-act="openPers" data-id="${p.id}"><td class="b">${p.ad}</td><td>${st[p.id]?.n || 0}</td><td>${fmtMulti(st[p.id]?.top || {})}</td><td><button class="btn ghost icon sm" data-act="persMenu" data-id="${p.id}" aria-label="İşlemler">${I('dots')}</button></td></tr>`)}</tbody></table>
@@ -3208,7 +3212,7 @@ A.persMenu = (el, e) => { e.stopPropagation(); const p = DB.personel.find(el.dat
   { label: 'Sil', icon: 'trash', danger: true, run: async () => { if (!await confirmBox({ title: 'Personeli sil', danger: true, ok: 'Sil', body: html`<p><b>${p.ad}</b> silinecek. Eski tekliflerde personel adı korunur.</p>` })) return; DB.personel.remove(p.id); toast('Personel silindi'); state.view === 'personelDetay' ? go('personeller') : drawPers(); } }]); };
 VIEWS.personelDetay = (main, { id }) => {
   const p = DB.personel.find(id); if (!p) return go('personeller');
-  const pm = payMap(), ts = DB.teklif.all().filter(t => t.personelId === id && !t.deletedAt).sort((a, b) => b.tarih.localeCompare(a.tarih)), top = {};
+  const pm = payMap(), ts = DB.teklif.all().filter(t => t.personelId === id && !t.deletedAt && t.tur !== 'proforma').sort((a, b) => b.tarih.localeCompare(a.tarih)), top = {};
   ts.forEach(t => addTo(top, t.doviz, calc(t, pm[t.id]).genel));
   mount(main, html`<div class="page"><div class="ph"><div class="ph-l"><button class="btn icon" data-act="nav" data-v="personeller" aria-label="Geri">${I('back')}</button><h1>${p.ad}</h1></div><div class="ph-act"><button class="btn" data-act="persMenu" data-id="${p.id}">${I('dots')}</button></div></div>
     <div class="stats"><div class="stat"><div class="muted sm">Toplam teklif sayısı</div><div class="v">${ts.length}</div></div><div class="stat" style="grid-column:span 2"><div class="muted sm">Toplam teklif tutarı</div><div class="v">${fmtMulti(top)}</div></div><div class="stat"><div class="muted sm">Kayıt tarihi</div><div class="v" style="font-size:15px">${fmtDate(isoOf(p.created))}</div></div></div>
@@ -3313,7 +3317,7 @@ A.repP = el => { RQ.p = el.dataset.k; go('raporlar'); };
 A.repTab = el => { RQ.tab = el.dataset.k; go('raporlar'); };
 function repData() {
   const rg = RQ.p ? rangeOf({ tarih: RQ.p, from: RQ.from, to: RQ.to }) : null, pm = payMap();
-  const ts = DB.teklif.all().filter(t => !t.deletedAt && (!rg || (t.tarih >= rg[0] && t.tarih <= rg[1]))).sort((a, b) => b.tarih.localeCompare(a.tarih));
+  const ts = DB.teklif.all().filter(t => !t.deletedAt && t.tur !== 'proforma' && (!rg || (t.tarih >= rg[0] && t.tarih <= rg[1]))).sort((a, b) => b.tarih.localeCompare(a.tarih));
   return { rg, pm, ts: ts.map(t => ({ t, c: calc(t, pm[t.id]) })) };
 }
 function repTable(tab, D) {
@@ -3336,7 +3340,7 @@ function drawRep() {
   if (RQ.tab === 'genel') {
     const top = {}, pes = {}, kal = {}; D.ts.forEach(({ t, c }) => { addTo(top, t.doviz, c.genel); addTo(pes, t.doviz, c.pes); addTo(kal, t.doviz, c.kalan); });
     const t0 = todayISO(), t7 = isoOf(Date.now() + 7 * 864e5), pm = D.pm;
-    const all = DB.teklif.all().filter(t => !t.deletedAt);
+    const all = DB.teklif.all().filter(t => !t.deletedAt && t.tur !== 'proforma');
     const up = all.filter(t => t.teslim >= t0 && t.teslim <= t7 && tkDurum(t) !== 'Teslim Edildi' && tkDurum(t) !== 'SSH' && tkDurum(t) !== 'İptal').sort((a, b) => a.teslim.localeCompare(b.teslim));
     const bek = all.filter(t => t.durum === 'Beklemede').sort((a, b) => b.tarih.localeCompare(a.tarih)).slice(0, 8);
     const log = Local.get('log', []).slice(0, 10);
@@ -3657,8 +3661,8 @@ document.addEventListener('focusin',function(e){var t=e.target;if(!t||!t.scrollI
 })();
 </script>
 <style id="kim-css">
-.kim-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
-.kim-g .btn{justify-content:center;padding:14px 8px;font-weight:700}
+.kim-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,190px),1fr));gap:8px}
+.kim-g .btn{justify-content:flex-start;text-align:left;padding:11px 12px;font-weight:700;white-space:normal;height:auto;min-height:46px;line-height:1.3;overflow-wrap:anywhere;word-break:break-word;min-width:0;width:100%}
 .kim-is{display:inline-block;background:var(--bg2,#f3f4f6);border-radius:8px;padding:3px 9px;font-weight:700;margin-bottom:10px}
 </style>
 <script id="kim-js">
@@ -3709,6 +3713,337 @@ function kimKV(t) {
   const z = ms => ms ? fmtDT(ms) : '';
   return html`${t.olusturan ? html`<dt>Oluşturan</dt><dd>${t.olusturan}<span class="muted sm"> · ${z(t.olusturanAt)}</span></dd>` : ''}${t.duzenleyen && t.duzenleyenAt !== t.olusturanAt ? html`<dt>Son düzenleyen</dt><dd>${t.duzenleyen}<span class="muted sm"> · ${z(t.duzenleyenAt)}</span></dd>` : ''}${t.gonderen ? html`<dt>Siparişe gönderen</dt><dd>${t.gonderen}<span class="muted sm"> · ${z(t.gonderenAt)}</span></dd>` : ''}`;
 }
+</script>
+<style id="pf-css">
+.pfc{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:700;white-space:nowrap}
+.pf-ac{background:#EEF2FF;color:#3949AB}.pf-gec{background:#FDECEC;color:#B02A37}.pf-don{background:#E8F5E9;color:#2E7D32}.pf-kay{background:#F1F1F1;color:#6b6b6b}
+[data-theme="dark"] .pf-ac{background:#262b4a;color:#aab4ff}[data-theme="dark"] .pf-gec{background:#3d2226;color:#f1aeb5}[data-theme="dark"] .pf-don{background:#1f3322;color:#9bd3a0}[data-theme="dark"] .pf-kay{background:#2b2b2b;color:#aaa}
+.pf-banner{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#FFF8E6;border:1px solid #F3D58A;border-radius:12px;padding:9px 14px;margin:0 0 12px;font-size:13px}
+[data-theme="dark"] .pf-banner{background:#2f2a1c;border-color:#6b5a26}
+.pf-banner b{font-weight:800}.pf-banner .btn{margin-left:auto}
+.pf-bant{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid #c7cdf5;background:#F4F6FF;border-radius:14px;padding:12px 14px;margin:0 0 14px}
+[data-theme="dark"] .pf-bant{background:#1f2238;border-color:#3a4170}
+.pf-bant.gec{border-color:#f0b4ba;background:#FFF5F5}[data-theme="dark"] .pf-bant.gec{background:#2d1d20;border-color:#6a3138}
+.pf-bant .t{flex:1;min-width:200px}.pf-bant .t b{display:block;font-size:14.5px}
+.pf-ch{display:grid;grid-template-columns:1fr 1fr;gap:10px}.pf-ch button{all:unset;box-sizing:border-box;cursor:pointer;border:2px solid var(--border);border-radius:14px;padding:14px;display:block}
+.pf-ch button:hover,.pf-ch button:focus-visible{border-color:#E6B22A;background:rgba(230,178,42,.08)}.pf-ch b{font-size:15px;display:block;margin-bottom:5px}
+.pf-op{display:grid;gap:8px}.pf-op button{all:unset;box-sizing:border-box;cursor:pointer;border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:block}
+.pf-op button:hover,.pf-op button:focus-visible{border-color:#E6B22A;background:rgba(230,178,42,.08)}.pf-op b{display:block;font-size:14px;margin-bottom:3px}
+.pf-flt{display:inline-flex;gap:6px;flex-wrap:wrap}.pf-flt .btn.on{background:var(--text);color:var(--surface)}
+.nav-item .pf-say,.cb-tile .pf-say{margin-left:auto;background:#E6B22A;color:#1a1a1a;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:800}
+.cb-tile .pf-say{position:absolute;top:8px;right:10px}.cb-tile{position:relative}
+.side.mini .nav-item .pf-say{display:none}
+.tkp-pf::before{content:'PROFORMA';position:absolute;z-index:5;top:10px;left:50%;transform:translateX(-50%);background:#EEF2FF;color:#3949AB;font-weight:800;font-size:11px;letter-spacing:.1em;padding:3px 10px;border-radius:8px;pointer-events:none}
+.pf-sec{display:grid;gap:6px;max-height:50vh;overflow:auto}.pf-sec label{display:flex;gap:10px;align-items:center;border:1px solid var(--border);border-radius:10px;padding:9px 12px;cursor:pointer}
+.pf-sec label span{flex:1;min-width:0}.pf-neden{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 10px}.pf-neden button.on{background:var(--text);color:var(--surface)}
+@media (max-width:600px){.pf-ch{grid-template-columns:1fr}}
+</style>
+<script id="pf-js">
+/* ===== PROFORMA ===== (trafik: ek istek yok; yeni/dönüşümde 1 numara + 1 kayıt) */
+const PF_GUN = 15;
+const PF_NEDEN = ['Fiyat yüksek', 'Teslim süresi uzun', 'Rakibi seçti', 'Müşteri vazgeçti', 'Cevap vermedi', 'Diğer'];
+const isPf = t => !!t && t.tur === 'proforma';
+const pfAcik = t => isPf(t) && !t.deletedAt && (t.pfDurum || 'acik') === 'acik';
+function pfGunEkle(iso, n) { const d = new Date((iso || todayISO()) + 'T12:00:00'); d.setDate(d.getDate() + n); return isoOf(d); }
+function pfKalan(t) { if (!t.gecerlilik) return null; return Math.round((new Date(t.gecerlilik + 'T12:00:00') - new Date(todayISO() + 'T12:00:00')) / 864e5); }
+function pfTag(t) {
+  if (t.pfDurum === 'kaybedildi') return html`<span class="pfc pf-kay">Kaybedildi${t.kayipNeden ? ' · ' + t.kayipNeden : ''}</span>`;
+  const k = pfKalan(t);
+  if (k != null && k < 0) return html`<span class="pfc pf-gec">Süresi doldu · takip et</span>`;
+  return html`<span class="pfc pf-ac">Proforma${k != null ? ` · ${k === 0 ? 'bugün son gün' : k + ' gün kaldı'}` : ''}</span>`;
+}
+function pfBaslik(t, L) {
+  if (!isPf(t)) return L.teklif;
+  const en = L === PL.en;
+  return (en ? 'PROFORMA QUOTATION' : 'PROFORMA TEKLİF') + (t.gecerlilik ? (en ? ' · VALID UNTIL ' : ' · GEÇERLİLİK ') + fmtDate(t.gecerlilik) : '');
+}
+function pfNoEt(t, L) { return isPf(t) ? 'Proforma No' : L.no; }
+function pfSay() { return DB.teklif.all().filter(pfAcik).length; }
+function pfSayCiz() {
+  const n = pfSay();
+  const nb = document.querySelector('#nav [data-v="proformalar"]');
+  if (nb) { let b = nb.querySelector('.pf-say'); if (!b) { b = document.createElement('b'); b.className = 'pf-say'; nb.appendChild(b); } b.textContent = n; b.hidden = !n; }
+  document.querySelectorAll('.cb-tile .pf-say').forEach(b => { b.textContent = n; b.hidden = !n; });
+}
+function pfBannerCiz() {
+  const el = document.getElementById('pfBanner'); if (!el) return; const n = pfSay();
+  mount(el, n ? html`<div class="pf-banner">${I('pf')}<span><b>${n} açık proforma</b> bu listede ve toplamlarda yok. Burada yalnızca kesin teklifler var.</span><button class="btn sm" data-act="nav" data-v="proformalar">Proformalara git →</button></div>` : '');
+  pfSayCiz();
+}
+function pfBant(t) {
+  if (!isPf(t)) return t.pfNo ? html`<div class="muted sm" style="margin:0 0 10px">Proforma ${t.pfNo} olarak hazırlandı${t.donusturuldu ? `, ${fmtDT(t.donusturuldu)}` : ''} teklife dönüştü${t.donusturen ? ` (${t.donusturen})` : ''}.</div>` : '';
+  const k = pfKalan(t), kay = t.pfDurum === 'kaybedildi';
+  if (kay) return html`<div class="pf-bant"><div class="t"><b>Kaybedildi${t.kayipNeden ? ' · ' + t.kayipNeden : ''}</b><span class="muted sm">${t.kayipNot ? t.kayipNot + ' · ' : ''}${t.kayipAt ? fmtDT(t.kayipAt) : ''}${t.kaybeden ? ' · ' + t.kaybeden : ''} — kayıt silinmedi</span></div><button class="btn" data-act="pfAc" data-id="${t.id}">Yeniden aç</button></div>`;
+  return html`<div class="pf-bant${k != null && k < 0 ? ' gec' : ''}"><div class="t"><b>Proforma — müşteriden cevap bekleniyor</b><span class="muted sm">Geçerlilik: ${t.gecerlilik ? fmtDate(t.gecerlilik) : '—'}${k != null ? (k < 0 ? ` · süresi ${-k} gün önce doldu` : ` · ${k} gün kaldı`) : ''}. Teklifler listesine ve toplamlara girmez.</span></div>
+    <button class="btn" data-act="pfUzat" data-id="${t.id}">Süreyi uzat</button><button class="btn primary" data-act="pfKarar" data-id="${t.id}">Müşteri cevap verdi →</button></div>`;
+}
+/* --- Proformalar sayfası --- */
+const PS = { q: '', f: 'acik' };
+VIEWS.proformalar = main => {
+  mount(main, html`<div class="page fill"><div class="ph"><div><h1>Proformalar</h1><div class="muted sm">Müşteriye gönderilen, henüz onaylanmamış teklifler. Teklifler listesinde ve toplamlarda görünmez.</div></div>
+    <div class="ph-act"><button class="btn primary" data-act="pfYeni">${I('plus')} Yeni Proforma</button></div></div>
+    <div class="offer-kpis" id="pfKpi"></div>
+    <div class="toolbar"><div class="search"><span>${I('search')}</span><input class="inp" id="pfq" placeholder="Proformalarda ara" value="${PS.q}" maxlength="80"></div><div class="pf-flt" id="pfFlt"></div></div>
+    <div class="tw" id="pftw"></div></div>`);
+  $('#pfq').addEventListener('input', debounce(e => { PS.q = clean(e.target.value, 80); pfCiz(); }));
+  pfCiz();
+};
+function pfCiz() {
+  const tw = $('#pftw'); if (!tw) return;
+  const pm = payMap(), q = trAra(PS.q), ay = todayISO().slice(0, 7);
+  const tum = DB.teklif.all().filter(t => !t.deletedAt && (isPf(t) || t.pfNo));
+  const grup = t => !isPf(t) ? 'donen' : t.pfDurum === 'kaybedildi' ? 'kayip' : 'acik';
+  const say = { acik: 0, donen: 0, kayip: 0, tum: tum.length }; tum.forEach(t => say[grup(t)]++);
+  const acik = tum.filter(t => grup(t) === 'acik'), gec = acik.filter(t => (pfKalan(t) ?? 0) < 0).length;
+  const buAy = tum.filter(t => (grup(t) === 'donen' && String(isoOf(t.donusturuldu || 0)).slice(0, 7) === ay) || (grup(t) === 'kayip' && String(isoOf(t.kayipAt || 0)).slice(0, 7) === ay));
+  const buAyDon = buAy.filter(t => grup(t) === 'donen').length, olasi = {}; acik.forEach(t => addTo(olasi, t.doviz, calc(t, pm[t.id]).genel));
+  mount($('#pfKpi'), html`<div class="offer-kpi"><div class="k-label">Açık Proforma</div><div class="k-value">${acik.length}</div><div class="k-sub">Cevap bekleniyor</div></div>
+    <div class="offer-kpi"><div class="k-label">Süresi Dolan</div><div class="k-value" style="${gec ? 'color:#B02A37' : ''}">${gec}</div><div class="k-sub">${gec ? 'Müşteriyi arayın' : 'Yok'}</div></div>
+    <div class="offer-kpi"><div class="k-label">Bu Ay Sonuçlanan</div><div class="k-value">${buAyDon} / ${buAy.length}</div><div class="k-sub">${buAy.length ? `Dönüşüm %${Math.round(buAyDon / buAy.length * 100)}` : 'Henüz yok'}</div></div>
+    <div class="offer-kpi"><div class="k-label">Olası Tutar</div><div class="k-value">${fmtMulti(olasi)}</div><div class="k-sub">Bilgi amaçlı · ciroya sayılmaz</div></div>`);
+  mount($('#pfFlt'), [['acik', 'Açık'], ['donen', 'Dönüşen'], ['kayip', 'Kaybedilen'], ['tum', 'Tümü']].map(([k, l]) => html`<button class="btn${PS.f === k ? ' on' : ''}" data-act="pfFiltre" data-k="${k}">${l} (${say[k]})</button>`));
+  let L = tum.filter(t => PS.f === 'tum' || grup(t) === PS.f);
+  if (q) L = L.filter(t => trAra([t.no, t.pfNo, t.cariSnap?.unvan, t.personelAd, ...t.items.flatMap(i => [i.kategori, i.model, i.renk])].join(' ')).includes(q));
+  L.sort((a, b) => grup(a) === 'acik' && grup(b) === 'acik' ? String(a.gecerlilik || '9').localeCompare(String(b.gecerlilik || '9')) : String(b.tarih).localeCompare(String(a.tarih)));
+  if (!L.length) return mount(tw, html`<div class="empty"><b>${tum.length ? 'Bu filtrede proforma yok' : 'Henüz proforma yok'}</b>${tum.length ? '' : html`Müşteri karar vermediyse <button class="btn sm primary" data-act="pfYeni">+ Yeni Proforma</button> hazırlayın ya da Teklifler'de "Proformaya taşı" deyin.`}</div>`);
+  const dur = t => grup(t) === 'donen' ? html`<span class="pfc pf-don">✓ Teklif ${t.no} oldu</span>` : pfTag(t);
+  const btn = t => grup(t) === 'acik' ? html`<button class="btn sm primary" data-act="pfKarar" data-id="${t.id}">Cevap →</button>` : grup(t) === 'kayip' ? html`<button class="btn sm" data-act="pfAc" data-id="${t.id}">Yeniden aç</button>` : '';
+  mount(tw, html`<table class="tbl offers resp"><thead><tr>${['Proforma No', 'Müşteri Ünvanı', 'Adet', 'Toplam Tutar', 'Tarih|Geçerlilik', 'Personel', 'Durum', ''].map((h, i) => { const [a, b] = h.split('|'); return html`<th class="${i === 2 || i === 3 ? 'r' : ''}"><div class="thi">${a}${b ? html`<span class="alt">${b}</span>` : ''}</div></th>`; })}</tr></thead><tbody>
+    ${L.map(t => { const c = calc(t, pm[t.id]); return html`<tr data-act="openTeklif" data-id="${t.id}"><td class="b">${isPf(t) ? t.no : t.pfNo}</td><td class="mus">${t.cariSnap?.unvan || ''}</td><td class="r">${c.adet}</td><td class="r b">${money(c.genel, t.doviz)}</td><td>${fmtDate(t.pfTarih || t.tarih)}<span class="alt">${isPf(t) && t.gecerlilik ? fmtDate(t.gecerlilik) : '—'}</span></td><td>${t.personelAd}</td><td>${dur(t)}</td><td class="nowrap">${btn(t)}</td></tr>`; })}
+  </tbody></table>
+  <div class="cards">${L.map(t => { const c = calc(t, pm[t.id]); return html`<div class="lcard" data-act="openTeklif" data-id="${t.id}"><div class="row"><span class="ttl">${t.cariSnap?.unvan || ''}</span>${btn(t)}</div>
+    <div class="row sm muted"><span>${isPf(t) ? t.no : t.pfNo} · ${fmtDate(t.pfTarih || t.tarih)}</span><span>${isPf(t) && t.gecerlilik ? 'Geçerlilik ' + fmtDate(t.gecerlilik) : ''}</span></div>
+    <div class="row"><span class="b">${money(c.genel, t.doviz)}</span>${dur(t)}</div></div>`; })}</div>`);
+  pfSayCiz();
+}
+A.pfFiltre = el => { PS.f = el.dataset.k; pfCiz(); };
+/* --- Yeni: Proforma mı Kesin Teklif mi? --- */
+let pfYeniTur = null;
+function pfTurSor() {
+  return new Promise(res => {
+    let bitti = false;
+    const m = modal({ title: 'Ne hazırlıyorsunuz?', size: 'sm', body: html`<div class="pf-ch"><button type="button" data-tur="proforma"><b>${I('pf')} Proforma</b><span class="muted sm">Müşteri henüz karar vermedi. Proformalar bölümünde durur, toplamlara girmez. ${PF_GUN} gün geçerli.</span></button>
+      <button type="button" data-tur="teklif"><b>${I('doc')} Kesin Teklif</b><span class="muted sm">Müşteri onayladı. Doğrudan Teklifler listesine girer, Siparişe gönderilebilir.</span></button></div>
+      <p class="muted sm" style="margin:12px 0 0">Emin değilseniz Proforma seçin; onaylanınca tek tuşla teklife dönüşür.</p>`,
+      foot: html`<button class="btn" data-no>Vazgeç</button>`,
+      onMount: mm => mm.el.addEventListener('click', e => { const b = e.target.closest('[data-tur]'); if (b) { bit(b.dataset.tur); } else if (e.target.closest('[data-no]')) bit(null); }) });
+    const bit = v => { if (bitti) return; bitti = true; clearInterval(iv); if (m.el.isConnected) m.close(); res(v); };
+    const iv = setInterval(() => { if (!m.el.isConnected) bit(null); }, 250);
+  });
+}
+const _pfPanelAc = tkPanelAc;
+tkPanelAc = async function (id) {
+  const ayni = tkPanel.el && (state.draft?.id || null) === (id || null);
+  let tur = null;
+  if (!id && !ayni) { tur = pfYeniTur || await pfTurSor(); pfYeniTur = null; if (!tur) return; }
+  const r = await _pfPanelAc.apply(this, arguments);
+  if (tur === 'proforma' && tkPanel.el && state.draft && !state.draft.id) { state.draft.tur = 'proforma'; state.draft.gecerlilik = pfGunEkle(state.draft.tarih, PF_GUN); }
+  if (tur === 'teklif' && state.draft && !state.draft.id) delete state.draft.tur;
+  pfPanelIsaret();
+  return r;
+};
+A.pfYeni = () => { pfYeniTur = 'proforma'; go('teklifForm', {}); };
+function pfPanelIsaret() { if (tkPanel.el) tkPanel.el.classList.toggle('tkp-pf', !!(state.draft && state.draft.tur === 'proforma')); }
+/* --- Siparişe gönder: proforma doğrudan gidemez --- */
+const _pfSipGonder = sipGonder;
+sipGonder = async function (t, o) { if (isPf(DB.teklif.find(t && t.id) || t)) { toast('Proforma siparişe gönderilemez. Önce "Müşteri cevap verdi → Onayladı" deyin.', 'err', 6000); return null; } return _pfSipGonder.apply(this, arguments); };
+const _pfASip = A.sipGonder;
+A.sipGonder = async el => { const t = DB.teklif.find(el.dataset.id); if (isPf(t)) return pfKarar(t); return _pfASip(el); };
+/* --- Karar: onayladı / vazgeçti --- */
+A.pfKarar = (el, e) => { e && e.stopPropagation(); pfKarar(DB.teklif.find(el.dataset.id)); };
+async function pfKarar(t) {
+  if (!pfAcik(t)) return;
+  const sec = await new Promise(res => {
+    let bitti = false;
+    const m = modal({ title: `${t.no} · ${t.cariSnap?.unvan || ''}`, size: 'sm', body: html`<p style="margin:0 0 12px">Müşteri ne dedi?</p><div class="pf-op">
+      <button type="button" data-k="gonder"><b>✓ Onayladı — Teklife dönüştür ve Siparişe gönder</b><span class="muted sm">Teklif numarası alır, Teklifler listesine geçer, Sipariş Takibi'ne onaya gider.</span></button>
+      <button type="button" data-k="donustur"><b>Onayladı — Sadece teklife dönüştür</b><span class="muted sm">Teklifler listesine geçer; siparişe daha sonra gönderirsiniz.</span></button>
+      <button type="button" data-k="kayip"><b>✗ Vazgeçti — Kaybedildi</b><span class="muted sm">Neden seçilir. Kayıt silinmez, Proformalar'da "Kaybedilen" altında durur.</span></button></div>`,
+      foot: html`<button class="btn" data-no>Vazgeç</button>`,
+      onMount: mm => mm.el.addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (b) bit(b.dataset.k); else if (e.target.closest('[data-no]')) bit(null); }) });
+    const bit = v => { if (bitti) return; bitti = true; clearInterval(iv); if (m.el.isConnected) m.close(); res(v); };
+    const iv = setInterval(() => { if (!m.el.isConnected) bit(null); }, 250);
+  });
+  if (!sec) return;
+  if (sec === 'kayip') return pfKaybet(t);
+  const k = await kimSor('Proformayı teklife dönüştür'); if (k === null) return;
+  if (!navigator.onLine) return toast('Teklif numarası almak için internet bağlantısı gerekli.', 'err');
+  const g = DB.teklif.find(t.id); if (!pfAcik(g)) return toast('Bu proforma başka bir yerde değişti.', 'err');
+  let no = g.no;
+  if (/^P-/.test(String(g.no))) { try { no = pad(await nextSeq('teklif')); } catch { return; } }
+  const yeni = { ...g, no, pfNo: g.no, pfTarih: g.tarih, tarih: todayISO(), donusturuldu: Date.now(), donusturen: k, durum: 'Beklemede', updated: Date.now() };
+  delete yeni.tur; delete yeni.pfDurum;
+  if (sec === 'gonder' && k) Object.assign(yeni, { gonderen: k, gonderenAt: Date.now() });
+  DB.teklif.upsert(yeni); logAct(`Proforma ${g.no} → Teklif ${no}`);
+  toast(`Proforma ${g.no} → Teklif ${no} oldu, Teklifler listesine geçti.`, 'ok', 5000);
+  go('teklifDetay', { id: g.id });
+  if (sec === 'gonder') await _pfSipGonder(yeni, { sessiz: true });
+}
+async function pfKaybet(t) {
+  let neden = '', not = '';
+  const tamam = await new Promise(res => {
+    let bitti = false;
+    const m = modal({ title: `${t.no} · Kaybedildi`, size: 'sm', body: html`<p class="muted sm" style="margin:0 0 6px">Neden? (raporda görünür)</p><div class="pf-neden">${PF_NEDEN.map(n => html`<button type="button" class="btn sm" data-n="${n}">${n}</button>`)}</div>
+      <textarea class="inp" id="pfNot" rows="2" maxlength="300" placeholder="Not (isteğe bağlı)"></textarea>`,
+      foot: html`<button class="btn" data-no>Vazgeç</button><button class="btn danger solid" data-ok disabled>Kaybedildi olarak işaretle</button>`,
+      onMount: mm => mm.el.addEventListener('click', e => {
+        const b = e.target.closest('[data-n]'); if (b) { neden = b.dataset.n; mm.el.querySelectorAll('[data-n]').forEach(x => x.classList.toggle('on', x === b)); mm.$('[data-ok]').disabled = false; return; }
+        if (e.target.closest('[data-ok]') && neden) { not = clean(mm.$('#pfNot').value, 300); bit(true); } else if (e.target.closest('[data-no]')) bit(false);
+      }) });
+    const bit = v => { if (bitti) return; bitti = true; clearInterval(iv); if (m.el.isConnected) m.close(); res(v); };
+    const iv = setInterval(() => { if (!m.el.isConnected) bit(false); }, 250);
+  });
+  if (!tamam) return;
+  const k = await kimSor('Proforma kaybedildi'); if (k === null) return;
+  const g = DB.teklif.find(t.id); if (!pfAcik(g)) return;
+  DB.teklif.upsert({ ...g, pfDurum: 'kaybedildi', kayipNeden: neden, kayipNot: not, kayipAt: Date.now(), kaybeden: k, updated: Date.now() });
+  logAct(`Proforma ${g.no} kaybedildi (${neden})`); toast('Kaybedildi olarak işaretlendi. Kayıt silinmedi.');
+  state.view === 'proformalar' ? pfCiz() : go('teklifDetay', { id: g.id });
+}
+A.pfAc = async (el, e) => { e && e.stopPropagation(); const t = DB.teklif.find(el.dataset.id); if (!isPf(t) || t.pfDurum !== 'kaybedildi') return;
+  if (await kimSor('Proformayı yeniden aç') === null) return;
+  const yeni = { ...t, pfDurum: 'acik', gecerlilik: pfGunEkle(todayISO(), PF_GUN), updated: Date.now() }; delete yeni.kayipNeden; delete yeni.kayipNot; delete yeni.kayipAt; delete yeni.kaybeden;
+  DB.teklif.upsert(yeni); logAct(`Proforma ${t.no} yeniden açıldı`); toast(`Proforma yeniden açıldı (${PF_GUN} gün geçerli).`); state.view === 'proformalar' ? pfCiz() : go('teklifDetay', { id: t.id }); };
+A.pfUzat = async el => { const t = DB.teklif.find(el.dataset.id); if (!pfAcik(t)) return;
+  const r = await choiceBox({ title: 'Geçerlilik süresini uzat', body: html`<p style="margin-top:0">Şu an: ${t.gecerlilik ? fmtDate(t.gecerlilik) : '—'}. Bugünden itibaren:</p>`, options: [{ v: '7', l: '+7 gün' }, { v: '15', l: '+15 gün', primary: true }, { v: '30', l: '+30 gün' }] });
+  if (!r) return;
+  DB.teklif.upsert({ ...t, gecerlilik: pfGunEkle(todayISO(), +r), updated: Date.now() }); logAct(`Proforma ${t.no} süresi uzatıldı (+${r} gün)`); go('teklifDetay', { id: t.id }); };
+/* --- Teklifler'den proformaya taşı (siparişe gönderilmemiş "Beklemede" teklifler) --- */
+async function pfTasi(ids) {
+  const L = ids.map(id => DB.teklif.find(id)).filter(t => gonderilmedi(t));
+  if (!L.length) return toast('Yalnızca siparişe gönderilmemiş "Beklemede" teklifler taşınabilir.', 'err');
+  if (!await confirmBox({ title: 'Proformaya taşı', body: html`<p style="margin-top:0"><b>${L.length} teklif</b> Proformalar bölümüne taşınacak; Teklifler listesinden ve toplamlardan çıkar.</p><p class="muted sm">Teklif numaraları aynı kalır. Onaylanınca aynı numarayla geri döner. Süre: bugünden ${PF_GUN} gün.</p>`, ok: 'Taşı' })) return;
+  const k = await kimSor('Proformaya taşı'); if (k === null) return;
+  const gec = pfGunEkle(todayISO(), PF_GUN);
+  L.forEach(t => DB.teklif.upsert({ ...DB.teklif.find(t.id), tur: 'proforma', pfDurum: 'acik', gecerlilik: gec, updated: Date.now() }));
+  logAct(`${L.length} teklif proformaya taşındı (${L.map(t => t.no).join(', ')})`);
+  toast(`${L.length} teklif Proformalar'a taşındı.`, 'ok', 5000);
+  state.view === 'teklifler' ? drawList() : go('teklifler');
+}
+function pfTasiSec() {
+  const L = DB.teklif.all().filter(t => gonderilmedi(t)).sort((a, b) => String(b.tarih).localeCompare(String(a.tarih)));
+  if (!L.length) return toast('Siparişe gönderilmemiş "Beklemede" teklif yok.');
+  const pm = payMap();
+  modal({ title: 'Proformaya taşı', size: 'sm', body: html`<p class="muted sm" style="margin:0 0 8px">Müşteri henüz karar vermediyse seçin. Yalnızca siparişe gönderilmemiş teklifler listelenir.</p>
+    <div class="pf-sec">${L.map(t => html`<label><input type="checkbox" value="${t.id}"><span><b>${t.no}</b> · ${t.cariSnap?.unvan || ''}<br><span class="muted sm">${fmtDate(t.tarih)} · ${money(calc(t, pm[t.id]).genel, t.doviz)}</span></span></label>`)}</div>`,
+    foot: html`<button class="btn" data-x>Vazgeç</button><button class="btn primary" data-tasi>Seçilenleri taşı</button>`,
+    onMount: m => m.el.addEventListener('click', e => { if (!e.target.closest('[data-tasi]')) return; const ids = [...m.el.querySelectorAll('input:checked')].map(i => i.value); if (!ids.length) return toast('En az bir teklif seçin.', 'err'); m.close(); pfTasi(ids); }) });
+}
+/* Proforma detayında menüde "Proformalar" seçili görünür */
+const _pfMarkNav = markNav;
+markNav = function () { _pfMarkNav.apply(this, arguments); if (state.view === 'teklifDetay' && isPf(DB.teklif.find(state.params && state.params.id))) { document.querySelectorAll('#nav .nav-item').forEach(b => b.classList.toggle('active', b.dataset.v === 'proformalar')); } };
+/* rozet ve form işareti (yalnızca ekrandaki veriden; istek yok) */
+setInterval(() => { try { pfSayCiz(); pfPanelIsaret(); } catch (_) {} }, 3000);
+setTimeout(() => { try { pfSayCiz(); } catch (_) {} }, 800);
+</script>
+<style id="en-css">
+.en-eksik{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#FFF8E6;border-bottom:1px solid #F3D58A;padding:8px 14px;font-size:12.5px}
+[data-theme="dark"] .en-eksik{background:#2f2a1c;border-color:#6b5a26}
+.en-eksik b{font-weight:800}.en-eksik .btn{margin-left:auto}
+.en-tab{display:grid;gap:6px;max-height:55vh;overflow:auto}
+.en-sat{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr) auto;gap:8px;align-items:center;border:1px solid var(--border);border-radius:10px;padding:7px 10px}
+.en-sat b{font-size:13px;overflow-wrap:anywhere}.en-sat label{display:flex;gap:5px;align-items:center;font-size:11.5px;color:var(--muted);white-space:nowrap}
+@media (max-width:560px){.en-sat{grid-template-columns:1fr}}
+</style>
+<script id="en-js">
+/* ===== İngilizce PDF: ürün çevirisi ===== */
+const EN_HAZIR = new Map('MAKAM MASASI=EXECUTIVE DESK;MAKAM TAKIMI=EXECUTIVE SET;MAKAM KOLTUĞU=EXECUTIVE CHAIR;MAKAM KOLTUGU=EXECUTIVE CHAIR;MAKAM=EXECUTIVE;;ÇALIŞMA MASASI=OFFICE DESK;PERSONEL MASASI=STAFF DESK;YÖNETİCİ MASASI=MANAGER DESK;YÖNETİCİ=MANAGER;OPERASYONEL MASA=OPERATIONAL DESK;OPERASYONEL=OPERATIONAL;;TOPLANTI MASASI=MEETING TABLE;KONFERANS MASASI=CONFERENCE TABLE;TOPLANTI=MEETING;KONFERANS=CONFERENCE;L MASA=L-SHAPED DESK;L TİPİ=L-SHAPED;;SAĞ DÖNÜŞ=RIGHT RETURN;SOL DÖNÜŞ=LEFT RETURN;DÖNÜŞ MASASI=RETURN DESK;YAN DÖNÜŞ=SIDE RETURN;DÖNÜŞ=RETURN;DÖNÜŞLÜ=WITH RETURN;;MASA TAKIMI=DESK SET;MASA TAKIMLARI=DESK SETS;MASA ÜSTÜ=DESKTOP;MASAÜSTÜ=DESKTOP;MASA=DESK;MASASI=DESK;MASALAR=DESKS;;ÇALIŞMA İSTASYONU=WORKSTATION;İSTASYON=STATION;WORKSTATION=WORKSTATION;BENCH MASA=BENCH DESK;ÖĞRETMEN MASASI=TEACHER DESK;ÖĞRENCİ MASASI=STUDENT DESK;ÖĞRENCİ=STUDENT;;YEMEK MASASI=DINING TABLE;BAR MASASI=BAR TABLE;ÇALIŞMA=WORK;;ORTA SEHPA=COFFEE TABLE;YAN SEHPA=SIDE TABLE;KÖŞE SEHPA=CORNER TABLE;SEHPA=COFFEE TABLE;SEHPASI=TABLE;;ÇEKMECELİ KESON=DRAWER PEDESTAL;MOBİL KESON=MOBILE PEDESTAL;SABİT KESON=FIXED PEDESTAL;KESON=PEDESTAL;KESONU=PEDESTAL;ÇEKMECE=DRAWER;ÇEKMECELİ=WITH DRAWERS;;DOSYA DOLABI=FILING CABINET;ARŞİV DOLABI=ARCHIVE CABINET;ARKA DOLAP=BACK CABINET;ARKA ÜNİTE=CREDENZA;YAN ÜNİTE=SIDE UNIT;KREDANS=CREDENZA;DOLAP=CABINET;DOLABI=CABINET;DOLAPLI=WITH CABINET;;KAPAKLI=WITH DOORS;KAPAKSIZ=OPEN;CAM KAPAKLI=GLASS DOOR;SÜRGÜ KAPAKLI=SLIDING DOOR;SÜRGÜLÜ=SLIDING;KAPAK=DOOR;KİLİTLİ=LOCKABLE;KİLİT=LOCK;;RAF=SHELF;RAFLI=WITH SHELVES;ETAJER=SHELF UNIT;KİTAPLIK=BOOKCASE;KİTAPLIKLI=WITH BOOKCASE;VİTRİN=DISPLAY CABINET;TV ÜNİTESİ=TV UNIT;ÜNİTE=UNIT;ÜNİTESİ=UNIT;KONSOL=CONSOLE;;RESEPSİYON BANKOSU=RECEPTION COUNTER;SEKRETER BANKOSU=SECRETARY COUNTER;KARŞILAMA BANKOSU=RECEPTION DESK;BANKO=COUNTER;BANKOSU=COUNTER;RESEPSİYON=RECEPTION;SEKRETER=SECRETARY;;KOLTUK TAKIMI=SOFA SET;ÇALIŞMA KOLTUĞU=TASK CHAIR;PERSONEL KOLTUĞU=STAFF CHAIR;MİSAFİR KOLTUĞU=VISITOR CHAIR;BEKLEME KOLTUĞU=WAITING CHAIR;KONFERANS KOLTUĞU=CONFERENCE CHAIR;;TOPLANTI KOLTUĞU=MEETING CHAIR;AMFİ KOLTUĞU=AUDITORIUM SEAT;OFİS KOLTUKLARI=OFFICE CHAIRS;OFİS KOLTUĞU=OFFICE CHAIR;KOLTUK=CHAIR;KOLTUĞU=CHAIR;KOLTUKLU=WITH CHAIRS;;MİSAFİR=VISITOR;PERSONEL=STAFF;BEKLEME=WAITING;AMFİ=AUDITORIUM;BAR TABURESİ=BAR STOOL;TABURE=STOOL;SANDALYE=CHAIR;SANDALYESİ=CHAIR;KANEPE=SOFA;BERJER=ARMCHAIR;PUF=POUF;;OTURMA GRUBU=SEATING GROUP;OTURMA GRUPLARI=SEATING GROUPS;OTURMA=SEATING;GRUBU=GROUP;GRUP=GROUP;TAKIM HALİNDE=AS A SET;TAKIM=SET;TAKIMI=SET;TAKIMLARI=SETS;;OFİS=OFFICE;BÜRO=OFFICE;MOBİLYA=FURNITURE;MOBİLYASI=FURNITURE;MOBİLYALARI=FURNITURE;MODÜL=MODULE;MODÜLER=MODULAR;;BÖLME PANELİ=PARTITION PANEL;BÖLME=PARTITION;PANEL=PANEL;PANELİ=PANEL;SEPERATÖR=SCREEN;SEPARATÖR=SCREEN;PARAVAN=SCREEN;AKUSTİK=ACOUSTIC;;KABLO KANALI=CABLE TRAY;KABLO GEÇİŞ KAPAĞI=CABLE GROMMET;KABLO GEÇİŞ=CABLE GROMMET;KABLO=CABLE;KANAL=CHANNEL;KANALI=TRAY;GEÇİŞ=PASSAGE;PRİZ=SOCKET;ELEKTRİK=ELECTRICAL;KUTUSU=BOX;KUTU=BOX;;METAL AYAK=METAL LEG;KROM AYAK=CHROME BASE;ALÜMİNYUM AYAK=ALUMINIUM BASE;AHŞAP AYAK=WOODEN LEG;AYAK=LEG;AYAKLI=LEGGED;AYAKLAR=LEGS;;METAL=METAL;KROM=CHROME;ALÜMİNYUM=ALUMINIUM;ÇELİK=STEEL;AHŞAP=WOODEN;PLASTİK=PLASTIC;NAYLON=NYLON;POLİAMİD=POLYAMIDE;;TEKERLEK=CASTOR;TEKERLEKLİ=ON CASTORS;AMORTİSÖR=GAS LIFT;MEKANİZMA=MECHANISM;MEKANİZMALI=WITH MECHANISM;SENKRON=SYNCHRO;;KOLÇAK=ARMREST;KOLÇAKLI=WITH ARMS;KOLÇAKSIZ=ARMLESS;YÜKSEKLİK AYARLI=HEIGHT ADJUSTABLE;AYARLI=ADJUSTABLE;ELEKTRİKLİ=ELECTRIC;BAŞLIK=HEADREST;BAŞLIKLI=WITH HEADREST;;FİLE SIRT=MESH BACK;YÜKSEK SIRT=HIGH BACK;ALÇAK SIRT=LOW BACK;ORTA SIRT=MID BACK;SIRT=BACK;SIRTLI=BACKED;FİLE=MESH;OTURAK=SEAT;MİNDER=CUSHION;;SUNİ DERİ=FAUX LEATHER;HAKİKİ DERİ=GENUINE LEATHER;DERİ=LEATHER;KUMAŞ=FABRIC;KUMAŞI=FABRIC;KADİFE=VELVET;KETEN=LINEN;DÖŞEME=UPHOLSTERY;DÖŞEMELİ=UPHOLSTERED;SÜNGER=FOAM;;MELAMİN=MELAMINE;LAMİNAT=LAMINATE;LAMİNE=LAMINATED;MDF=MDF;SUNTA=CHIPBOARD;LAM=LAMINATED;LAKE=LACQUER;LAKELİ=LACQUERED;PARLAK=GLOSSY;MAT=MATT;;TEMPERLİ CAM=TEMPERED GLASS;BUZLU CAM=FROSTED GLASS;CAM=GLASS;AYNA=MIRROR;MERMER=MARBLE;KAPLAMA=VENEER;DOĞAL=NATURAL;MASİF=SOLID WOOD;;DOĞAL MEŞE=NATURAL OAK;MEŞE=OAK;CEVİZ=WALNUT;KAYIN=BEECH;AKÇAAĞAÇ=MAPLE;TİK=TEAK;WENGE=WENGE;ZEBRANO=ZEBRANO;ARDIÇ=JUNIPER;;AÇIK GRİ=LIGHT GREY;KOYU GRİ=DARK GREY;BEYAZ=WHITE;SİYAH=BLACK;GRİ=GREY;ANTRASİT=ANTHRACITE;FÜME=SMOKED;KAHVE=BROWN;KAHVERENGİ=BROWN;BEJ=BEIGE;KREM=CREAM;VİZON=TAUPE;;LACİVERT=NAVY BLUE;MAVİ=BLUE;KIRMIZI=RED;BORDO=BURGUNDY;YEŞİL=GREEN;SARI=YELLOW;TURUNCU=ORANGE;MOR=PURPLE;PEMBE=PINK;TURKUAZ=TURQUOISE;;GÜMÜŞ=SILVER;ALTIN=GOLD;BRONZ=BRONZE;BAKIR=COPPER;RENK=COLOUR;RENKLİ=COLOURED;AÇIK=LIGHT;KOYU=DARK;;SAĞ=RIGHT;SOL=LEFT;ÇİFT=DOUBLE;YOK=NONE;SAĞA=RIGHT;SOLA=LEFT;ÖN=FRONT;ARKA=BACK;ALT=BOTTOM;ÜST=TOP;YAN=SIDE;ORTA=MIDDLE;;KÖŞE=CORNER;KÖŞELİ=CORNER;YUVARLAK=ROUND;OVAL=OVAL;KARE=SQUARE;DİKDÖRTGEN=RECTANGULAR;BÜYÜK=LARGE;KÜÇÜK=SMALL;;ÇİFTLİ=DOUBLE;İKİLİ=DOUBLE;TEKLİ=SINGLE;ÜÇLÜ=TRIPLE;DÖRTLÜ=FOUR-SEATER;ALTILI=SIX-SEATER;KİŞİLİK=PERSON;;STANDART=STANDARD;ÖZEL ÖLÇÜ=CUSTOM SIZE;ÖZEL=CUSTOM;ÖLÇÜ=SIZE;ÖLÇÜLÜ=SIZED;GENİŞLİK=WIDTH;DERİNLİK=DEPTH;YÜKSEKLİK=HEIGHT;BOY=LENGTH;ADET=PCS;;İLE=WITH;VE=AND;VEYA=OR;DAHİL=INCLUDED;HARİÇ=EXCLUDED;İÇİN=FOR;;KUMAŞ DEĞİŞİMİ YAPILACAK=FABRIC TO BE CHANGED;DEĞİŞİMİ YAPILACAK=TO BE CHANGED;DEĞİŞİMİ=CHANGE;YAPILACAK=TO BE DONE;;MONTAJ=ASSEMBLY;MONTAJLI=ASSEMBLED;MONTAJSIZ=UNASSEMBLED;NAKLİYE=SHIPPING;TESLİM=DELIVERY;GARANTİ=WARRANTY;YIL=YEAR;YENİ=NEW;;MODEL=MODEL;SERİ=SERIES;SERİSİ=SERIES;KOLEKSİYON=COLLECTION;LOGOLU=WITH LOGO;LOGO=LOGO;BASKI=PRINT;BASKILI=PRINTED;;ASKILIK=COAT STAND;PORTMANTO=COAT RACK;ÇÖP KOVASI=WASTE BIN;SAKSI=PLANTER;LAMBA=LAMP;AYDINLATMA=LIGHTING;HALI=CARPET;PERDE=CURTAIN;STOR=ROLLER BLIND;JALUZİ=VENETIAN BLIND;;KOMODİN=NIGHTSTAND;LABORATUVAR=LABORATORY;KAFETERYA=CAFETERIA;YEMEKHANE=DINING HALL;YEMEK=DINING;BAR=BAR;ÇAY OCAĞI=KITCHENETTE;MUTFAK=KITCHEN;TEZGAH=WORKTOP;SIRA=SCHOOL DESK;;EŞLİ=PAIRED;TAKIMLI=WITH SET;SET=SET;CM=CM;MM=MM;MT=M;KG=KG;X=X;'.split(';').filter(Boolean).map(x => { const i = x.indexOf('='); return [x.slice(0, i).trim(), x.slice(i + 1).trim()]; }));
+const enUp = s => String(s == null ? '' : s).toLocaleUpperCase('tr-TR');
+const enTemiz = (s, n = 80) => String(s == null ? '' : s).replace(/[\u0000-\u001F\u007F<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, n);
+function enSoz() { const v = mem('meta').get('sozluk_en') || {}; return { s: v.s && typeof v.s === 'object' ? v.s : {}, k: Array.isArray(v.k) ? v.k : [] }; }
+function enKaydet(z) {
+  const s = {}, k = [];
+  for (const [a, b] of Object.entries(z.s || {}).slice(0, 2000)) { const A = enUp(enTemiz(a, 80)), B = enUp(enTemiz(b, 120)); if (A && B) s[A] = B; }
+  for (const a of (z.k || []).slice(0, 2000)) { const A = enUp(enTemiz(a, 80)); if (A && !k.includes(A)) k.push(A); }
+  Sync.put('meta', 'sozluk_en', { s, k, updated: Date.now() });
+}
+const EN_HARF = /[A-ZÇĞİÖŞÜ]/;
+/* Bir metni çevirir; çevrilemeyen kelimeleri "eksik" kümesine ekler. En uzun ifade önce (4 kelimeye kadar). */
+function enCevir(metin, eksik) {
+  if (metin == null || metin === '') return metin;
+  const z = enSoz(), kul = z.s, tut = new Set(z.k);
+  const bul = k => (k in kul ? kul[k] : EN_HAZIR.get(k));
+  const tek = w => {
+    let r = bul(w); if (r != null) return r;
+    for (const [ek, cog] of [['LARI', 1], ['LERİ', 1], ['LAR', 1], ['LER', 1], ['LERİN', 1], ['LARIN', 1], ['Sİ', 0], ['SI', 0], ['SU', 0], ['SÜ', 0], ['İ', 0], ['I', 0], ['U', 0], ['Ü', 0]]) {
+      if (w.length > ek.length + 2 && w.endsWith(ek)) { const kok = w.slice(0, -ek.length); r = bul(kok) ?? bul(kok.replace(/Ğ$/, 'K')); if (r != null) return cog && !/S$/.test(r) ? r + 'S' : r; }
+    }
+    return null;
+  };
+  const satir = String(metin).split('\n');
+  return satir.map(line => {
+    const tok = enUp(line).split(/(\s+)/), ham = line.split(/(\s+)/);
+    const out = []; let i = 0;
+    while (i < tok.length) {
+      if (/^\s*$/.test(tok[i])) { out.push(tok[i]); i++; continue; }
+      let ok = false;
+      for (let n = 4; n >= 2 && !ok; n--) {
+        const parts = []; let j = i, c = 0; while (j < tok.length && c < n) { if (!/^\s+$/.test(tok[j])) { parts.push(tok[j]); c++; } j++; }
+        if (c < n) continue;
+        const k = parts.join(' '), r = bul(k);
+        if (r != null && !/[^\wÇĞİÖŞÜçğıöşü\-]$/.test(k)) { out.push(r); i = j; ok = true; }
+      }
+      if (ok) continue;
+      const m = tok[i].match(/^([^A-ZÇĞİÖŞÜ0-9]*)(.*?)([^A-ZÇĞİÖŞÜ0-9]*)$/), on = m ? m[1] : '', w = m ? m[2] : tok[i], son = m ? m[3] : '';
+      let r = w ? tek(w) : null;
+      if (r == null && w.includes('-')) { const p = w.split('-').map(x => tek(x)); if (p.every(x => x != null)) r = p.join('-'); }
+      if (r == null) { r = ham[i]; if (w && EN_HARF.test(w) && !/\d/.test(w) && w.length > 1 && !tut.has(w) && eksik) eksik.add(w); }
+      else r = on + r + son;
+      out.push(r); i++;
+    }
+    return out.join('');
+  }).join('\n');
+}
+function enT(L, v) { return L === PL.en ? enCevir(v, null) : v; }
+function enEksikler(t) {
+  const e = new Set();
+  for (const it of t.items || []) [it.kategori, itemTitle(it), it.olcu, it.renk, it.yon, it.aciklama].forEach(v => enCevir(v, e));
+  return [...e];
+}
+function enEksikCiz(m, t, o, render) {
+  const box = m.el.querySelector('.mdl'); if (!box) return;
+  let bar = box.querySelector('.en-eksik');
+  const L = enEksikler(t);
+  if ((PL[o.lang] || PL.tr) !== PL.en || !L.length) { if (bar) bar.remove(); return; }
+  if (!bar) { bar = document.createElement('div'); bar.className = 'en-eksik'; box.querySelector('.pdf-h').after(bar); }
+  mount(bar, html`<span>⚠ <b>${L.length} kelime çevrilemedi:</b> ${L.slice(0, 8).join(', ')}${L.length > 8 ? ` +${L.length - 8}` : ''} — PDF'te Türkçe kalır.</span><button class="btn sm primary" data-en-tamam>Tamamla</button>`);
+  bar.querySelector('[data-en-tamam]').onclick = () => enTamamla(L, render);
+}
+function enTamamla(L, sonra) {
+  const z = enSoz();
+  modal({ title: 'İngilizce karşılıklar', size: 'sm', body: html`<p class="muted sm" style="margin:0 0 10px">Bir kez yazın; tüm bilgisayarlarda ve sonraki PDF'lerde kullanılır. Model adı gibi çevrilmeyecekleri "Aynen kalsın" işaretleyin.</p>
+    <div class="en-tab">${L.map(w => html`<div class="en-sat" data-w="${w}"><b>${w}</b><input class="inp" maxlength="120" placeholder="İngilizcesi" value="${z.s[w] || ''}"><label><input type="checkbox"> Aynen kalsın</label></div>`)}</div>`,
+    foot: html`<button class="btn" data-x>Vazgeç</button><button class="btn primary" data-en-kaydet>Kaydet</button>`,
+    onMount: mm => mm.el.addEventListener('click', e => {
+      if (!e.target.closest('[data-en-kaydet]')) return;
+      const yeni = enSoz(); let n = 0;
+      mm.el.querySelectorAll('.en-sat').forEach(r => { const w = r.dataset.w, v = enTemiz(r.querySelector('input.inp').value, 120); if (r.querySelector('input[type=checkbox]').checked) { yeni.k.push(w); n++; } else if (v) { yeni.s[w] = v; n++; } });
+      if (!n) return toast('En az bir kelimenin İngilizcesini yazın ya da "Aynen kalsın" işaretleyin.', 'err');
+      enKaydet(yeni); mm.close(); toast(`${n} kelime sözlüğe eklendi.`); sonra && sonra();
+    }) });
+}
+/* Ayarlar → PDF: İngilizce Sözlük */
+const _enSetPdf = setPdf;
+setPdf = function (b) {
+  _enSetPdf.apply(this, arguments);
+  const z = enSoz(), E = Object.entries(z.s).sort((a, c) => a[0].localeCompare(c[0], 'tr'));
+  const kart = document.createElement('div'); kart.className = 'card'; kart.style.marginTop = '14px';
+  mount(kart, html`<div class="card-h"><h3>İngilizce Sözlük (${E.length})</h3><button class="btn sm primary" data-en-ekle>${I('plus')} Kelime ekle</button></div>
+    <p class="muted sm" style="margin-top:0">İngilizce PDF'te ürün bilgileri önce bu sözlükle, sonra hazır ofis mobilyası sözlüğüyle (${EN_HAZIR.size} terim) çevrilir. Tüm bilgisayarlarda ortaktır.${z.k.length ? ` Aynen kalan: ${z.k.join(', ')}` : ''}</p>
+    ${E.length ? html`<div class="tw"><table class="tbl static"><tbody>${E.map(([a, c]) => html`<tr><td class="b">${a}</td><td>${c}</td><td class="r"><button class="btn sm" data-en-ed="${a}">Düzenle</button> <button class="btn sm" data-en-sil="${a}">Kaldır</button></td></tr>`)}</tbody></table></div>` : html`<div class="empty" style="padding:16px">Henüz kelime yok. İngilizce PDF açınca çevrilemeyen kelimeleri "Tamamla" ile ekleyebilirsiniz.</div>`}`);
+  b.appendChild(kart);
+  kart.addEventListener('click', async e => {
+    const ed = e.target.closest('[data-en-ed]'), sil = e.target.closest('[data-en-sil]');
+    if (e.target.closest('[data-en-ekle]') || ed) {
+      const w0 = ed ? ed.dataset.enEd : '';
+      modal({ title: ed ? 'Kelimeyi düzenle' : 'Kelime ekle', size: 'sm', body: html`<div class="grid"><div class="field"><label>Türkçe</label><input class="inp" data-tr maxlength="80" value="${w0}" ${ed ? 'readonly' : ''}></div><div class="field"><label>İngilizce</label><input class="inp" data-en maxlength="120" value="${ed ? enSoz().s[w0] || '' : ''}"></div></div>`,
+        foot: html`<button class="btn" data-x>Vazgeç</button><button class="btn primary" data-s>Kaydet</button>`,
+        onMount: mm => mm.el.addEventListener('click', ev => { if (!ev.target.closest('[data-s]')) return; const a = enUp(enTemiz(mm.$('[data-tr]').value)), c = enTemiz(mm.$('[data-en]').value, 120);
+          if (!a || !c) return toast('İki alanı da doldurun.', 'err'); const y = enSoz(); y.s[a] = c; y.k = y.k.filter(x => x !== a); enKaydet(y); mm.close(); go('ayarlar', { sec: 'pdf' }); }) });
+    }
+    if (sil) { const y = enSoz(); delete y.s[sil.dataset.enSil]; enKaydet(y); go('ayarlar', { sec: 'pdf' }); }
+  });
+};
 </script>
 </body>
 </html>

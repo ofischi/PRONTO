@@ -165,7 +165,7 @@ select.inp option{background:var(--bg2);color:var(--text)}
 .tags:empty{display:none}
 .ftag{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:20px;border:1px solid color-mix(in srgb,var(--accent) 40%,transparent);background:color-mix(in srgb,var(--accent) 10%,transparent);color:var(--accent);font-size:12px;font-weight:600}
 .st{display:inline-flex;align-items:center;height:22px;padding:0 9px;border-radius:20px;font-size:11.5px;font-weight:700;white-space:nowrap;border:1px solid}
-/* Siparişe gönderilmemiş "Beklemede" teklif: renkli, hareketli uyarı */
+/* Sipariş Takibi’ne gönderilmemiş "Beklemede" teklif: renkli, hareketli uyarı */
 .st.st-gonder{gap:6px;color:#fff;border-color:transparent;background:linear-gradient(90deg,#f59e0b,#ef4444,#ec4899,#f59e0b);background-size:300% 100%;animation:gonderAk 3.2s linear infinite,gonderNabiz 1.8s ease-out infinite;text-shadow:0 1px 1px rgba(0,0,0,.18)}
 .st.st-gonder .st-dot{width:7px;height:7px;border-radius:50%;background:#fff;animation:gonderNokta 1.1s ease-in-out infinite alternate}
 @keyframes gonderAk{to{background-position:300% 0}}
@@ -189,7 +189,7 @@ table.tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
 .tbl th{position:sticky;top:0;z-index:2;background:var(--bg2);text-align:left;font-weight:700;color:var(--muted);font-size:12px;border-bottom:1px solid var(--border);padding:0;white-space:nowrap}
 .tbl th .thi{overflow:hidden;padding:10px 12px}
 .tbl th.r .thi{text-align:right}
-/* Teklifler tablosu: iki satırlı hücreler — ilgili bilgiler alt alta; hiçbir sütun gizlenmez, tutarlar kesilmez */
+/* Siparişler tablosu: iki satırlı hücreler — ilgili bilgiler alt alta; hiçbir sütun gizlenmez, tutarlar kesilmez */
 .tbl.offers{table-layout:auto;width:100%;font-variant-numeric:tabular-nums}
 .tbl.offers th .thi{line-height:1.25;padding:9px 10px}
 .tbl.offers td{padding:8px 10px;max-width:none;overflow:visible;text-overflow:clip}
@@ -262,7 +262,7 @@ img.thumb{cursor:zoom-in}
 .setup{margin:auto;width:min(480px,calc(100vw - 32px));text-align:left}
 .upd{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:95;display:flex;align-items:center;gap:12px;padding:10px 12px 10px 16px;border-radius:14px;background:rgba(24,24,22,.94);color:#fff;box-shadow:var(--shadow);font-size:13.5px;animation:fade .25s;max-width:calc(100vw - 32px)}
 .upd .btn.ghost{color:#fff}
-/* Teklif paneli: tam ekran form, alta küçültülebilir */
+/* Sipariş paneli: tam ekran form, alta küçültülebilir */
 .tkp{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;background:var(--bg);animation:viewEnter .22s var(--ease-out) both}
 .tkp.min{display:none}
 .tkp>.page{flex:1;min-height:0}
@@ -299,7 +299,7 @@ img.thumb{cursor:zoom-in}
 @keyframes rot{to{transform:rotate(360deg)}}
 .imgview{max-width:100%;max-height:70dvh;border-radius:var(--r);display:block;margin:auto}
 
-/* ---------- teklif formu ---------- */
+/* ---------- sipariş formu ---------- */
 .tf{display:grid;grid-template-columns:minmax(300px,420px) minmax(0,1fr);gap:16px;align-items:start}
 .form-right{min-width:0}
 .form-bottom{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(280px,.85fr);gap:12px;margin-top:12px;align-items:start}
@@ -312,7 +312,7 @@ img.thumb{cursor:zoom-in}
 @media (max-width:900px){.form-bottom{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:700px){.condition-pesinat-row{grid-template-columns:1fr 1fr}}
 @media (max-width:1000px){.tf{grid-template-columns:minmax(0,1fr)}}
-/* Teklif formu: dar ekranda (dizüstü penceresi/tablet) alanlar sıkışmasın — yerleşim içerik genişliğine göre */
+/* Sipariş formu: dar ekranda (dizüstü penceresi/tablet) alanlar sıkışmasın — yerleşim içerik genişliğine göre */
 @media (max-width:1240px){.tf{grid-template-columns:minmax(0,1fr)}}
 .tf>div:first-child,.form-right{container-type:inline-size;min-width:0}
 @container (max-width:760px){.tf .it-main{grid-template-columns:170px minmax(0,1fr)}.tf .it-photo{width:170px;height:130px}}
@@ -539,7 +539,7 @@ table.pd-t{width:100%;border-collapse:collapse;font-size:9pt}
  [data-theme=dark] .cb-tile.on{background:rgba(217,154,20,.22);border-color:rgba(217,154,20,.55)}
 }
 @media print{.cb,.cb-ov{display:none!important}}
-/* Telefon: üstteki "Yeni Teklif" gizli (alttaki artı aynı işi yapar); tablet/masaüstü/.exe değişmez */
+/* Telefon: üstteki "Yeni Sipariş" gizli (alttaki artı aynı işi yapar); tablet/masaüstü/.exe değişmez */
 @media (max-width:767px){.ph-act>[data-act="newTeklif"]{display:none}}
 
 /* ===== telefon/tablet: 4 adımlı Yeni Teklif ===== */
@@ -663,7 +663,7 @@ table.pd-t{width:100%;border-collapse:collapse;font-size:9pt}
 .sih-acts .sih-r+.sih-r{margin-top:0}
 .sih-vurgu{border:2px solid var(--accent)}
 .sih-done .sih-g2 .btn{min-height:46px;justify-content:center}
-/* tablet: ürünler ızgara, sağda teklif listesi */
+/* tablet: ürünler ızgara, sağda sipariş listesi */
 @media (min-width:700px){
  .sih-c{max-width:none}
  .sih-m2{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:20px;align-items:start}
@@ -705,7 +705,7 @@ table.pd-t{width:100%;border-collapse:collapse;font-size:9pt}
 <script>
 'use strict';
 /* =====================================================================
-   PRONTO — Teklif / Satış Sistemi
+   PRONTO — Sipariş / Satış Sistemi
    Veri: Supabase (tek tablo pt_rows) + cihazda IndexedDB önbellek.
    Trafik kuralı: açılışta yalnızca "son eşitlemeden beri değişen" satırlar
    çekilir; bir PC kayıt yapınca sadece o satır gönderilir ve diğer PC'lere
@@ -810,7 +810,7 @@ function tkDurum(t) {
 const sipNo = id => 'PR-' + String(id).padStart(5, '0');
 /* Siparişe hiç gönderilmemiş, beklemedeki teklif (unutulmasın diye renkli ve hareketli gösterilir) */
 const gonderilmedi = t => !!t && !t.deletedAt && t.tur !== 'proforma' && !sipBag(t) && (t.durum || 'Beklemede') === 'Beklemede';
-const durumTag = t => t && t.tur === 'proforma' ? pfTag(t) : gonderilmedi(t) ? html`<span class="st st-gonder" title="Siparişe gönderilmedi"><i class="st-dot"></i>Beklemede</span>` : stTag(tkDurum(t));
+const durumTag = t => t && t.tur === 'proforma' ? pfTag(t) : gonderilmedi(t) ? html`<span class="st st-gonder" title="Sipariş Takibi’ne gönderilmedi"><i class="st-dot"></i>Beklemede</span>` : stTag(tkDurum(t));
 function sipKalemTag(t, it) {
   const k = sipBag(t)?.kalemler?.[it.uid]; if (!k) return '';
   return html`<div class="siptag">${sipNo(k.no)} ${stTag(k.durum)}</div>`;
@@ -829,14 +829,14 @@ async function sipGonder(t, { sessiz = false } = {}) {
   if (sipBag(t)?.bekleyen === 'silme') { toast('Silme talebi Sipariş Takibi\'nde onay bekliyor; şu an gönderilemez.', 'err'); return null; }
   if (!navigator.onLine) { toast('İnternet bağlantısı yok. Bağlantı gelince tekrar deneyin.', 'err'); return null; }
   if (!sessiz) {
-    const k = await kimSor('Siparişe gönder'); if (k === null) return null;
-    if (k) { const g = DB.teklif.find(t.id) || t; t = { ...g, gonderen: k, gonderenAt: Date.now() }; DB.teklif.upsert(t); logAct(`Teklif ${t.no} siparişe gönderildi`); }
+    const k = await kimSor('Sipariş Takibi’ne gönder'); if (k === null) return null;
+    if (k) { const g = DB.teklif.find(t.id) || t; t = { ...g, gonderen: k, gonderenAt: Date.now() }; DB.teklif.upsert(t); logAct(`Sipariş ${t.no} Sipariş Takibi’ne gönderildi`); }
   }
   await Sync.flush();
-  if ([...Sync.outbox.values()].some(o => (o.tbl === 'teklifler' && o.id === t.id) || o.tbl === 'photo')) { toast('Teklif henüz sunucuya kaydedilmedi, birkaç saniye sonra tekrar deneyin.', 'err'); return null; }
+  if ([...Sync.outbox.values()].some(o => (o.tbl === 'teklifler' && o.id === t.id) || o.tbl === 'photo')) { toast('Sipariş henüz sunucuya kaydedilmedi, birkaç saniye sonra tekrar deneyin.', 'err'); return null; }
   try {
     const r = await api('rpc/pronto_teklif_gonder', { method: 'POST', body: { p_teklif_id: t.id, p_foto: sipFotoKeys(t) } });
-    const m = { gonderildi: `Teklif ${t.no} Sipariş Takibi'ne onaya gönderildi`, guncelleme_gonderildi: 'Değişiklikler Sipariş Takibi\'ne onaya gönderildi', degisiklik_yok: sessiz ? '' : 'Siparişi etkileyen bir değişiklik yok' }[r?.sonuc];
+    const m = { gonderildi: `Sipariş ${t.no} Sipariş Takibi'ne onaya gönderildi`, guncelleme_gonderildi: 'Değişiklikler Sipariş Takibi\'ne onaya gönderildi', degisiklik_yok: sessiz ? '' : 'Siparişi etkileyen bir değişiklik yok' }[r?.sonuc];
     if (m) toast(m, 'ok', 5000);
     return r;
   } catch (e) { toast('Sipariş Takibi\'ne gönderilemedi: ' + (e.message || e), 'err'); return null; }
@@ -847,7 +847,7 @@ function sipPanel(t) {
   if (b.bag === 'reddedildi') return html`<div class="sipbox err"><div class="grow"><b>Sipariş Takibi reddetti</b><div class="note">${b.ret_notu || ''}</div><div class="muted sm">Düzeltip tekrar gönderebilirsiniz.</div></div><button class="btn primary sm" data-act="sipGonder" data-id="${t.id}">Tekrar Gönder</button></div>`;
   return html`<div class="sipbox ok"><div class="grow"><b>Siparişe dönüştü</b> · durumlar Sipariş Takibi'nden yönetilir
     ${b.bekleyen === 'guncelleme' ? html`<div class="muted sm" style="color:var(--warn)">Yaptığınız değişiklikler Sipariş Takibi'nde onay bekliyor.</div>` : ''}
-    ${b.bekleyen === 'silme' ? html`<div class="muted sm" style="color:var(--err)"><b>Silme talebi</b> Sipariş Takibi'nde onay bekliyor. Onaylanınca açık siparişler İptal olur, teklif Geri Dönüşüm Kutusu'na taşınır.</div>` : ''}
+    ${b.bekleyen === 'silme' ? html`<div class="muted sm" style="color:var(--err)"><b>Silme talebi</b> Sipariş Takibi'nde onay bekliyor. Onaylanınca açık siparişler İptal olur, sipariş Geri Dönüşüm Kutusu'na taşınır.</div>` : ''}
     ${b.ret_notu ? html`<div class="note">${b.ret_notu}</div>` : ''}</div></div>`;
 }
 
@@ -1129,7 +1129,7 @@ function checkAppVersion() {
   el.addEventListener('click', async e => {
     if (e.target.closest('[data-updx]')) { el.remove(); return; }
     if (!e.target.closest('[data-upd]')) return;
-    tkTaslakKaydet(true);   /* açık teklif formu bu bilgisayarda saklanır, güncellemeden sonra devam edilir */
+    tkTaslakKaydet(true);   /* açık sipariş formu bu bilgisayarda saklanır, güncellemeden sonra devam edilir */
     await Sync.flush();
     /* Önbelleği tazele, sonra yeniden yükle (tek seferlik 2 küçük istek) */
     await Promise.all(['./', 'config.js'].map(u => fetch(u, { cache: 'reload' }).catch(() => {})));
@@ -1365,7 +1365,7 @@ function applyTheme() {
 }
 
 /* ---------- kabuk ---------- */
-const NAV = [['teklifler','Teklifler','doc'],['proformalar','Proformalar','pf'],['musteriler','Müşteriler','users'],['personeller','Personeller','user'],['urunler','Ürünler','box'],['raporlar','Raporlar','chart']];
+const NAV = [['teklifler','Siparişler','doc'],['proformalar','Proformalar','pf'],['musteriler','Müşteriler','users'],['personeller','Personeller','user'],['urunler','Ürünler','box'],['raporlar','Raporlar','chart']];
 function renderShell() {
   mount(app, html`<aside class="side" id="side" aria-label="Ana menü">
     <div class="side-top"><div class="brand" id="brand">${brandInner()}</div></div>
@@ -1376,9 +1376,9 @@ function renderShell() {
       <button class="nav-item" data-act="logout" title="Çıkış">${I('out')}<span class="lbl">Çıkış</span></button>
     </div></aside><main class="main" id="main"></main>
     <nav class="cb" id="cb" aria-label="Alt menü">
-      <button class="cb-it" data-act="nav" data-v="teklifler">${I('doc')}<span>Teklifler</span></button>
+      <button class="cb-it" data-act="nav" data-v="teklifler">${I('doc')}<span>Siparişler</span></button>
       <button class="cb-it" data-act="nav" data-v="musteriler">${I('users')}<span>Müşteriler</span></button>
-      <button class="cb-fab" data-act="cbYeni" aria-label="Yeni Teklif" title="Yeni Teklif">${I('plus')}</button>
+      <button class="cb-fab" data-act="cbYeni" aria-label="Yeni Sipariş" title="Yeni Sipariş">${I('plus')}</button>
       <button class="cb-it" data-act="nav" data-v="urunler">${I('box')}<span>Ürünler</span></button>
       <button class="cb-it" data-act="cbDaha" data-v="daha">${I('dots')}<span>Daha</span></button>
     </nav>
@@ -1482,10 +1482,10 @@ const VIEWS = {};
 VIEWS.teklifler = main => {
   LS.limit = 20;
   mount(main, html`<div class="page fill">
-    <div class="ph"><div><h1>Teklifler</h1><div class="muted sm" id="cnt"></div></div>
-      <div class="ph-act"><button class="btn primary" data-act="newTeklif">${I('plus')} Yeni Teklif</button><button class="btn" data-act="refreshList" aria-label="Yenile">${I('refresh')} Yenile</button><button class="btn icon" data-act="listMore" aria-label="Diğer işlemler">${I('dots')}</button></div></div>
+    <div class="ph"><div><h1>Siparişler</h1><div class="muted sm" id="cnt"></div></div>
+      <div class="ph-act"><button class="btn primary" data-act="newTeklif">${I('plus')} Yeni Sipariş</button><button class="btn" data-act="refreshList" aria-label="Yenile">${I('refresh')} Yenile</button><button class="btn icon" data-act="listMore" aria-label="Diğer işlemler">${I('dots')}</button></div></div>
     <div id="pfBanner"></div><div class="offer-kpis" id="offerKpis"></div>
-    <div class="toolbar"><div class="search"><span>${I('search')}</span><input class="inp" id="q" placeholder="Tüm teklif alanlarında ara" value="${LS.q}" maxlength="80"></div>
+    <div class="toolbar"><div class="search"><span>${I('search')}</span><input class="inp" id="q" placeholder="Tüm sipariş alanlarında ara" value="${LS.q}" maxlength="80"></div>
       <button class="btn" data-act="openFilter">${I('filter')} Filtre</button><button class="btn" data-act="sortMenu">${I('sort')} <span id="sortLbl"></span></button></div>
     <div class="tags" id="tags"></div>
     <div class="tw" id="tw"></div></div>`);
@@ -1493,21 +1493,21 @@ VIEWS.teklifler = main => {
   $('#tw').addEventListener('scroll', e => { const w = e.target; if (w.scrollTop + w.clientHeight > w.scrollHeight - 120 && LS.limit < LS._total) { LS.limit += 20; drawList(true); } });
   drawList();
 };
-const SORT_L = { tarih: 'Tarih', tutar: 'Toplam Tutar', no: 'Teklif No', musteri: 'Müşteri Adı' };
+const SORT_L = { tarih: 'Tarih', tutar: 'Toplam Tutar', no: 'Sipariş No', musteri: 'Müşteri Adı' };
 function drawList(keepScroll) {
   if (!$('#tw')) return;
   const rows = listRows(); LS._total = rows.length; const vis = rows.slice(0, LS.limit);
-  $('#cnt').textContent = `${rows.length} teklif`;
+  $('#cnt').textContent = `${rows.length} sipariş`;
   $('#sortLbl').textContent = `${SORT_L[LS.sort]} ${LS.dir === 'desc' ? '↓' : '↑'}`;
   const kBek = rows.filter(r => tkDurum(r.t) === 'Beklemede').length;
   const kUret = rows.filter(r => tkDurum(r.t) === 'Üretimde').length;
   const kGon = rows.filter(r => gonderilmedi(r.t)).length;
   const kTop = {}; rows.forEach(r => { kTop[r.t.doviz] = (kTop[r.t.doviz] || 0) + (+r.c.genel || 0); });
   mount($('#offerKpis'), html`
-    <div class="offer-kpi"><div class="k-label">Toplam Teklif</div><div class="k-value">${rows.length}</div><div class="k-sub">Görüntülenen sonuç</div></div>
-    <div class="offer-kpi"><div class="k-label">Beklemede</div><div class="k-value">${kBek}</div><div class="k-sub">${kGon ? html`<span class="k-uyari"><i class="st-dot"></i>${kGon} siparişe gönderilmedi</span>` : 'Teklif'}</div></div>
-    <div class="offer-kpi"><div class="k-label">Üretimde</div><div class="k-value">${kUret}</div><div class="k-sub">Teklif</div></div>
-    <div class="offer-kpi"><div class="k-label">Toplam Tutar</div><div class="k-value">${fmtMulti(kTop)}</div><div class="k-sub">Filtrelenen teklifler</div></div>`);
+    <div class="offer-kpi"><div class="k-label">Toplam Sipariş</div><div class="k-value">${rows.length}</div><div class="k-sub">Görüntülenen sonuç</div></div>
+    <div class="offer-kpi"><div class="k-label">Beklemede</div><div class="k-value">${kBek}</div><div class="k-sub">${kGon ? html`<span class="k-uyari"><i class="st-dot"></i>${kGon} Sipariş Takibi’ne gönderilmedi</span>` : 'Sipariş'}</div></div>
+    <div class="offer-kpi"><div class="k-label">Üretimde</div><div class="k-value">${kUret}</div><div class="k-sub">Sipariş</div></div>
+    <div class="offer-kpi"><div class="k-label">Toplam Tutar</div><div class="k-value">${fmtMulti(kTop)}</div><div class="k-sub">Filtrelenen siparişler</div></div>`);
   const f = LS.f, tg = [];
   if (f.cari) tg.push(['cari', 'Müşteri: ' + (DB.cari.find(f.cari)?.unvan || '—')]);
   if (f.durum) tg.push(['durum', 'Durum: ' + f.durum]);
@@ -1516,8 +1516,8 @@ function drawList(keepScroll) {
   mount($('#tags'), tg.map(([k, l]) => html`<button class="ftag" data-act="openFilter" data-k="${k}">${l}</button>`));
   const tw = $('#tw'); const st = tw.scrollTop;
   const any = DB.teklif.all().some(t => !t.deletedAt && t.tur !== 'proforma'); pfBannerCiz();
-  if (!rows.length) { mount(tw, html`<div class="empty"><b>${any ? 'Aramayla eşleşen teklif yok' : 'Henüz teklif yok'}</b>${any ? 'Arama metnini veya filtreleri değiştirin.' : html`İlk teklifi oluşturmak için <button class="btn sm primary" data-act="newTeklif">+ Yeni Teklif</button>`}</div>`); return; }
-  const cols = [['Teklif No'], ['Müşteri Ünvanı'], ['Adet'], ['Ana Para', 'İskonto'], ['Ara Toplam', 'KDV'], ['Toplam Tutar'], ['Alınan Peşinat', 'Kalan Tutar'], ['Teklif Tarihi', 'Teslim Tarihi'], ['Personel', 'Döviz'], ['Durumu'], ['']];
+  if (!rows.length) { mount(tw, html`<div class="empty"><b>${any ? 'Aramayla eşleşen sipariş yok' : 'Henüz sipariş yok'}</b>${any ? 'Arama metnini veya filtreleri değiştirin.' : html`İlk siparişi oluşturmak için <button class="btn sm primary" data-act="newTeklif">+ Yeni Sipariş</button>`}</div>`); return; }
+  const cols = [['Sipariş No'], ['Müşteri Ünvanı'], ['Adet'], ['Ana Para', 'İskonto'], ['Ara Toplam', 'KDV'], ['Toplam Tutar'], ['Alınan Peşinat', 'Kalan Tutar'], ['Sipariş Tarihi', 'Teslim Tarihi'], ['Personel', 'Döviz'], ['Durumu'], ['']];
   const R = new Set([2, 3, 4, 5, 6]);
   mount(tw, html`<table class="tbl offers resp"><thead><tr>${cols.map(([a, b], i) => html`<th class="${R.has(i) ? 'r' : ''}"><div class="thi">${a}${b ? html`<span class="alt">${b}</span>` : ''}</div></th>`)}</tr></thead><tbody>
     ${vis.map(({ t, c }) => html`<tr data-act="openTeklif" data-id="${t.id}" class="${(LS.sel === t.id ? 'sel' : '') + (gonderilmedi(t) ? ' gonder-yok' : '')}">
@@ -1554,11 +1554,11 @@ function quickTeklifDetail(id) {
       <div class="price">${money((+it.fiyat || 0) * (+it.adet || 0), t.doviz)}</div>
     </div>`;
   });
-  modal({ title: `Teklif ${t.no} — Hızlı Detay`, cls: 'detail-panel-ov', body: html`
+  modal({ title: `Sipariş ${t.no} — Hızlı Detay`, cls: 'detail-panel-ov', body: html`
     <div class="detail-panel-grid">
       <div class="detail-panel-card"><div class="lbl">Müşteri</div><div class="val">${cs.unvan || '—'}</div></div>
       <div class="detail-panel-card"><div class="lbl">Durum</div><div class="val">${durumTag(t)}</div></div>
-      <div class="detail-panel-card"><div class="lbl">Teklif Tarihi</div><div class="val">${fmtDate(t.tarih)}</div></div>
+      <div class="detail-panel-card"><div class="lbl">Sipariş Tarihi</div><div class="val">${fmtDate(t.tarih)}</div></div>
       <div class="detail-panel-card"><div class="lbl">Teslim Tarihi</div><div class="val">${fmtDate(t.teslim)}</div></div>
       <div class="detail-panel-card"><div class="lbl">Personel</div><div class="val">${t.personelAd || '—'}</div></div>
       <div class="detail-panel-card"><div class="lbl">Döviz</div><div class="val">${t.doviz}</div></div>
@@ -1575,7 +1575,7 @@ A.rowMenu = (el, e) => { e.stopPropagation(); const id = el.dataset.id; popMenu(
   { label: 'Hızlı Detay', icon: 'doc', run: () => quickTeklifDetail(id) },
   { label: 'Düzenle', icon: 'edit', run: () => go('teklifForm', { id }) },
   { label: 'PDF', icon: 'pdf', run: () => pdfPreview(id) },
-  ...(gonderilmedi(DB.teklif.find(id)) ? [{ label: 'Siparişe Gönder', icon: 'share', run: () => A.sipGonder({ dataset: { id }, disabled: false }) }] : []), '-',
+  ...(gonderilmedi(DB.teklif.find(id)) ? [{ label: 'Sipariş Takibi’ne Gönder', icon: 'share', run: () => A.sipGonder({ dataset: { id }, disabled: false }) }] : []), '-',
   ...(gonderilmedi(DB.teklif.find(id)) ? [{ label: 'Proformaya taşı', icon: 'pf', run: () => pfTasi([id]) }] : []),
   { label: 'Sil', icon: 'trash', danger: true, run: () => deleteTeklif(id) }]); };
 const EMPTY_F = () => ({ cari: '', durum: '', personel: '', tarih: '', from: '', to: '' });
@@ -1596,7 +1596,7 @@ A.openFilter = el => {
       ${row('cari', 'Müşteri', html`<select class="inp" data-f="cari"><option value="">Tümü</option>${cariOpts}</select>`)}
       ${row('durum', 'Durum', html`<select class="inp" data-f="durum"><option value="">Tümü</option>${DURUMLAR.map(d => html`<option ${f.durum === d ? 'selected' : ''}>${d}</option>`)}</select>`)}
       ${row('personel', 'Personel', html`<select class="inp" data-f="personel"><option value="">Tümü</option>${perOpts}</select>`)}
-      ${row('tarih', 'Teklif Tarihi', html`<select class="inp" data-f="tarih"><option value="">Tümü</option>${Object.entries(TARIH_L).map(([k, l]) => html`<option value="${k}" ${f.tarih === k ? 'selected' : ''}>${l}</option>`)}</select>`)}
+      ${row('tarih', 'Sipariş Tarihi', html`<select class="inp" data-f="tarih"><option value="">Tümü</option>${Object.entries(TARIH_L).map(([k, l]) => html`<option value="${k}" ${f.tarih === k ? 'selected' : ''}>${l}</option>`)}</select>`)}
       <div class="grid g2 ${f.tarih === 'ozel' ? '' : 'hidden'}" data-ozel><div class="field"><label>Başlangıç</label><input type="date" class="inp" data-f="from" value="${f.from}"></div><div class="field"><label>Bitiş</label><input type="date" class="inp" data-f="to" value="${f.to}"></div></div></div>`,
     foot: html`<button class="btn" data-all>Tüm filtreleri temizle</button><button class="btn primary" data-apply>Uygula</button>`,
     onMount: m => {
@@ -1609,22 +1609,22 @@ A.openFilter = el => {
       });
     } });
 };
-function teklifOzet(t) { const c = calc(t, payMap()[t.id]); return html`<dl class="kv"><dt>Teklif No</dt><dd class="b">${t.no}</dd><dt>Müşteri</dt><dd>${t.cariSnap.unvan}</dd><dt>Tarih</dt><dd>${fmtDate(t.tarih)}</dd><dt>Ürün adedi</dt><dd>${c.adet}</dd><dt>Genel Toplam</dt><dd class="b">${money(c.genel, t.doviz)}</dd><dt>Alınan</dt><dd>${money(c.pes, t.doviz)}</dd></dl>`; }
+function teklifOzet(t) { const c = calc(t, payMap()[t.id]); return html`<dl class="kv"><dt>Sipariş No</dt><dd class="b">${t.no}</dd><dt>Müşteri</dt><dd>${t.cariSnap.unvan}</dd><dt>Tarih</dt><dd>${fmtDate(t.tarih)}</dd><dt>Ürün adedi</dt><dd>${c.adet}</dd><dt>Genel Toplam</dt><dd class="b">${money(c.genel, t.doviz)}</dd><dt>Alınan</dt><dd>${money(c.pes, t.doviz)}</dd></dl>`; }
 async function deleteTeklif(id) {
   const t = DB.teklif.find(id); if (!t) return;
-  if (await kimSor('Teklif silme') === null) return;
+  if (await kimSor('Sipariş silme') === null) return;
   { const b = sipBag(t); if (b && b.bag !== 'reddedildi') return tkSilIste(t, b); }
-  if (!await confirmBox({ title: 'Teklifi sil', body: html`${teklifOzet(t)}<p style="margin:14px 0 0">Bu teklifi silmek istediğinize emin misiniz? Teklif ödemeleriyle birlikte Geri Dönüşüm Kutusu'na taşınır ve 7 gün sonra kalıcı olarak silinir.</p>`, ok: 'Sil', danger: true })) return;
-  DB.teklif.upsert({ ...t, deletedAt: Date.now(), silen: Local.get('kisi', '') }); logAct(`Teklif ${t.no} silindi (Geri Dönüşüm Kutusu)`); toast('Teklif Geri Dönüşüm Kutusu\'na taşındı');
+  if (!await confirmBox({ title: 'Siparişi sil', body: html`${teklifOzet(t)}<p style="margin:14px 0 0">Bu siparişi silmek istediğinize emin misiniz? Sipariş ödemeleriyle birlikte Geri Dönüşüm Kutusu'na taşınır ve 7 gün sonra kalıcı olarak silinir.</p>`, ok: 'Sil', danger: true })) return;
+  DB.teklif.upsert({ ...t, deletedAt: Date.now(), silen: Local.get('kisi', '') }); logAct(`Sipariş ${t.no} silindi (Geri Dönüşüm Kutusu)`); toast('Sipariş Geri Dönüşüm Kutusu\'na taşındı');
   if (state.view === 'teklifler') drawList(); else go('teklifler');
 }
 
 /* Sipariş Takibi'ne bağlı teklif: onay bekliyorsa talep geri çekilir; siparişe dönüştüyse silme talebi gider (Sipariş onaylar) */
 async function tkSilIste(t, b) {
-  if (b.bekleyen === 'silme') return toast('Bu teklifin silme talebi zaten Sipariş Takibi\'nde onay bekliyor.', 'err', 6000);
+  if (b.bekleyen === 'silme') return toast('Bu siparişin silme talebi zaten Sipariş Takibi\'nde onay bekliyor.', 'err', 6000);
   const tes = Object.values(b.kalemler || {}).filter(k => k.durum === 'Teslim Edildi' || k.durum === 'SSH');
-  if (b.bag === 'onaylandi' && tes.length) return toast(`Bu teklifin teslim edilmiş siparişleri var (${tes.map(k => sipNo(k.no)).join(', ')}). Teslim edilmiş iş kaydı silinemez.`, 'err', 8000);
-  if (!navigator.onLine) return toast('İnternet bağlantısı yok. Bağlı teklif silinirken Sipariş Takibi\'ne haber verilmesi gerekir.', 'err');
+  if (b.bag === 'onaylandi' && tes.length) return toast(`Bu siparişin teslim edilmiş siparişleri var (${tes.map(k => sipNo(k.no)).join(', ')}). Teslim edilmiş iş kaydı silinemez.`, 'err', 8000);
+  if (!navigator.onLine) return toast('İnternet bağlantısı yok. Bağlı sipariş silinirken Sipariş Takibi\'ne haber verilmesi gerekir.', 'err');
   const onayli = b.bag === 'onaylandi';
   let neden = '';
   const yaz = e => { if (e.target && e.target.id === 'tkSilNeden') neden = e.target.value; };
@@ -1632,8 +1632,8 @@ async function tkSilIste(t, b) {
   let evet;
   try {
     evet = await confirmBox(onayli
-      ? { title: 'Silme talebi gönder', ok: 'Silme Talebi Gönder', danger: true, body: html`${teklifOzet(t)}<p style="margin:14px 0 8px">Bu teklif <b>siparişe dönüştü</b>. Silinmesi için Sipariş Takibi'ne <b>silme talebi</b> gönderilir.</p><p class="muted sm" style="margin:0 0 10px">Sipariş onaylarsa açık siparişler İptal olur (silinmez) ve teklif Geri Dönüşüm Kutusu'na taşınır. Reddederse hiçbir şey değişmez.</p><label class="muted sm" for="tkSilNeden">Neden (Sipariş Takibi'nde görünür)</label><textarea id="tkSilNeden" class="inp" rows="2" maxlength="300" placeholder="Örn. Müşteri vazgeçti" style="width:100%;margin-top:4px"></textarea>` }
-      : { title: 'Teklifi sil', ok: 'Sil', danger: true, body: html`${teklifOzet(t)}<p style="margin:14px 0 0">Bu teklif Sipariş Takibi'nde <b>onay bekliyor</b>. Silerseniz onay talebi geri çekilir ve teklif Geri Dönüşüm Kutusu'na taşınır (7 gün içinde geri alınabilir).</p>` });
+      ? { title: 'Silme talebi gönder', ok: 'Silme Talebi Gönder', danger: true, body: html`${teklifOzet(t)}<p style="margin:14px 0 8px">Bu sipariş <b>siparişe dönüştü</b>. Silinmesi için Sipariş Takibi'ne <b>silme talebi</b> gönderilir.</p><p class="muted sm" style="margin:0 0 10px">Sipariş onaylarsa açık siparişler İptal olur (silinmez) ve sipariş Geri Dönüşüm Kutusu'na taşınır. Reddederse hiçbir şey değişmez.</p><label class="muted sm" for="tkSilNeden">Neden (Sipariş Takibi'nde görünür)</label><textarea id="tkSilNeden" class="inp" rows="2" maxlength="300" placeholder="Örn. Müşteri vazgeçti" style="width:100%;margin-top:4px"></textarea>` }
+      : { title: 'Siparişi sil', ok: 'Sil', danger: true, body: html`${teklifOzet(t)}<p style="margin:14px 0 0">Bu sipariş Sipariş Takibi'nde <b>onay bekliyor</b>. Silerseniz onay talebi geri çekilir ve sipariş Geri Dönüşüm Kutusu'na taşınır (7 gün içinde geri alınabilir).</p>` });
   } finally { document.removeEventListener('input', yaz, true); }
   if (!evet) return;
   let r;
@@ -1645,13 +1645,13 @@ async function tkSilIste(t, b) {
   const s = r && r.sonuc;
   if (s === 'serbest' || s === 'geri_cekildi') {
     const g = DB.teklif.find(t.id) || t;
-    DB.teklif.upsert({ ...g, deletedAt: Date.now(), silen: Local.get('kisi', '') }); logAct(`Teklif ${g.no} silindi (Geri Dönüşüm Kutusu)`);
-    toast(s === 'geri_cekildi' ? 'Onay talebi geri çekildi, teklif Geri Dönüşüm Kutusu\'na taşındı' : 'Teklif Geri Dönüşüm Kutusu\'na taşındı');
+    DB.teklif.upsert({ ...g, deletedAt: Date.now(), silen: Local.get('kisi', '') }); logAct(`Sipariş ${g.no} silindi (Geri Dönüşüm Kutusu)`);
+    toast(s === 'geri_cekildi' ? 'Onay talebi geri çekildi, sipariş Geri Dönüşüm Kutusu\'na taşındı' : 'Sipariş Geri Dönüşüm Kutusu\'na taşındı');
     if (state.view === 'teklifler') drawList(); else go('teklifler');
     return;
   }
   if (s === 'zaten') return toast('Silme talebi zaten Sipariş Takibi\'nde onay bekliyor.', 'ok', 6000);
-  toast('Silme talebi Sipariş Takibi\'ne gönderildi. Onaylanınca teklif Geri Dönüşüm Kutusu\'na taşınır.', 'ok', 7000);
+  toast('Silme talebi Sipariş Takibi\'ne gönderildi. Onaylanınca sipariş Geri Dönüşüm Kutusu\'na taşınır.', 'ok', 7000);
 }
 
 /* =====================================================================
@@ -1667,13 +1667,13 @@ VIEWS.teklifForm = (main, { id, taslak }) => {
   if (edit && d.iskontoTip === '%' && d.iskontoDeger) { d.iskontoTutar = calc(d, []).isk; d.iskontoDeger = 0; d.iskontoTip = 'tutar'; }
   if (!taslak) d._orig = edit ? JSON.stringify(src) : null;
   PK.kat = PK.model = PK.katQ = PK.modelQ = '';
-  mount(main, html`<div class="page"><div class="ph"><div class="ph-l"><button class="btn icon" data-act="formBack" aria-label="Geri">${I('back')}</button><div><h1>${edit ? `Teklif ${src.no} — Düzenle` : 'Yeni Teklif'}</h1><div class="muted sm">${edit ? 'Müşteri ve personel değiştirilemez.' : 'Teklif numarası kayıtta otomatik verilir.'}</div></div></div>
-    <div class="ph-act"><button class="btn" data-act="tkMin" title="Küçült (Esc) — diğer ekranlarda çalışmaya devam edin">${I('min')} Küçült</button><button class="btn" data-act="formBack">Vazgeç</button><button class="btn primary" data-act="saveTeklif">${edit ? 'Değişiklikleri Kaydet' : 'Teklifi Kaydet'}</button></div></div>
+  mount(main, html`<div class="page"><div class="ph"><div class="ph-l"><button class="btn icon" data-act="formBack" aria-label="Geri">${I('back')}</button><div><h1>${edit ? `Sipariş ${src.no} — Düzenle` : 'Yeni Sipariş'}</h1><div class="muted sm">${edit ? 'Müşteri ve personel değiştirilemez.' : 'Sipariş numarası kayıtta otomatik verilir.'}</div></div></div>
+    <div class="ph-act"><button class="btn" data-act="tkMin" title="Küçült (Esc) — diğer ekranlarda çalışmaya devam edin">${I('min')} Küçült</button><button class="btn" data-act="formBack">Vazgeç</button><button class="btn primary" data-act="saveTeklif">${edit ? 'Değişiklikleri Kaydet' : 'Siparişi Kaydet'}</button></div></div>
     <div class="tf"><div>
-      <div class="card offer-main-card"><div class="card-h"><h3>TEKLİF BİLGİLERİ</h3></div>
+      <div class="card offer-main-card"><div class="card-h"><h3>SİPARİŞ BİLGİLERİ</h3></div>
         <div class="offer-currency"><div class="field"><label>DÖVİZ <span class="req">*</span></label><select class="inp" data-d="doviz" ${edit ? 'disabled' : ''}><option value="">SEÇİN</option>${CURS.map(c => html`<option value="${c}" ${d.doviz === c ? 'selected' : ''}>${c}</option>`)}</select></div></div>
         <div class="grid g2 offer-dates">
-          <div class="field"><label>TEKLİF TARİHİ <span class="req">*</span></label><input type="date" class="inp" data-d="tarih" value="${d.tarih}"></div>
+          <div class="field"><label>SİPARİŞ TARİHİ <span class="req">*</span></label><input type="date" class="inp" data-d="tarih" value="${d.tarih}"></div>
           <div class="field"><label>TESLİM TARİHİ <span class="req">*</span></label><input type="date" class="inp" data-d="teslim" value="${d.teslim}" min="${d.tarih}"></div>
         </div>
         <div class="offer-conditions">
@@ -1805,12 +1805,12 @@ A.addItem = async el => {
   const u = DB.urun.find(el.dataset.id); if (!u) return; const d = state.draft;
   const same = d.items.findIndex(i => i.urunId === u.id);
   if (same >= 0) {
-    const c = await choiceBox({ title: 'Bu ürün zaten ekli', body: html`<p><b>${itemTitle(d.items[same])}</b> teklifte mevcut. Ne yapmak istersiniz?</p>`, options: [{ v: 'add', l: 'Mevcut ürüne ekle', primary: true }, { v: 'new', l: 'Yeni satır oluştur' }] });
+    const c = await choiceBox({ title: 'Bu ürün zaten ekli', body: html`<p><b>${itemTitle(d.items[same])}</b> siparişte mevcut. Ne yapmak istersiniz?</p>`, options: [{ v: 'add', l: 'Mevcut ürüne ekle', primary: true }, { v: 'new', l: 'Yeni satır oluştur' }] });
     if (!c) return; if (c === 'add') { d.items[same].adet = (d.items[same].adet || 0) + 1; drawItems(); drawTots(); scrollToItem(d.items[same].uid); toast('Adet artırıldı'); return; }
   }
   const it = { uid: uid(), urunId: u.id, kod: u.kod, kategori: u.kategori, model: u.model, modul: u.modul, olcu: u.olcu, renk: u.renk, yon: u.yon, fotoCustom: false, fiyat: u.doviz === d.doviz ? (+u.fiyat || 0) : 0, adet: 1, aciklama: '' };
   d.items.push(it); drawItems(); drawTots(); scrollToItem(it.uid);
-  if (u.fiyat && u.doviz !== d.doviz) toast(`Liste fiyatı ${u.doviz}; teklif ${d.doviz}. Fiyatı elle girin.`, 'err');
+  if (u.fiyat && u.doviz !== d.doviz) toast(`Liste fiyatı ${u.doviz}; sipariş ${d.doviz}. Fiyatı elle girin.`, 'err');
 };
 /* Ölçü/renk hafızası — KATEGORİ bazında. Yeni bir değer yazılınca bir kez kaydedilir,
    bilinen değer seçilince hiçbir şey yazılmaz (gereksiz trafik yok).
@@ -1954,7 +1954,7 @@ A.formBack = async () => {
 };
 
 /* =====================================================================
-   TEKLİF PANELİ: "Yeni Teklif" / "Düzenle" tam ekran panelde açılır.
+   TEKLİF PANELİ: "Yeni Sipariş" / "Düzenle" tam ekran panelde açılır.
    – Küçült ile alta iner, bu arada diğer ekranlar kullanılır. Tek panel.
    Taslak YALNIZCA bu bilgisayarda saklanır (sunucuya trafik yok).
    ===================================================================== */
@@ -1972,7 +1972,7 @@ function tkTaslakKaydet(simdi) {
     const d = state.draft; if (!tkPanel.el || !d) return;
     if (!tkDirty(d)) { Local.del(TK_TASLAK); return; }
     try { localStorage.setItem('pl_' + TK_TASLAK, JSON.stringify({ v: 1, id: d.id || null, orig: d._orig || null, d: stripDraft(d), at: Date.now(), min: tkPanel.min })); }
-    catch { if (!tkKotaUyari) { tkKotaUyari = true; toast('Taslak bu bilgisayara kaydedilemedi (yer dolu). Teklifi kaydetmeyi unutmayın.', 'err', 7000); } }
+    catch { if (!tkKotaUyari) { tkKotaUyari = true; toast('Taslak bu bilgisayara kaydedilemedi (yer dolu). Siparişi kaydetmeyi unutmayın.', 'err', 7000); } }
   };
   simdi ? yaz() : (tkTaslakKaydet._t = setTimeout(yaz, 500));
 }
@@ -1986,16 +1986,16 @@ function tkOzet(d) {
   const c = d.id ? d.cariSnap : DB.cari.find(d.cariId);
   const n = d.items.length, cur = CURS.includes(d.doviz) ? d.doviz : null;
   let top = ''; try { const k = calc(d, []); top = cur ? money(k.genel, cur) : NF.format(k.genel); } catch {}
-  return { baslik: d.id ? `Teklif ${d.no || ''} düzenleniyor` : 'Yeni teklif', alt: [c?.unvan || 'Müşteri seçilmedi', `${n} ürün`, n ? top : ''].filter(Boolean).join(' · ') };
+  return { baslik: d.id ? `Sipariş ${d.no || ''} düzenleniyor` : 'Yeni teklif', alt: [c?.unvan || 'Müşteri seçilmedi', `${n} ürün`, n ? top : ''].filter(Boolean).join(' · ') };
 }
 function tkMiniCiz() {
   if (!tkPanel.mini) return;
   const o = tkOzet(state.draft);
-  mount(tkPanel.mini, html`<button class="tkm-open" data-tkp="ac" title="Teklif formunu aç">${I('doc')}<span class="tkm-t"><b>${o.baslik}</b><span>${o.alt}</span></span></button><button class="btn sm primary" data-tkp="ac">Aç</button><button class="btn ghost icon sm" data-tkp="x" aria-label="Taslağı kapat">${I('x')}</button>`);
+  mount(tkPanel.mini, html`<button class="tkm-open" data-tkp="ac" title="Sipariş formunu aç">${I('doc')}<span class="tkm-t"><b>${o.baslik}</b><span>${o.alt}</span></span></button><button class="btn sm primary" data-tkp="ac">Aç</button><button class="btn ghost icon sm" data-tkp="x" aria-label="Taslağı kapat">${I('x')}</button>`);
 }
 function tkPanelKur(id, taslak) {
-  if (id && !DB.teklif.find(id)) { toast('Teklif bulunamadı (silinmiş olabilir).', 'err'); return false; }
-  const el = document.createElement('div'); el.id = 'tkPanel'; el.className = 'tkp'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Teklif formu');
+  if (id && !DB.teklif.find(id)) { toast('Sipariş bulunamadı (silinmiş olabilir).', 'err'); return false; }
+  const el = document.createElement('div'); el.id = 'tkPanel'; el.className = 'tkp'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Sipariş formu');
   document.body.appendChild(el); tkPanel.el = el; tkPanel.min = false; state.draft = null;
   const mini = document.createElement('div'); mini.id = 'tkMini'; mini.className = 'tkm hidden'; document.body.appendChild(mini); tkPanel.mini = mini;
   tkPanel.sih = sihMod(); el.classList.toggle('tkp-sih', tkPanel.sih);
@@ -2027,7 +2027,7 @@ async function tkPanelAc(id) {
     const ayni = (state.draft?.id || null) === (id || null);
     if (ayni || !tkDirty()) { if (!ayni) { tkPanelKapat(); return void tkPanelKur(id, null); } return tkBuyut(); }
     const o = tkOzet(state.draft);
-    const r = await choiceBox({ title: 'Açık bir teklif formu var', body: html`<p style="margin-top:0"><b>${o.baslik}</b></p><p class="muted sm">${o.alt}</p><p>Aynı anda tek teklif formu açılabilir. Önce açık olanı kaydedin ya da silin.</p>`,
+    const r = await choiceBox({ title: 'Açık bir sipariş formu var', body: html`<p style="margin-top:0"><b>${o.baslik}</b></p><p class="muted sm">${o.alt}</p><p>Aynı anda tek sipariş formu açılabilir. Önce açık olanı kaydedin ya da silin.</p>`,
       options: [{ v: 'sil', l: 'Onu sil, bunu aç' }, { v: 'don', l: 'Açık olana dön', primary: true }] });
     if (r === 'don') return tkBuyut();
     if (r !== 'sil') return;
@@ -2039,13 +2039,13 @@ let tkSoruldu = false;
 async function tkTaslakSor() {
   if (tkSoruldu || tkPanel.el) return; const t = tkTaslakOku(); if (!t) return; tkSoruldu = true;
   if (t.id && !DB.teklif.find(t.id)) {
-    const cur = t.d; if (!await confirmBox({ title: 'Yarım kalan teklif', body: html`<p>Teklif ${cur.no || ''} için yarım kalan bir düzenleme vardı ama teklif artık bulunamıyor (silinmiş olabilir).</p><p>Taslak silinsin mi?</p>`, ok: 'Taslağı sil', danger: true })) return;
+    const cur = t.d; if (!await confirmBox({ title: 'Yarım kalan teklif', body: html`<p>Sipariş ${cur.no || ''} için yarım kalan bir düzenleme vardı ama sipariş artık bulunamıyor (silinmiş olabilir).</p><p>Taslak silinsin mi?</p>`, ok: 'Taslağı sil', danger: true })) return;
     Local.del(TK_TASLAK); return;
   }
   const o = tkOzet(t.d);
   const r = await choiceBox({ title: 'Yarım kalan teklif', body: html`<p style="margin-top:0"><b>${o.baslik}</b></p><p class="muted sm">${o.alt}</p><p class="muted sm">Son değişiklik: ${new Date(t.at).toLocaleString('tr-TR')}</p>`,
     options: [{ v: 'sil', l: 'Sil' }, { v: 'devam', l: 'Devam et', primary: true }] });
-  if (r === 'sil') { if (await confirmBox({ title: 'Taslağı sil', body: html`<p>Yarım kalan teklif silinsin mi? Bu geri alınamaz.</p>`, ok: 'Sil', danger: true })) { Local.del(TK_TASLAK); toast('Taslak silindi'); } else { if (tkPanelKur(t.id, t)) tkKucult(); } return; }
+  if (r === 'sil') { if (await confirmBox({ title: 'Taslağı sil', body: html`<p>Yarım kalan sipariş silinsin mi? Bu geri alınamaz.</p>`, ok: 'Sil', danger: true })) { Local.del(TK_TASLAK); toast('Taslak silindi'); } else { if (tkPanelKur(t.id, t)) tkKucult(); } return; }
   if (!tkPanelKur(t.id, t)) return;
   if (r !== 'devam') tkKucult();   /* Vazgeç: taslak alt çubukta bekler */
 }
@@ -2054,7 +2054,7 @@ document.addEventListener('click', async e => {
   const b = e.target.closest('[data-tkp]'); if (!b || !tkPanel.mini || !tkPanel.mini.contains(b)) return;
   if (b.dataset.tkp === 'ac') return tkBuyut();
   if (b.dataset.tkp === 'x') {
-    if (tkDirty() && !await confirmBox({ title: 'Taslağı kapat', body: html`<p>Kaydedilmemiş teklif formu silinsin mi?</p>`, ok: 'Sil ve kapat', danger: true })) return;
+    if (tkDirty() && !await confirmBox({ title: 'Taslağı kapat', body: html`<p>Kaydedilmemiş sipariş formu silinsin mi?</p>`, ok: 'Sil ve kapat', danger: true })) return;
     tkPanelKapat();
   }
 });
@@ -2069,7 +2069,7 @@ const normYon = y => ({ 'sağ': 'sag', 'sol': 'sol', 'çift': 'cift', 'yok': 'yo
 function validateTeklif(d) {
   const E = []; const add = (sel, msg) => E.push({ sel, msg });
   if (!CURS.includes(d.doviz)) add('[data-d="doviz"]', 'Döviz seçin.');
-  if (!d.tarih) add('[data-d="tarih"]', 'Teklif tarihi girin.');
+  if (!d.tarih) add('[data-d="tarih"]', 'Sipariş tarihi girin.');
   if (!d.teslim || d.teslim < d.tarih) add('[data-d="teslim"]', 'Teslim tarihi geçersiz.');
   if (!['dahil','haric'].includes(d.nakliye)) add('[data-d="nakliye"]', 'Nakliye seçin.');
   if (!['dahil','haric'].includes(d.montaj)) add('[data-d="montaj"]', 'Montaj seçin.');
@@ -2101,14 +2101,14 @@ A.saveTeklif = async el => {
     $('.validation-error')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;
   }
-  if (!tkKisi) { const k = await kimSor(d.id ? 'Teklif düzenleme' : 'Yeni teklif'); if (k === null) return; tkKisi = k; }
+  if (!tkKisi) { const k = await kimSor(d.id ? 'Sipariş düzenleme' : 'Yeni teklif'); if (k === null) return; tkKisi = k; }
   if (tkKisi) Local.set('kisi', tkKisi);
   if (d.id) {
     const cur = DB.teklif.find(d.id);
-    if (!cur || cur.deletedAt) { toast('Bu teklif siz düzenlerken silinmiş; kaydedilemedi.', 'err', 6000); return; }
+    if (!cur || cur.deletedAt) { toast('Bu sipariş siz düzenlerken silinmiş; kaydedilemedi.', 'err', 6000); return; }
     const degisti = JSON.stringify(cur) !== d._orig;
     if (!await confirmBox(degisti
-      ? { title: 'Teklif başka yerde değişti', body: html`<p>Teklif <b>${cur.no}</b> siz düzenlerken başka bir yerde değiştirildi.</p><p>Kaydederseniz o değişikliklerin üzerine yazılır.</p>`, ok: 'Yine de kaydet', danger: true }
+      ? { title: 'Sipariş başka yerde değişti', body: html`<p>Sipariş <b>${cur.no}</b> siz düzenlerken başka bir yerde değiştirildi.</p><p>Kaydederseniz o değişikliklerin üzerine yazılır.</p>`, ok: 'Yine de kaydet', danger: true }
       : { title: 'Kaydet', body: html`<p>Değişiklikleri kaydetmek istiyor musunuz?</p>`, ok: 'Kaydet' })) return;
   }
   const t = stripDraft(d);
@@ -2131,8 +2131,8 @@ A.saveTeklif = async el => {
   t.updated = Date.now();
   if (tkKisi) { if (!d.id) { t.olusturan = tkKisi; t.olusturanAt = t.updated; } t.duzenleyen = tkKisi; t.duzenleyenAt = t.updated; }
   DB.teklif.upsert(t); saveVariants(t.items);
-  logAct(`${t.tur === 'proforma' ? 'Proforma' : 'Teklif'} ${t.no} ${d.id ? 'düzenlendi' : 'oluşturuldu'}`);
-  tkPanelKapat(); toast(d.id ? 'Değişiklikler kaydedildi' : `${t.tur === 'proforma' ? 'Proforma' : 'Teklif'} ${t.no} kaydedildi`); go('teklifDetay', { id: t.id });
+  logAct(`${t.tur === 'proforma' ? 'Proforma' : 'Sipariş'} ${t.no} ${d.id ? 'düzenlendi' : 'oluşturuldu'}`);
+  tkPanelKapat(); toast(d.id ? 'Değişiklikler kaydedildi' : `${t.tur === 'proforma' ? 'Proforma' : 'Sipariş'} ${t.no} kaydedildi`); go('teklifDetay', { id: t.id });
   { const b = sipBag(t); if (d.id && b && (b.bag === 'onaylandi' || b.bag === 'bekliyor')) sipGonder(t, { sessiz: true }); }
 };
 /* İşlem günlüğü yalnızca bu cihazda tutulur (sunucuya trafik yok) */
@@ -2140,7 +2140,7 @@ function logAct(msg) { const l = Local.get('log', []); l.unshift({ ts: Date.now(
 /* =====================================================================
    TELEFON / TABLET: 4 adımlı Yeni Teklif (Müşteri → Ürünler → Şartlar → Özet)
    Masaüstü ve .exe eski formu kullanır. Taslak, küçültme, doğrulama ve kayıt
-   mevcut teklif formuyla aynı koddan geçer; sunucuya ek istek yoktur.
+   mevcut sipariş formuyla aynı koddan geçer; sunucuya ek istek yoktur.
    ===================================================================== */
 const sihMod = () => !desktop() && matchMedia('(max-width:1024px)').matches;
 const SIH = { adim: 1, en: 1, q: '', mq: '', kat: '', model: '', hata: [] };
@@ -2174,8 +2174,8 @@ VIEWS.teklifSih = (main, { id, taslak }) => {
 function sihCiz() {
   const el = tkPanel.el, d = state.draft; if (!el || !tkPanel.sih || !d) return;
   const a = SIH.adim, edit = !!d.id;
-  const baslik = [edit ? `Teklif ${d.no} — Düzenle` : 'Yeni Teklif', 'Ürün ekle', 'Teslim ve şartlar', 'Özet'][a - 1];
-  const alt = a === 1 ? (edit ? 'Müşteri ve personel değiştirilemez' : 'Teklif numarası kayıtta verilir') : `Adım ${a} / 4${sihCari() ? ' · ' + sihCari().unvan : ''}`;
+  const baslik = [edit ? `Sipariş ${d.no} — Düzenle` : 'Yeni Sipariş', 'Ürün ekle', 'Teslim ve şartlar', 'Özet'][a - 1];
+  const alt = a === 1 ? (edit ? 'Müşteri ve personel değiştirilemez' : 'Sipariş numarası kayıtta verilir') : `Adım ${a} / 4${sihCari() ? ' · ' + sihCari().unvan : ''}`;
   mount(el, html`<div class="sih" data-adim="${a}">
     <div class="sih-h"><button class="btn icon" data-act="sihGeri" aria-label="${a === 1 ? 'Kapat' : 'Geri'}">${I(a === 1 ? 'x' : 'back')}</button>
       <div class="sih-ht"><b>${a === 1 ? baslik : baslik}</b><span>${alt}</span></div>
@@ -2197,7 +2197,7 @@ function sihAdim1() {
     return html`<div class="sih-c"><div class="sih-l">Müşteri</div>
       <div class="sih-r on" style="cursor:default"><span class="sih-av">${sihBas(c.unvan)}</span><span class="t"><b>${c.unvan}</b><span>${[[c.ilce, c.sehir].filter(Boolean).join(' / '), c.gsm].filter(Boolean).join(' · ')}</span></span></div>
       <div class="sih-l">Personel</div><div class="sih-chips"><span class="sih-chip on">${d.personelAd || '—'}</span></div>
-      <p class="muted sm">Kayıtlı teklifte müşteri ve personel değiştirilemez.</p></div>`;
+      <p class="muted sm">Kayıtlı siparişte müşteri ve personel değiştirilemez.</p></div>`;
   }
   const per = DB.personel.find(d.personelId);
   return html`<div class="sih-c sih-m2"><div class="sih-mc">
@@ -2235,7 +2235,7 @@ function sihAdim2() {
     <div id="sihSecim" class="${SIH.q ? 'hidden' : ''}">${sihSecim()}</div>
     ${sihHataMsg('items')}
     <div id="sihUrun" class="sih-ug">${sihUrunListe()}</div>
-    <button type="button" class="sih-r sih-yeni" data-act="sihYeniUrun"><span class="sih-av sih-arti">${I('plus')}</span><span class="t"><b>Katalogda yok mu?</b><span>Yeni ürün oluştur ve teklife ekle</span></span></button>
+    <button type="button" class="sih-r sih-yeni" data-act="sihYeniUrun"><span class="sih-av sih-arti">${I('plus')}</span><span class="t"><b>Katalogda yok mu?</b><span>Yeni ürün oluştur ve siparişe ekle</span></span></button>
   </div><aside class="sih-sepet" id="sihSepet">${sihSepet()}</aside></div>`;
 }
 const sihKatlar = () => { const m = new Map(); for (const u of DB.urun.all()) { const k = trLower(u.kategori); const e = m.get(k) || { ad: u.kategori, n: 0 }; e.n++; m.set(k, e); } return [...m.values()].sort((a, b) => a.ad.localeCompare(b.ad, 'tr')); };
@@ -2283,7 +2283,7 @@ A.sihModelSec = () => { if (!SIH.kat) return; sihKlavyesiz(picker({ title: `Mode
 A.sihAraTemizle = () => { SIH.q = ''; const i = $('[data-sq="urun"]'); if (i) i.value = ''; $('.sih-ara-x')?.classList.add('hidden'); sihSecimCiz(); };
 function sihSepet() {
   const d = state.draft, c = calc(d, []);
-  return html`<div class="sih-sh"><b>Teklifteki ürünler (${d.items.length})</b></div>
+  return html`<div class="sih-sh"><b>Siparişteki ürünler (${d.items.length})</b></div>
     ${d.items.length ? d.items.map((it, i) => { const f = safeImg(offerFotoGet(it)), bad = SIH.hata.some(h => h.k === 'it' + i);
       return html`<div class="sih-ki ${bad ? 'bad' : ''}">${f ? html`<img class="sih-img sm" src="${f}" alt="">` : html`<span class="sih-img sm bos">${I('img')}</span>`}
         <div class="t"><b>${it.model || itemTitle(it)}</b><span>${it.adet || 0} × ${money(it.fiyat, d.doviz)}${[it.olcu, it.renk, ({ sag: 'SAĞ', sol: 'SOL', cift: 'ÇİFT', yok: 'YOK' }[normYon(it.yon)] || it.yon)].filter(Boolean).map(x => ' · ' + x).join('')}</span>${bad ? html`<span class="sih-e" style="margin:2px 0 0">${SIH.hata.find(h => h.k === 'it' + i).msg}</span>` : ''}</div>
@@ -2296,7 +2296,7 @@ A.sihKalem = el => { closeSihSepet(); sihKalemAc(null, +el.dataset.i); };
 A.sihSil = el => { const d = state.draft, i = +el.dataset.i, it = d.items[i]; if (!it) return; d.items.splice(i, 1); SIH.hata = []; sihYenile(); sihAltCiz(); toast(`${it.model || 'Ürün'} çıkarıldı`); };
 A.sihYeniUrun = () => {
   urunForm(null, u => { if (u && state.draft) { if (!SIH.q) { SIH.kat = u.kategori; SIH.model = u.model; } sihYenile(); sihKalemAc(u, -1); } });
-  /* seçili kategori/model ve teklifin dövizi forma hazır gelir */
+  /* seçili kategori/model ve siparişin dövizi forma hazır gelir */
   const ov = [...document.querySelectorAll('.ov')].pop(); if (!ov) return;
   const yaz = (k, v) => { const el = ov.querySelector(`[data-u="${k}"]`); if (el && v) { el.value = v; el.dispatchEvent(new Event(el.tagName === 'SELECT' ? 'change' : 'input', { bubbles: true })); } };
   if (!SIH.q) { yaz('kategori', SIH.kat); yaz('model', SIH.model); }
@@ -2304,7 +2304,7 @@ A.sihYeniUrun = () => {
 };
 A.sihSepet = () => {
   if (SIH.adim !== 2 || matchMedia('(min-width:700px)').matches) return;
-  modal({ title: 'Teklifteki ürünler', cls: 'sih-ov sih-sepet-ov', body: html`<div id="sihSepetM">${sihSepet()}</div>` });
+  modal({ title: 'Siparişteki ürünler', cls: 'sih-ov sih-sepet-ov', body: html`<div id="sihSepetM">${sihSepet()}</div>` });
 };
 function closeSihSepet() { $('.sih-sepet-ov')?.remove(); }
 
@@ -2327,7 +2327,7 @@ function sihKalemAc(u, i) {
     <div class="field"><label>Yön ${sihMasa(it) ? html`<span class="req">*</span>` : ''}</label><div class="sih-chips" data-chs="yon">${SIH_YON.map(([v, l]) => html`<button type="button" class="sih-chip ${normYon(it.yon) === v ? 'on' : ''}" data-ch="yon" data-v="${v}">${l}</button>`)}</div></div>
     <div class="field"><label>Not</label><textarea class="inp" data-f="aciklama" rows="2" maxlength="1000" placeholder="Örn. kapaklar soft-close olacak">${it.aciklama || ''}</textarea></div>
     <div class="sih-e" data-hata hidden></div>`,
-    foot: html`<button class="btn" data-x>Vazgeç</button><button class="btn primary sih-ekle-b" data-ok>${ed ? 'Kaydet' : 'Teklife ekle'} · <span data-top>${toplam()}</span></button>`,
+    foot: html`<button class="btn" data-x>Vazgeç</button><button class="btn primary sih-ekle-b" data-ok>${ed ? 'Kaydet' : 'Siparişe ekle'} · <span data-top>${toplam()}</span></button>`,
     onMount: m => {
       const h = m.$('[data-hata]');
       const yaz = () => { m.$('[data-top]').textContent = toplam(); };
@@ -2358,8 +2358,8 @@ function sihKalemAc(u, i) {
           saveVariants([it]);
           SIH.hata = SIH.hata.filter(x => x.k !== 'items' && !String(x.k).startsWith('it'));
           m.close(); sihYenile(); sihAltCiz(); tkTaslakKaydet();
-          toast(ed ? 'Ürün güncellendi' : `${it.model || 'Ürün'} teklife eklendi`, 'ok', 1600);
-          if (!ed && !it.fiyat && ur && ur.fiyat && ur.doviz !== d.doviz) toast(`Liste fiyatı ${ur.doviz}; teklif ${d.doviz}. Fiyatı elle girin.`, 'err');
+          toast(ed ? 'Ürün güncellendi' : `${it.model || 'Ürün'} siparişe eklendi`, 'ok', 1600);
+          if (!ed && !it.fiyat && ur && ur.fiyat && ur.doviz !== d.doviz) toast(`Liste fiyatı ${ur.doviz}; sipariş ${d.doviz}. Fiyatı elle girin.`, 'err');
         }
       });
     } });
@@ -2372,13 +2372,13 @@ function sihAdim3() {
   return html`<div class="sih-c">
     <div class="sih-l">Teslim tarihi <span class="req">*</span></div>
     <div class="sih-chips">${[15, 30, 45].map(n => html`<button type="button" class="sih-chip ${d.teslim === gun(n) ? 'on' : ''}" data-act="sihGun" data-g="${n}">${n} gün</button>`)}</div>
-    <div class="sih-g2"><div class="field"><label>Teklif tarihi</label><input type="date" class="inp" data-sd="tarih" value="${d.tarih}"></div>
+    <div class="sih-g2"><div class="field"><label>Sipariş tarihi</label><input type="date" class="inp" data-sd="tarih" value="${d.tarih}"></div>
       <div class="field"><label>Teslim tarihi</label><input type="date" class="inp ${sihHataVar('teslim') ? 'bad' : ''}" data-sd="teslim" value="${d.teslim}" min="${d.tarih}"></div></div>
     <div class="muted sm" id="sihTeslimY">${d.teslim ? '→ ' + sihUzun(d.teslim) : ''}</div>${sihHataMsg('teslim')}${sihHataMsg('tarih')}
     ${SIH_SART.map(([k, l, o]) => html`<div class="sih-l">${l} <span class="req">*</span></div><div class="sih-tg">${o.map(([v, t]) => html`<button type="button" class="${d[k] === v ? 'on' : ''} ${sihHataVar(k) ? 'bad' : ''}" data-act="sihSec" data-k="${k}" data-v="${v}">${t}</button>`)}</div>${sihHataMsg(k)}`)}
     <div class="sih-l">Döviz</div>
     <div class="sih-chips">${CURS.map(c => html`<button type="button" class="sih-chip ${d.doviz === c ? 'on' : ''}" data-act="sihDoviz" data-v="${c}" ${edit ? 'disabled' : ''}>${SYM[c]} ${c}</button>`)}</div>${sihHataMsg('doviz')}
-    ${edit ? html`<p class="muted sm" style="margin:0">Kayıtlı teklifin dövizi değiştirilemez.</p>` : ''}</div>`;
+    ${edit ? html`<p class="muted sm" style="margin:0">Kayıtlı siparişin dövizi değiştirilemez.</p>` : ''}</div>`;
 }
 A.sihGun = el => { const d = state.draft, t = new Date((d.tarih || todayISO()) + 'T12:00:00'); t.setDate(t.getDate() + +el.dataset.g); d.teslim = isoOf(t); SIH.hata = SIH.hata.filter(h => h.k !== 'teslim'); sihCiz(); };
 A.sihSec = el => { state.draft[el.dataset.k] = el.dataset.v; SIH.hata = SIH.hata.filter(h => h.k !== el.dataset.k); sihCiz(); };
@@ -2414,7 +2414,7 @@ function sihAlt() {
   else if (a === 3) { b = `${n} ürün · ${money(c.ana, d.doviz)}`; s = 'KDV ve iskonto hariç'; go = 'Özet'; }
   else { b = money(c.genel, d.doviz); s = `Kalan ${money(c.kalan, d.doviz)}`; }
   return html`<button type="button" class="sih-fs" data-act="sihSepet"><b>${b}</b><span>${s}</span></button>
-    ${a < 4 ? html`<button type="button" class="btn primary sih-go" data-act="sihIleri">${go} →</button>` : html`<button type="button" class="btn primary sih-go" data-act="sihKaydet">${d.id ? 'Değişiklikleri kaydet' : 'Teklifi kaydet'}</button>`}`;
+    ${a < 4 ? html`<button type="button" class="btn primary sih-go" data-act="sihIleri">${go} →</button>` : html`<button type="button" class="btn primary sih-go" data-act="sihKaydet">${d.id ? 'Değişiklikleri kaydet' : 'Siparişi kaydet'}</button>`}`;
 }
 function sihAltCiz() {
   /* Yerinde güncellenir: düğme yeniden çizilirse dokunuş (click) kaybolabilir */
@@ -2488,26 +2488,26 @@ A.sihKaydet = async el => {
   if (!tkPanel.el && state.view === 'teklifDetay' && state.params?.id) sihBitti(state.params.id);
 };
 
-/* ---------- kaydedildi: PDF göster / paylaş / siparişe gönder ---------- */
+/* ---------- kaydedildi: PDF göster / paylaş / Sipariş Takibi’ne gönder ---------- */
 function sihBitti(id) {
   const t = DB.teklif.find(id); if (!t) return;
   const c = calc(t, payMap()[t.id] || []), paylasVar = !!navigator.share && !desktop();
   let dosya = null;
   const hazir = paylasVar ? tkPdfBlob(t, curPdfOpts()).then(b => { dosya = new File([b], teklifFileName(t), { type: 'application/pdf' }); const p = $('.sih-done [data-k="paylas"] .t span'); if (p) p.textContent = 'WhatsApp, e-posta… telefonun paylaş menüsü'; return dosya; }).catch(() => null) : null;
-  modal({ title: null, cls: 'sih-ov sih-done', body: html`<div class="sih-okk"><div class="ci">✓</div><b>Teklif ${t.no} kaydedildi</b><span>${t.cariSnap?.unvan || ''} · ${money(c.genel, t.doviz)}</span>${durumTag(t)}</div>
+  modal({ title: null, cls: 'sih-ov sih-done', body: html`<div class="sih-okk"><div class="ci">✓</div><b>Sipariş ${t.no} kaydedildi</b><span>${t.cariSnap?.unvan || ''} · ${money(c.genel, t.doviz)}</span>${durumTag(t)}</div>
     <div class="sih-acts">
-      <button type="button" class="sih-r" data-k="pdf"><span class="sih-av sih-arti">${I('pdf')}</span><span class="t"><b>PDF göster</b><span>Teklifi ekranda aç</span></span></button>
+      <button type="button" class="sih-r" data-k="pdf"><span class="sih-av sih-arti">${I('pdf')}</span><span class="t"><b>PDF göster</b><span>Siparişi ekranda aç</span></span></button>
       ${paylasVar ? html`<button type="button" class="sih-r sih-vurgu" data-k="paylas"><span class="sih-av sih-arti">${I('share')}</span><span class="t"><b>PDF'i paylaş</b><span>PDF hazırlanıyor…</span></span></button>` : ''}
-      ${!sipBag(t) ? html`<button type="button" class="sih-r" data-k="sip" data-id="${t.id}"><span class="sih-av sih-arti">${I('box')}</span><span class="t"><b>Siparişe gönder</b><span>Müşteri onayladıysa Sipariş Takibi'ne gönderir</span></span></button>` : ''}
+      ${!sipBag(t) ? html`<button type="button" class="sih-r" data-k="sip" data-id="${t.id}"><span class="sih-av sih-arti">${I('box')}</span><span class="t"><b>Sipariş Takibi’ne gönder</b><span>Müşteri onayladıysa Sipariş Takibi'ne gönderir</span></span></button>` : ''}
     </div>
-    <div class="sih-g2" style="margin-top:12px"><button type="button" class="btn" data-k="kapat">Teklif detayına git</button><button type="button" class="btn" data-k="yeni">${I('plus')} Yeni teklif</button></div>`,
+    <div class="sih-g2" style="margin-top:12px"><button type="button" class="btn" data-k="kapat">Sipariş detayına git</button><button type="button" class="btn" data-k="yeni">${I('plus')} Yeni sipariş</button></div>`,
     onMount: m => m.el.addEventListener('click', async e => {
       const b = e.target.closest('[data-k]'); if (!b) return; const k = b.dataset.k;
       if (k === 'kapat') return m.close();
       if (k === 'yeni') { m.close(); return go('teklifForm', {}); }
       if (k === 'pdf') return pdfPreview(t.id);
       if (k === 'paylas') {
-        if (dosya) { try { await navigator.share({ title: `Teklif ${t.no}`, files: [dosya] }); } catch (er) { if (!er || er.name !== 'AbortError') shareTeklif(t); } return; }
+        if (dosya) { try { await navigator.share({ title: `Sipariş ${t.no}`, files: [dosya] }); } catch (er) { if (!er || er.name !== 'AbortError') shareTeklif(t); } return; }
         toast('PDF hazırlanıyor, birkaç saniye sonra tekrar dokunun.'); await hazir; if (!dosya) shareTeklif(t); return;
       }
       if (k === 'sip') { await A.sipGonder(b); if (sipBag(DB.teklif.find(t.id))) b.remove(); }
@@ -2523,15 +2523,15 @@ VIEWS.teklifDetay = (main, { id, tab = 'urunler' }) => {
   const t = DB.teklif.find(id); if (!t || t.deletedAt) return go('teklifler');
   const pays = (payMap()[t.id] || []).sort((a, b) => (b.tarih + b.created).localeCompare(a.tarih + a.created));
   const c = calc(t, pays), cs = t.cariSnap, pct = c.genel ? Math.min(100, c.pes / c.genel * 100) : 0;
-  /* Teklifte girilen peşinat da bir ödeme olarak listelenir (teklif kaydında durur, Düzenle ile değişir) */
-  const pesRow = t.pesinat > 0 ? { pesinat: true, tarih: t.pesinatTarih || t.tarih, tutar: t.pesinat, doviz: t.doviz, cevrilmis: t.pesinat, aciklama: 'Teklifte alınan peşinat' } : null;
+  /* Siparişte girilen peşinat da bir ödeme olarak listelenir (sipariş kaydında durur, Düzenle ile değişir) */
+  const pesRow = t.pesinat > 0 ? { pesinat: true, tarih: t.pesinatTarih || t.tarih, tutar: t.pesinat, doviz: t.doviz, cevrilmis: t.pesinat, aciklama: 'Siparişte alınan peşinat' } : null;
   const payRows = pesRow ? [...pays, pesRow] : pays, payCount = payRows.length;
   mount(main, html`<div class="page detail"><div class="ph"><div class="ph-l"><button class="btn icon" data-act="nav" data-v="${t.tur === 'proforma' ? 'proformalar' : 'teklifler'}" aria-label="Geri">${I('back')}</button>
-      <div><h1 style="display:flex;gap:10px;align-items:center">${t.tur === 'proforma' ? 'Proforma' : 'Teklif'} ${t.no} ${durumTag(t)}</h1><div class="muted sm">${cs.unvan}</div></div></div>
-    <div class="ph-act"><button class="btn" data-act="editTeklif" data-id="${t.id}">${I('edit')} Düzenle</button><button class="btn primary" data-act="pdf" data-id="${t.id}">${I('pdf')} PDF</button>${!sipBag(t) && t.tur !== 'proforma' ? html`<button class="btn${gonderilmedi(t) ? ' btn-gonder' : ''}" data-act="sipGonder" data-id="${t.id}">${I('share')} Siparişe Gönder</button>` : ''}<button class="btn icon" data-act="rowMenu" data-id="${t.id}" aria-label="Diğer">${I('dots')}</button></div></div>
+      <div><h1 style="display:flex;gap:10px;align-items:center">${t.tur === 'proforma' ? 'Proforma' : 'Sipariş'} ${t.no} ${durumTag(t)}</h1><div class="muted sm">${cs.unvan}</div></div></div>
+    <div class="ph-act"><button class="btn" data-act="editTeklif" data-id="${t.id}">${I('edit')} Düzenle</button><button class="btn primary" data-act="pdf" data-id="${t.id}">${I('pdf')} PDF</button>${!sipBag(t) && t.tur !== 'proforma' ? html`<button class="btn${gonderilmedi(t) ? ' btn-gonder' : ''}" data-act="sipGonder" data-id="${t.id}">${I('share')} Sipariş Takibi’ne Gönder</button>` : ''}<button class="btn icon" data-act="rowMenu" data-id="${t.id}" aria-label="Diğer">${I('dots')}</button></div></div>
     <div class="dgrid">
       <div class="card"><div class="card-h"><h3>Müşteri</h3></div><dl class="kv"><dt>Ünvan</dt><dd>${cs.unvan}</dd>${cs.yetkili ? html`<dt>Yetkili</dt><dd>${cs.yetkili}</dd>` : ''}<dt>Telefon</dt><dd>${cs.gsm || '—'}</dd>${cs.sabit ? html`<dt>Sabit No</dt><dd>${cs.sabit}</dd>` : ''}<dt>E-posta</dt><dd>${cs.eposta || '—'}</dd><dt>Adres</dt><dd>${[cs.adres, cs.ilce, cs.sehir, cs.ulke].filter(Boolean).join(', ')}</dd>${cs.vd ? html`<dt>Vergi Dairesi</dt><dd>${cs.vd}</dd>` : ''}${cs.vkn ? html`<dt>${String(cs.vkn).length === 11 ? 'TCKN' : 'VKN'}</dt><dd>${cs.vkn}</dd>` : ''}</dl></div>
-      <div class="card"><div class="card-h"><h3>Teklif</h3></div><dl class="kv"><dt>Teklif Tarihi</dt><dd>${fmtDate(t.tarih)}</dd><dt>Teslim Tarihi</dt><dd>${fmtDate(t.teslim)}</dd><dt>Döviz</dt><dd>${t.doviz}</dd><dt>Personel</dt><dd>${t.personelAd}</dd>${kimKV(t)}
+      <div class="card"><div class="card-h"><h3>Sipariş</h3></div><dl class="kv"><dt>Sipariş Tarihi</dt><dd>${fmtDate(t.tarih)}</dd><dt>Teslim Tarihi</dt><dd>${fmtDate(t.teslim)}</dd><dt>Döviz</dt><dd>${t.doviz}</dd><dt>Personel</dt><dd>${t.personelAd}</dd>${kimKV(t)}
         <dt>Montaj</dt><dd>${LBL[t.montaj]}</dd><dt>Nakliye</dt><dd>${LBL[t.nakliye]}</dd><dt>Teslim Yeri</dt><dd>${LBL[t.teslimYeri]}</dd></dl></div>
       <div class="card"><div class="card-h"><h3>Ödeme özeti</h3><button class="btn sm" data-act="addPay" data-id="${t.id}">${I('plus')} Ödeme</button></div>
         <dl class="kv"><dt>Genel Toplam</dt><dd class="b">${money(c.genel, t.doviz)}</dd>
@@ -2547,28 +2547,28 @@ VIEWS.teklifDetay = (main, { id, tab = 'urunler' }) => {
     : html`<div class="toolbar"><button class="btn primary" data-act="addPay" data-id="${t.id}">${I('plus')} Ödeme Ekle</button></div>
       ${payRows.length ? html`<div class="tw"><table class="tbl static resp"><thead><tr>${['Tarih', 'Tutar', 'Kur', `Karşılığı (${t.doviz})`, 'Yöntem', 'Açıklama', ''].map((h, i) => html`<th class="${i === 1 || i === 3 ? 'r' : ''}"><div class="thi">${h}</div></th>`)}</tr></thead><tbody>
         ${payRows.map(p => html`<tr><td>${fmtDate(p.tarih)}</td><td class="r">${money(p.tutar, p.doviz)}</td><td>${p.doviz !== t.doviz ? kurText(p.doviz, t.doviz, p.kur) : '—'}</td><td class="r b">${money(p.cevrilmis, t.doviz)}</td><td>${p.pesinat ? 'Peşinat' : (DB.yontem.find(p.yontemId)?.ad || '—')}</td><td class="wrap">${p.aciklama || ''}</td>
-          <td class="nowrap">${p.pesinat ? html`<button class="btn ghost icon sm" data-act="editTeklif" data-id="${t.id}" aria-label="Peşinatı düzenle" title="Peşinat teklif formundan düzenlenir">${I('edit')}</button>` : html`<button class="btn ghost icon sm" data-act="editPay" data-id="${p.id}" aria-label="Düzenle">${I('edit')}</button><button class="btn ghost icon sm" data-act="delPay" data-id="${p.id}" aria-label="Sil">${I('trash')}</button>`}</td></tr>`)}</tbody></table>
+          <td class="nowrap">${p.pesinat ? html`<button class="btn ghost icon sm" data-act="editTeklif" data-id="${t.id}" aria-label="Peşinatı düzenle" title="Peşinat sipariş formundan düzenlenir">${I('edit')}</button>` : html`<button class="btn ghost icon sm" data-act="editPay" data-id="${p.id}" aria-label="Düzenle">${I('edit')}</button><button class="btn ghost icon sm" data-act="delPay" data-id="${p.id}" aria-label="Sil">${I('trash')}</button>`}</td></tr>`)}</tbody></table>
         <div class="cards">${payRows.map(p => html`<div class="lcard" style="cursor:default"><div class="row"><span class="b">${money(p.tutar, p.doviz)}</span><span class="muted sm">${fmtDate(p.tarih)}</span></div>
           <div class="row sm"><span class="muted">${p.pesinat ? 'Peşinat' : (DB.yontem.find(p.yontemId)?.ad || '—')}${p.doviz !== t.doviz ? ' · ' + kurText(p.doviz, t.doviz, p.kur) : ''}</span><span>${money(p.cevrilmis, t.doviz)}</span></div>${p.aciklama ? html`<div class="sm muted">${p.aciklama}</div>` : ''}
           <div class="row" style="justify-content:flex-end">${p.pesinat ? html`<button class="btn sm" data-act="editTeklif" data-id="${t.id}">Düzenle</button>` : html`<button class="btn sm" data-act="editPay" data-id="${p.id}">Düzenle</button><button class="btn sm danger" data-act="delPay" data-id="${p.id}">Sil</button>`}</div></div>`)}</div></div>`
-      : html`<div class="empty card"><b>Bu teklife henüz ödeme girilmedi</b>Peşinat veya ara ödeme almak için "Ödeme Ekle"yi kullanın.</div>`}`}
+      : html`<div class="empty card"><b>Bu siparişe henüz ödeme girilmedi</b>Peşinat veya ara ödeme almak için "Ödeme Ekle"yi kullanın.</div>`}`}
     <div class="totbar"><div class="c x"><span>Ana Para</span><span>${money(c.ana, t.doviz)}</span></div><div class="c x"><span>İskonto</span><span>${c.isk ? '-' + money(c.isk, t.doviz) : money(0, t.doviz)}</span></div>
       <div class="c x"><span>Ara Toplam</span><span>${money(c.ara, t.doviz)}</span></div><div class="c x"><span>KDV %${NF.format(t.kdv).replace(',00', '')}</span><span>${money(c.kdv, t.doviz)}</span></div>
       <div class="c"><span>Genel Toplam</span><span class="b">${money(c.genel, t.doviz)}</span></div><div class="c x"><span>Peşinat</span><span>${money(c.pes, t.doviz)}</span></div><div class="c"><span>Kalan</span><span>${money(c.kalan, t.doviz)}</span></div>
       <button class="btn sm mob" data-act="totDetail" data-id="${t.id}">Detay</button></div></div>`);
 };
 A.dTab = el => go('teklifDetay', { id: el.dataset.id, tab: el.dataset.t });
-A.editTeklif = el => { const t = DB.teklif.find(el.dataset.id); if (sipBag(t)?.bekleyen === 'silme') return toast('Silme talebi Sipariş Takibi\'nde onay bekliyor; bu sırada teklif düzenlenemez.', 'err', 6000); go('teklifForm', { id: el.dataset.id }); };
+A.editTeklif = el => { const t = DB.teklif.find(el.dataset.id); if (sipBag(t)?.bekleyen === 'silme') return toast('Silme talebi Sipariş Takibi\'nde onay bekliyor; bu sırada sipariş düzenlenemez.', 'err', 6000); go('teklifForm', { id: el.dataset.id }); };
 A.pdf = el => pdfPreview(el.dataset.id);
 A.sipGonder = async el => {
   const t = DB.teklif.find(el.dataset.id); if (!t) return;
-  if (!await confirmBox({ title: 'Siparişe Gönder', body: html`<p style="margin-top:0">Teklif <b>${t.no}</b> — ${t.cariSnap.unvan}</p><p>Sipariş Takibi'ne onaya gönderilsin mi?</p><p class="muted sm">Orada onaylanınca siparişler oluşur; ürünlerin durumu buraya otomatik gelir.</p>`, ok: 'Gönder' })) return;
+  if (!await confirmBox({ title: 'Sipariş Takibi’ne Gönder', body: html`<p style="margin-top:0">Sipariş <b>${t.no}</b> — ${t.cariSnap.unvan}</p><p>Sipariş Takibi'ne onaya gönderilsin mi?</p><p class="muted sm">Orada onaylanınca siparişler oluşur; ürünlerin durumu buraya otomatik gelir.</p>`, ok: 'Gönder' })) return;
   el.disabled = true; try { await sipGonder(t); } finally { el.disabled = false; }
 };
 
 A.printT = el => printTeklif(DB.teklif.find(el.dataset.id));
 A.shareT = el => shareTeklif(DB.teklif.find(el.dataset.id));
-A.totDetail = el => { const t = DB.teklif.find(el.dataset.id); modal({ title: `Teklif ${t.no} toplamlar`, size: 'sm', body: totsHTML(calc(t, payMap()[t.id]), t) }); };
+A.totDetail = el => { const t = DB.teklif.find(el.dataset.id); modal({ title: `Sipariş ${t.no} toplamlar`, size: 'sm', body: totsHTML(calc(t, payMap()[t.id]), t) }); };
 function kurText(pd, td, kur) { return pd === 'TRY' ? `1 ${td} = ${NF.format(kur)} TRY` : `1 ${pd} = ${NF.format(kur)} ${td}`; }
 function convert(tutar, pd, td, kur) { if (pd === td) return r2(tutar); return pd === 'TRY' ? r2(tutar / kur) : r2(tutar * kur); }
 A.addPay = el => payForm(DB.teklif.find(el.dataset.id), null);
@@ -2577,7 +2577,7 @@ A.delPay = async el => {
   const p = DB.odeme.find(el.dataset.id), t = DB.teklif.find(p.teklifId);
   if (await kimSor('Ödeme silme') === null) return;
   if (!await confirmBox({ title: 'Ödemeyi sil', danger: true, ok: 'Sil', body: html`<dl class="kv"><dt>Tarih</dt><dd>${fmtDate(p.tarih)}</dd><dt>Tutar</dt><dd class="b">${money(p.tutar, p.doviz)}</dd><dt>Karşılığı</dt><dd>${money(p.cevrilmis, t.doviz)}</dd><dt>Yöntem</dt><dd>${DB.yontem.find(p.yontemId)?.ad || '—'}</dd><dt>Açıklama</dt><dd>${p.aciklama || '—'}</dd></dl><p style="margin:14px 0 0">Bu ödeme silinecek ve kalan tutar yeniden hesaplanacak.</p>` })) return;
-  DB.odeme.remove(p.id); logAct(`Teklif ${t.no}: ödeme silindi`); toast('Ödeme silindi'); go('teklifDetay', { id: t.id, tab: 'odemeler' });
+  DB.odeme.remove(p.id); logAct(`Sipariş ${t.no}: ödeme silindi`); toast('Ödeme silindi'); go('teklifDetay', { id: t.id, tab: 'odemeler' });
 };
 function payForm(t, p) {
   const v = p ? { ...p } : { tarih: todayISO(), tutar: '', doviz: t.doviz, kur: '', yontemId: DB.yontem.all()[0]?.id || '', aciklama: '' };
@@ -2595,7 +2595,7 @@ function payForm(t, p) {
         const diff = v.doviz !== t.doviz; m.$('[data-kurw]').classList.toggle('hidden', !diff);
         m.$('[data-kurl]').textContent = diff ? (v.doviz === 'TRY' ? `Kur: 1 ${t.doviz} = ? TRY` : `Kur: 1 ${v.doviz} = ? ${t.doviz}`) : '';
         const tu = num(v.tutar), ku = num(v.kur); const ok = tu > 0 && (!diff || ku > 0);
-        m.$('[data-conv]').textContent = ok ? `Teklif dövizindeki karşılığı: ${money(convert(tu, v.doviz, t.doviz, ku), t.doviz)}` : '';
+        m.$('[data-conv]').textContent = ok ? `Sipariş dövizindeki karşılığı: ${money(convert(tu, v.doviz, t.doviz, ku), t.doviz)}` : '';
         m.$('[data-yon] span').textContent = DB.yontem.find(v.yontemId)?.ad || 'Seçin';
       };
       upd();
@@ -2611,7 +2611,7 @@ function payForm(t, p) {
           const _k = await kimSor(p ? 'Ödeme düzenleme' : 'Ödeme ekleme'); if (_k === null) return;
           const row = { id: p?.id || uid(), teklifId: t.id, tarih: v.tarih, tutar: tu, doviz: v.doviz, kur: diff ? ku : 1, cevrilmis: convert(tu, v.doviz, t.doviz, ku), yontemId: v.yontemId, aciklama: clean(v.aciklama, 300), created: p?.created || Date.now(),
             giren: p ? (p.giren || '') : _k, ...(p ? { duzenleyen: _k, duzenleyenAt: Date.now() } : {}) };
-          DB.odeme.upsert(row); logAct(`Teklif ${t.no}: ${money(tu, v.doviz)} ödeme ${p ? 'düzenlendi' : 'eklendi'}`);
+          DB.odeme.upsert(row); logAct(`Sipariş ${t.no}: ${money(tu, v.doviz)} ödeme ${p ? 'düzenlendi' : 'eklendi'}`);
           m.close(); toast(p ? 'Ödeme güncellendi' : 'Ödeme eklendi'); go('teklifDetay', { id: t.id, tab: 'odemeler' });
         }
       });
@@ -2622,16 +2622,16 @@ function payForm(t, p) {
    PDF (önizleme → yazdır / PDF olarak kaydet / paylaş)
    ===================================================================== */
 const PL = {
-  tr: { teklif: 'TEKLİF', no: 'Teklif No', tarih: 'Teklif Tarihi', teslim: 'Teslim Tarihi', doviz: 'Döviz', montaj: 'Montaj', nakliye: 'Nakliye', yer: 'Teslim Yeri', dahil: 'Dahil', haric: 'Hariç', fabrika: 'Fabrika', adres: 'Adres',
+  tr: { teklif: 'SİPARİŞ FORMU', no: 'Sipariş No', tarih: 'Sipariş Tarihi', teslim: 'Teslim Tarihi', doviz: 'Döviz', montaj: 'Montaj', nakliye: 'Nakliye', yer: 'Teslim Yeri', dahil: 'Dahil', haric: 'Hariç', fabrika: 'Fabrika', adres: 'Adres',
     foto: 'Fotoğraf', urun: 'Ürün', olcu: 'Ölçü', renk: 'Renk', yon: 'Yön', birim: 'Birim Fiyat', adet: 'Adet', toplam: 'Toplam Fiyat', yok: 'Fotoğraf Yok',
     ana: 'Ana Para', isk: 'İskonto', ara: 'Ara Toplam', kdv: 'KDV', genel: 'Genel Toplam', pes: 'Alınan Peşinat', kalan: 'Kalan Tutar', odemeler: 'Ödemeler', sayfa: 'Sayfa',
     yetkili: 'Yetkili', gsm: 'GSM', sabit: 'Tel', eposta: 'E-posta', vkn: 'VKN', tckn: 'TCKN', vd: 'Vergi Dairesi' },
-  en: { teklif: 'QUOTATION', no: 'Quote No', tarih: 'Quote Date', teslim: 'Delivery Date', doviz: 'Currency', montaj: 'Assembly', nakliye: 'Shipping', yer: 'Delivery', dahil: 'Included', haric: 'Excluded', fabrika: 'Ex-works', adres: 'To address',
+  en: { teklif: 'ORDER FORM', no: 'Order No', tarih: 'Order Date', teslim: 'Delivery Date', doviz: 'Currency', montaj: 'Assembly', nakliye: 'Shipping', yer: 'Delivery', dahil: 'Included', haric: 'Excluded', fabrika: 'Ex-works', adres: 'To address',
     foto: 'Photo', urun: 'Product', olcu: 'Size', renk: 'Color', yon: 'Side', birim: 'Unit Price', adet: 'Qty', toplam: 'Total', yok: 'No Photo',
     ana: 'Subtotal', isk: 'Discount', ara: 'Net', kdv: 'VAT', genel: 'Grand Total', pes: 'Paid', kalan: 'Balance', odemeler: 'Payments', sayfa: 'Page',
     yetkili: 'Contact', gsm: 'Mobile', sabit: 'Phone', eposta: 'E-mail', vkn: 'Tax No', tckn: 'ID No', vd: 'Tax Office' }
 };
-/* Teklifte müşteri bilgileri: caride girilen her bilgi yazılır, boş olan hiç görünmez */
+/* Siparişte müşteri bilgileri: caride girilen her bilgi yazılır, boş olan hiç görünmez */
 function custSatirlar(cs, L) {
   const v = x => String(x ?? '').trim(), out = [];
   if (v(cs.yetkili)) out.push([L.yetkili, v(cs.yetkili)]);
@@ -2698,7 +2698,7 @@ function printHTML(content, css) {
 /* Masaüstü programı: Chrome motoruyla gerçek PDF dosyası (yazı seçilebilir, Türkçe karakter sorunsuz) */
 const desktop = () => window.prontoDesktop && typeof window.prontoDesktop.savePdf === 'function' ? window.prontoDesktop : null;
 const safeFileName = s => clean(s, 120).replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim();
-const teklifFileName = t => safeFileName(`Teklif ${t.no} - ${t.cariSnap?.unvan || ''}`).replace(/[.\s]+$/, '') + '.pdf';
+const teklifFileName = t => safeFileName(`${t.tur === 'proforma' ? 'Proforma' : 'Siparis'} ${t.no} - ${t.cariSnap?.unvan || ''}`).replace(/[.\s]+$/, '') + '.pdf';
 async function teklifPdfFile(t, o, { ask = true, reveal = false } = {}) {
   const d = desktop();
   if (!d) return null;
@@ -2731,7 +2731,7 @@ async function downloadTeklifPdf(t, o = curPdfOpts()) {
   } catch (e) { toast('PDF oluşturulamadı: ' + (e.message || e), 'err'); }
 }
 function printTeklif(t, o = curPdfOpts()) { printHTML(pdfDoc(t, o), pageCss(o.size, o.orient, (PL[o.lang] || PL.tr).sayfa)); }
-/* ===== Tarayıcı ve telefon: pdfmake ile gerçek (yazısı seçilebilen) teklif PDF'i ===== */
+/* ===== Tarayıcı ve telefon: pdfmake ile gerçek (yazısı seçilebilen) sipariş PDF'i ===== */
 let tkPdfmakeP = null;
 function tkEnsurePdfmake() {
   if (window.pdfMake && window.pdfMake.vfs && window.pdfMake.vfs['Roboto-Regular.ttf']) return Promise.resolve();
@@ -2830,7 +2830,7 @@ async function tkShareWeb(t, o) {
   try {
     const blob = await tkPdfBlob(t, o), file = new File([blob], teklifFileName(t), { type: 'application/pdf' });
     if (navigator.canShare && !navigator.canShare({ files: [file] })) return toast('Bu cihaz PDF paylaşmayı desteklemiyor. PDF butonuyla kaydedip gönderebilirsiniz.', 'err', 6000);
-    await navigator.share({ title: `Teklif ${t.no}`, files: [file] });
+    await navigator.share({ title: `Sipariş ${t.no}`, files: [file] });
   } catch (e) { if (!e || e.name !== 'AbortError') toast('Paylaşılamadı: ' + (e.message || e), 'err'); }
 }
 function pdfPreview(id) {
@@ -2839,7 +2839,7 @@ function pdfPreview(id) {
   let o = { ...S.pdf, ...(Local.get('pdf_last', null) || {}) }, zoom = .85;
   modal({ cls: 'pdf-ov', title: null, body: '', onMount: m => {
     const box = $('.mdl', m.el); box.classList.add('lg');
-    mount(box, html`<div class="pdf-h"><div class="meta">${logoSrc() ? html`<img src="${logoSrc()}" alt="">` : html`<div class="mark">P</div>`}<div style="min-width:0"><div class="b">Teklif ${t.no}</div><div class="muted sm" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.cariSnap.unvan} · ${fmtDate(t.tarih)}</div></div></div>
+    mount(box, html`<div class="pdf-h"><div class="meta">${logoSrc() ? html`<img src="${logoSrc()}" alt="">` : html`<div class="mark">P</div>`}<div style="min-width:0"><div class="b">Sipariş ${t.no}</div><div class="muted sm" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.cariSnap.unvan} · ${fmtDate(t.tarih)}</div></div></div>
       <button class="btn icon sm" data-z="-1" aria-label="Uzaklaştır">${I('zout')}</button><button class="btn icon sm" data-z="1" aria-label="Yakınlaştır">${I('zin')}</button>
       <button class="btn sm" data-set title="Ayarlar">${I('gear')}<span class="bl"> Ayarlar</span></button><button class="btn sm" data-dl title="PDF">${I('pdf')}<span class="bl"> PDF</span></button><button class="btn sm" data-print title="Yazdır">${I('print')}<span class="bl"> Yazdır</span></button><button class="btn sm primary" data-share title="Paylaş">${I('share')}<span class="bl"> Paylaş</span></button>
       <button class="btn ghost icon sm" data-x aria-label="Kapat">${I('x')}</button></div><div class="pdf-stage" data-stage><div class="pdf-zoom" data-zoom></div></div>`);
@@ -2879,7 +2879,7 @@ function shareTeklif(t, o = curPdfOpts()) {
   const cs = t.cariSnap || {}, phone = waPhone(cs.gsm), mail = V.email(cs.eposta) && cs.eposta ? cs.eposta : '';
   const d = desktop(), canCopy = !!(d && typeof d.copyFile === 'function' && typeof d.openWhatsApp === 'function');
   if (!d) return tkShareWeb(t, o);
-  modal({ title: `Teklif ${t.no} — Paylaş`, size: 'sm', body: html`
+  modal({ title: `Sipariş ${t.no} — Paylaş`, size: 'sm', body: html`
     <p class="muted sm" style="margin-top:0">${canCopy ? html`PDF hazırlanıp <b>panoya kopyalanır</b>. Açılan sohbete <b>Ctrl+V</b> ile yapıştırıp gönderin.` : 'PDF hazırlanıp klasörde gösterilir; açılan sohbete sürükleyip bırakın.'}</p>
     <div class="grid">
       <button class="btn primary" data-sh="wa">${I('share')} WhatsApp ile PDF gönder</button>
@@ -2899,7 +2899,7 @@ function shareTeklif(t, o = curPdfOpts()) {
           const num = k === 'waCari' ? phone : '';
           if (canCopy) await d.openWhatsApp(num); else await d.openExternal(num ? `https://wa.me/${num}` : 'https://wa.me/');
         }
-        if (k === 'mail') openOut(`mailto:${encodeURIComponent(mail)}?subject=${encodeURIComponent(`Teklif ${t.no} — ${S.firma.ad || ''}`)}`);
+        if (k === 'mail') openOut(`mailto:${encodeURIComponent(mail)}?subject=${encodeURIComponent(`Sipariş ${t.no} — ${S.firma.ad || ''}`)}`);
         toast(copied ? (k === 'mail' ? 'PDF kopyalandı — e-postada Ctrl+V ile ekleyin.' : 'PDF kopyalandı — WhatsApp\'ta kişiyi seçip Ctrl+V ile yapıştırın.') : 'PDF klasörde gösterildi — açılan pencereye sürükleyin.', 'ok', 8000);
         m.close();
       } catch (er) { toast('Paylaşım yapılamadı: ' + (er.message || er), 'err'); }
@@ -3061,14 +3061,14 @@ function cariForm(c, onSaved) {
       };
     } });
 }
-/* ---------- Müşteri bilgisi değişince: eski teklifler + Sipariş Takibi tek işlemde güncellenir ---------- */
+/* ---------- Müşteri bilgisi değişince: eski siparişler + Sipariş Takibi tek işlemde güncellenir ---------- */
 const CARI_YAYILAN = ['unvan', 'gsm', 'sabit', 'eposta', 'adres', 'ilce', 'sehir', 'ulke', 'vkn', 'vd', 'yetkili'];
 const cariBilgiDegisti = (a, b) => CARI_YAYILAN.some(k => String(a[k] ?? '') !== String(b[k] ?? ''));
 async function cariYay(c, row, formM, onSaved) {
   const btn = formM.$('[data-save]'); const eskiYazi = btn.textContent;
   const bitir = () => { btn.disabled = false; btn.textContent = eskiYazi; };
   const yerel = () => { DB.cari.upsert(row); formM.close(); toast('Cari güncellendi'); logAct(`Cari güncellendi: ${row.unvan}`); onSaved && onSaved(row); };
-  if (!navigator.onLine || !Auth.s) return toast('Müşteri bilgisi eski tekliflere ve Sipariş Takibi\'ne de yazılacağı için internet bağlantısı gerekli.', 'err', 6000);
+  if (!navigator.onLine || !Auth.s) return toast('Müşteri bilgisi eski siparişlere ve Sipariş Takibi\'ne de yazılacağı için internet bağlantısı gerekli.', 'err', 6000);
   btn.disabled = true; btn.textContent = 'Kontrol ediliyor…';
   try {
     // bu müşteriye ait gönderilmemiş değişiklik varsa önce gönderilir (sunucudaki güncel hali ezilmesin)
@@ -3111,8 +3111,8 @@ async function cariYay(c, row, formM, onSaved) {
             Sync.applyRows(rows); RT.broadcast(rows); Sync.bump(rows); remoteChanged();
             m.close(); formM.close();
             const yeni = DB.cari.find(c.id) || row;
-            toast(`Güncellendi: ${r.teklif} teklif, ${r.siparis + r.manuel} sipariş${r.kart ? ', Sipariş Takibi müşteri kartı' : ''}`, 'ok', 5000);
-            logAct(`Cari güncellendi: ${yeni.unvan} (${r.teklif} teklif, ${r.siparis + r.manuel} sipariş)`);
+            toast(`Güncellendi: ${r.teklif} sipariş, ${r.siparis + r.manuel} sipariş${r.kart ? ', Sipariş Takibi müşteri kartı' : ''}`, 'ok', 5000);
+            logAct(`Cari güncellendi: ${yeni.unvan} (${r.teklif} sipariş, ${r.siparis + r.manuel} sipariş)`);
             onSaved && onSaved(yeni);
           } catch (er) {
             b.disabled = false; b.textContent = 'Güncelle';
@@ -3146,11 +3146,11 @@ function drawCari() {
   const st = cariStats(), q = trAra(MQ.q);
   const rows = DB.cari.all().filter(c => !q || trAra([c.unvan, c.tur, c.sehir, c.ilce, c.mahalle, c.adres, c.ulke, c.gsm, c.eposta, c.yetkili, c.vkn].join(' ')).includes(q)).sort((a, b) => a.unvan.localeCompare(b.unvan, 'tr'));
   $('#cnt').textContent = `${rows.length} cari`;
-  mount($('#tw'), rows.length ? html`<table class="tbl resp"><thead><tr>${['Cari Ünvanı', 'Tür', 'Şehir / Ülke', 'GSM', 'E-Posta', 'Döviz', 'Teklif', 'Toplam', ''].map(h => html`<th><div class="thi">${h}</div></th>`)}</tr></thead><tbody>
+  mount($('#tw'), rows.length ? html`<table class="tbl resp"><thead><tr>${['Cari Ünvanı', 'Tür', 'Şehir / Ülke', 'GSM', 'E-Posta', 'Döviz', 'Sipariş', 'Toplam', ''].map(h => html`<th><div class="thi">${h}</div></th>`)}</tr></thead><tbody>
     ${rows.map(c => html`<tr data-act="openCari" data-id="${c.id}"><td class="b">${c.unvan}</td><td>${c.tur}</td><td>${c.sehir || c.ulke}</td><td>${c.gsm}</td><td>${c.eposta || '—'}</td><td>${c.doviz}</td><td>${st[c.id]?.n || 0}</td><td>${fmtMulti(st[c.id]?.top || {})}</td>
       <td><button class="btn ghost icon sm" data-act="cariMenu" data-id="${c.id}" aria-label="İşlemler">${I('dots')}</button></td></tr>`)}</tbody></table>
     <div class="cards">${rows.map(c => html`<div class="lcard" data-act="openCari" data-id="${c.id}"><div class="row"><span class="ttl">${c.unvan}</span><button class="btn ghost icon sm" data-act="cariMenu" data-id="${c.id}" aria-label="İşlemler">${I('dots')}</button></div>
-      <div class="row sm muted"><span>${c.tur} · ${c.sehir || c.ulke}</span><span>${c.gsm}</span></div><div class="row sm"><span class="muted">${st[c.id]?.n || 0} teklif</span><span>${fmtMulti(st[c.id]?.top || {})}</span></div></div>`)}</div>`
+      <div class="row sm muted"><span>${c.tur} · ${c.sehir || c.ulke}</span><span>${c.gsm}</span></div><div class="row sm"><span class="muted">${st[c.id]?.n || 0} sipariş</span><span>${fmtMulti(st[c.id]?.top || {})}</span></div></div>`)}</div>`
     : html`<div class="empty"><b>${DB.cari.all().length ? 'Aramayla eşleşen cari yok' : 'Henüz cari yok'}</b>${DB.cari.all().length ? '' : 'Yeni Cari ile ilk müşterinizi ekleyin.'}</div>`);
 }
 A.newCari = () => cariForm(null, () => drawCari());
@@ -3158,7 +3158,7 @@ A.openCari = el => go('musteriDetay', { id: el.dataset.id });
 A.cariMenu = (el, e) => { e.stopPropagation(); const c = DB.cari.find(el.dataset.id); popMenu(el, [
   { label: 'Düzenle', icon: 'edit', run: () => cariForm(c, () => state.view === 'musteriler' ? drawCari() : go('musteriDetay', { id: c.id })) }, '-',
   { label: 'Sil', icon: 'trash', danger: true, run: async () => { if (await kimSor('Müşteri (cari) silme') === null) return; const n = DB.teklif.all().filter(t => t.cariId === c.id && !t.deletedAt).length;
-    if (!await confirmBox({ title: 'Cariyi sil', danger: true, ok: 'Sil', body: html`<p><b>${c.unvan}</b> silinecek.${n ? ` Bu cariye ait ${n} teklif korunur; tekliflerde müşteri bilgisi kayıtlı kalır.` : ''}</p>` })) return;
+    if (!await confirmBox({ title: 'Cariyi sil', danger: true, ok: 'Sil', body: html`<p><b>${c.unvan}</b> silinecek.${n ? ` Bu cariye ait ${n} sipariş korunur; siparişlerde müşteri bilgisi kayıtlı kalır.` : ''}</p>` })) return;
     DB.cari.remove(c.id); logAct(`Cari silindi: ${c.unvan}`); toast('Cari silindi'); go('musteriler'); } }]); };
 VIEWS.musteriDetay = (main, { id }) => {
   const c = DB.cari.find(id); if (!c) return go('musteriler');
@@ -3168,14 +3168,14 @@ VIEWS.musteriDetay = (main, { id }) => {
     <div class="ph-act"><button class="btn" data-act="cariMenu" data-id="${c.id}">${I('dots')}</button></div></div>
     <div class="dgrid"><div class="card"><div class="card-h"><h3>İletişim</h3></div><dl class="kv"><dt>GSM</dt><dd>${c.gsm}</dd><dt>Sabit</dt><dd>${c.sabit || '—'}</dd><dt>E-posta</dt><dd>${c.eposta || '—'}</dd><dt>Yetkili</dt><dd>${c.yetkili || '—'}</dd></dl></div>
       <div class="card"><div class="card-h"><h3>Adres ve vergi</h3></div><dl class="kv"><dt>Adres</dt><dd>${[c.adres, c.ilce, c.sehir, c.ulke].filter(Boolean).join(', ')}</dd><dt>TCKN/VKN</dt><dd>${c.vkn || '—'}</dd><dt>Vergi Dairesi</dt><dd>${c.vd || '—'}</dd></dl></div>
-      <div class="card"><div class="card-h"><h3>Özet</h3></div><dl class="kv"><dt>Teklif sayısı</dt><dd>${ts.length}</dd><dt>Toplam</dt><dd class="b">${fmtMulti(top)}</dd><dt>Kalan</dt><dd>${fmtMulti(kal)}</dd></dl></div></div>
-    <h2 style="margin:6px 0 10px">Teklif geçmişi</h2>${teklifMini(ts, pm)}</div>`);
+      <div class="card"><div class="card-h"><h3>Özet</h3></div><dl class="kv"><dt>Sipariş sayısı</dt><dd>${ts.length}</dd><dt>Toplam</dt><dd class="b">${fmtMulti(top)}</dd><dt>Kalan</dt><dd>${fmtMulti(kal)}</dd></dl></div></div>
+    <h2 style="margin:6px 0 10px">Sipariş geçmişi</h2>${teklifMini(ts, pm)}</div>`);
 };
 function teklifMini(ts, pm) {
   return ts.length ? html`<div class="tw"><table class="tbl resp"><thead><tr>${['No', 'Tarih', 'Müşteri', 'Personel', 'Genel Toplam', 'Kalan', 'Durum'].map(h => html`<th><div class="thi">${h}</div></th>`)}</tr></thead><tbody>
     ${ts.map(t => { const c = calc(t, pm[t.id]); return html`<tr data-act="openTeklif" data-id="${t.id}"><td class="b">${t.no}</td><td>${fmtDate(t.tarih)}</td><td>${t.cariSnap.unvan}</td><td>${t.personelAd}</td><td class="b">${money(c.genel, t.doviz)}</td><td>${money(c.kalan, t.doviz)}</td><td>${durumTag(t)}</td></tr>`; })}</tbody></table>
     <div class="cards">${ts.map(t => { const c = calc(t, pm[t.id]); return html`<div class="lcard" data-act="openTeklif" data-id="${t.id}"><div class="row"><span class="ttl">#${t.no} · ${t.cariSnap.unvan}</span>${durumTag(t)}</div><div class="row sm"><span class="muted">${fmtDate(t.tarih)}</span><span class="b">${money(c.genel, t.doviz)}</span></div></div>`; })}</div></div>`
-    : html`<div class="empty card"><b>Teklif yok</b></div>`;
+    : html`<div class="empty card"><b>Sipariş yok</b></div>`;
 }
 
 /* =====================================================================
@@ -3194,9 +3194,9 @@ function personelListHTML() {
   const pm = payMap(), q = trAra(PQ.q), st = {};
   for (const t of DB.teklif.all()) { if (t.deletedAt || t.tur === 'proforma') continue; const s = st[t.personelId] ||= { n: 0, top: {} }; s.n++; addTo(s.top, t.doviz, calc(t, pm[t.id]).genel); }
   const rows = DB.personel.all().filter(p => !q || trAra(p.ad).includes(q)).sort((a, b) => a.ad.localeCompare(b.ad, 'tr'));
-  return rows.length ? html`<table class="tbl resp"><thead><tr>${['Ad Soyad', 'Teklif Sayısı', 'Toplam Teklif Tutarı', ''].map(h => html`<th><div class="thi">${h}</div></th>`)}</tr></thead><tbody>
+  return rows.length ? html`<table class="tbl resp"><thead><tr>${['Ad Soyad', 'Sipariş Sayısı', 'Toplam Sipariş Tutarı', ''].map(h => html`<th><div class="thi">${h}</div></th>`)}</tr></thead><tbody>
     ${rows.map(p => html`<tr data-act="openPers" data-id="${p.id}"><td class="b">${p.ad}</td><td>${st[p.id]?.n || 0}</td><td>${fmtMulti(st[p.id]?.top || {})}</td><td><button class="btn ghost icon sm" data-act="persMenu" data-id="${p.id}" aria-label="İşlemler">${I('dots')}</button></td></tr>`)}</tbody></table>
-    <div class="cards">${rows.map(p => html`<div class="lcard" data-act="openPers" data-id="${p.id}"><div class="row"><span class="ttl">${p.ad}</span><button class="btn ghost icon sm" data-act="persMenu" data-id="${p.id}" aria-label="İşlemler">${I('dots')}</button></div><div class="row sm"><span class="muted">${st[p.id]?.n || 0} teklif</span><span>${fmtMulti(st[p.id]?.top || {})}</span></div></div>`)}</div>`
+    <div class="cards">${rows.map(p => html`<div class="lcard" data-act="openPers" data-id="${p.id}"><div class="row"><span class="ttl">${p.ad}</span><button class="btn ghost icon sm" data-act="persMenu" data-id="${p.id}" aria-label="İşlemler">${I('dots')}</button></div><div class="row sm"><span class="muted">${st[p.id]?.n || 0} sipariş</span><span>${fmtMulti(st[p.id]?.top || {})}</span></div></div>`)}</div>`
     : html`<div class="empty"><b>${DB.personel.all().length ? 'Eşleşen personel yok' : 'Henüz personel yok'}</b></div>`;
 }
 function drawPers() { const tw = $('#ptw'); if (tw) mount(tw, personelListHTML()); }
@@ -3209,14 +3209,14 @@ A.newPers = () => personelForm(null, drawPers);
 A.openPers = el => go('personelDetay', { id: el.dataset.id });
 A.persMenu = (el, e) => { e.stopPropagation(); const p = DB.personel.find(el.dataset.id); popMenu(el, [
   { label: 'Düzenle', icon: 'edit', run: () => personelForm(p, () => state.view === 'personelDetay' ? go('personelDetay', { id: p.id }) : drawPers()) }, '-',
-  { label: 'Sil', icon: 'trash', danger: true, run: async () => { if (!await confirmBox({ title: 'Personeli sil', danger: true, ok: 'Sil', body: html`<p><b>${p.ad}</b> silinecek. Eski tekliflerde personel adı korunur.</p>` })) return; DB.personel.remove(p.id); toast('Personel silindi'); state.view === 'personelDetay' ? go('personeller') : drawPers(); } }]); };
+  { label: 'Sil', icon: 'trash', danger: true, run: async () => { if (!await confirmBox({ title: 'Personeli sil', danger: true, ok: 'Sil', body: html`<p><b>${p.ad}</b> silinecek. Eski siparişlerde personel adı korunur.</p>` })) return; DB.personel.remove(p.id); toast('Personel silindi'); state.view === 'personelDetay' ? go('personeller') : drawPers(); } }]); };
 VIEWS.personelDetay = (main, { id }) => {
   const p = DB.personel.find(id); if (!p) return go('personeller');
   const pm = payMap(), ts = DB.teklif.all().filter(t => t.personelId === id && !t.deletedAt && t.tur !== 'proforma').sort((a, b) => b.tarih.localeCompare(a.tarih)), top = {};
   ts.forEach(t => addTo(top, t.doviz, calc(t, pm[t.id]).genel));
   mount(main, html`<div class="page"><div class="ph"><div class="ph-l"><button class="btn icon" data-act="nav" data-v="personeller" aria-label="Geri">${I('back')}</button><h1>${p.ad}</h1></div><div class="ph-act"><button class="btn" data-act="persMenu" data-id="${p.id}">${I('dots')}</button></div></div>
-    <div class="stats"><div class="stat"><div class="muted sm">Toplam teklif sayısı</div><div class="v">${ts.length}</div></div><div class="stat" style="grid-column:span 2"><div class="muted sm">Toplam teklif tutarı</div><div class="v">${fmtMulti(top)}</div></div><div class="stat"><div class="muted sm">Kayıt tarihi</div><div class="v" style="font-size:15px">${fmtDate(isoOf(p.created))}</div></div></div>
-    <h2 style="margin:6px 0 10px">Teklif geçmişi</h2>${teklifMini(ts, pm)}</div>`);
+    <div class="stats"><div class="stat"><div class="muted sm">Toplam sipariş sayısı</div><div class="v">${ts.length}</div></div><div class="stat" style="grid-column:span 2"><div class="muted sm">Toplam sipariş tutarı</div><div class="v">${fmtMulti(top)}</div></div><div class="stat"><div class="muted sm">Kayıt tarihi</div><div class="v" style="font-size:15px">${fmtDate(isoOf(p.created))}</div></div></div>
+    <h2 style="margin:6px 0 10px">Sipariş geçmişi</h2>${teklifMini(ts, pm)}</div>`);
 };
 
 /* =====================================================================
@@ -3296,7 +3296,7 @@ A.openUrun = el => { const u = DB.urun.find(el.dataset.id); const f = safeImg(mo
     <dl class="kv"><dt>Kategori</dt><dd>${u.kategori}</dd><dt>Model</dt><dd>${u.model}</dd><dt>Modül</dt><dd>${u.modul || '—'}</dd><dt>Ölçü</dt><dd>${u.olcu || '—'}</dd><dt>Renk</dt><dd>${u.renk || '—'}</dd><dt>Yön</dt><dd>${u.yon || '—'}</dd><dt>Liste Fiyatı</dt><dd>${u.fiyat ? money(u.fiyat, u.doviz) : '—'}</dd></dl>` }); };
 A.urunMenu = (el, e) => { e.stopPropagation(); const u = DB.urun.find(el.dataset.id); popMenu(el, [
   { label: 'Detay', icon: 'box', run: () => A.openUrun(el) }, { label: 'Düzenle', icon: 'edit', run: () => urunForm(u, drawUrun) }, '-',
-  { label: 'Sil', icon: 'trash', danger: true, run: async () => { if (!await confirmBox({ title: 'Ürünü sil', danger: true, ok: 'Sil', body: html`<p><b>${u.kod} — ${u.kategori} ${u.model}</b> katalogdan silinecek. Eski tekliflerdeki ürün bilgileri korunur.</p>` })) return;
+  { label: 'Sil', icon: 'trash', danger: true, run: async () => { if (!await confirmBox({ title: 'Ürünü sil', danger: true, ok: 'Sil', body: html`<p><b>${u.kod} — ${u.kategori} ${u.model}</b> katalogdan silinecek. Eski siparişlerdeki ürün bilgileri korunur.</p>` })) return;
     DB.urun.remove(u.id); if (!DB.urun.all().some(x => trLower(x.kategori) === trLower(u.kategori) && trLower(x.model) === trLower(u.model))) modelFoto.set(u.kategori, u.model, u.modul, ''); toast('Ürün silindi'); drawUrun(); } }]); };
 
 /* =====================================================================
@@ -3308,7 +3308,7 @@ VIEWS.raporlar = main => {
       <div class="ph-act"><button class="btn" data-act="repXls">${I('xls')} Excel</button><button class="btn" data-act="repPrint">${I('print')} PDF / Yazdır</button></div></div>
     <div class="toolbar"><div class="chips">${[['', 'Tümü'], ...Object.entries(TARIH_L)].map(([k, l]) => html`<button class="chip ${RQ.p === k ? 'on' : ''}" data-act="repP" data-k="${k}">${l}</button>`)}</div>
       <div class="${RQ.p === 'ozel' ? '' : 'hidden'}" style="display:flex;gap:8px"><input type="date" class="inp" id="rf" value="${RQ.from}" style="width:auto"><input type="date" class="inp" id="rt" value="${RQ.to}" style="width:auto"></div></div>
-    <div class="tabs rep-tabs">${[['genel', 'Genel Bakış'], ['teklif', 'Teklif'], ['musteri', 'Müşteri'], ['personel', 'Personel'], ['urun', 'Ürün'], ['finans', 'Finansal Özet']].map(([k, l]) => html`<button class="${RQ.tab === k ? 'on' : ''}" data-act="repTab" data-k="${k}">${l}</button>`)}</div>
+    <div class="tabs rep-tabs">${[['genel', 'Genel Bakış'], ['teklif', 'Sipariş'], ['musteri', 'Müşteri'], ['personel', 'Personel'], ['urun', 'Ürün'], ['finans', 'Finansal Özet']].map(([k, l]) => html`<button class="${RQ.tab === k ? 'on' : ''}" data-act="repTab" data-k="${k}">${l}</button>`)}</div>
     <div id="rep"></div></div>`);
   ['rf', 'rt'].forEach(i => $('#' + i).addEventListener('change', e => { RQ[i === 'rf' ? 'from' : 'to'] = e.target.value; drawRep(); }));
   drawRep();
@@ -3322,17 +3322,17 @@ function repData() {
 }
 function repTable(tab, D) {
   const { ts } = D;
-  if (tab === 'teklif') return { title: 'Teklif raporu', cols: ['No', 'Tarih', 'Teslim', 'Müşteri', 'Personel', 'Döviz', 'Adet', 'Genel Toplam', 'Alınan', 'Kalan', 'Durum'], rows: ts.map(({ t, c }) => [t.no, fmtDate(t.tarih), fmtDate(t.teslim), t.cariSnap.unvan, t.personelAd, t.doviz, c.adet, money(c.genel, t.doviz), money(c.pes, t.doviz), money(c.kalan, t.doviz), tkDurum(t)]) };
+  if (tab === 'teklif') return { title: 'Sipariş raporu', cols: ['No', 'Tarih', 'Teslim', 'Müşteri', 'Personel', 'Döviz', 'Adet', 'Genel Toplam', 'Alınan', 'Kalan', 'Durum'], rows: ts.map(({ t, c }) => [t.no, fmtDate(t.tarih), fmtDate(t.teslim), t.cariSnap.unvan, t.personelAd, t.doviz, c.adet, money(c.genel, t.doviz), money(c.pes, t.doviz), money(c.kalan, t.doviz), tkDurum(t)]) };
   if (tab === 'musteri' || tab === 'personel') {
     const g = {}; for (const { t, c } of ts) { const k = tab === 'musteri' ? t.cariSnap.unvan : t.personelAd; const s = g[k] ||= { n: 0, top: {}, pes: {}, kal: {} }; s.n++; addTo(s.top, t.doviz, c.genel); addTo(s.pes, t.doviz, c.pes); addTo(s.kal, t.doviz, c.kalan); }
-    return { title: tab === 'musteri' ? 'Müşteri raporu' : 'Personel raporu', cols: [tab === 'musteri' ? 'Müşteri' : 'Personel', 'Teklif Sayısı', 'Toplam', 'Tahsilat', 'Kalan'], rows: Object.entries(g).sort((a, b) => b[1].n - a[1].n).map(([k, s]) => [k, s.n, fmtMulti(s.top), fmtMulti(s.pes), fmtMulti(s.kal)]) };
+    return { title: tab === 'musteri' ? 'Müşteri raporu' : 'Personel raporu', cols: [tab === 'musteri' ? 'Müşteri' : 'Personel', 'Sipariş Sayısı', 'Toplam', 'Tahsilat', 'Kalan'], rows: Object.entries(g).sort((a, b) => b[1].n - a[1].n).map(([k, s]) => [k, s.n, fmtMulti(s.top), fmtMulti(s.pes), fmtMulti(s.kal)]) };
   }
   if (tab === 'urun') {
     const g = {}; for (const { t } of ts) for (const it of t.items) { const k = itemTitle(it); const s = g[k] ||= { kat: it.kategori, adet: 0, tk: new Set(), top: {} }; s.adet += +it.adet || 0; s.tk.add(t.id); addTo(s.top, t.doviz, it.fiyat * it.adet); }
-    return { title: 'Ürün raporu', cols: ['Ürün', 'Kategori', 'Toplam Adet', 'Teklif Sayısı', 'Satır Toplamı (KDV hariç)'], rows: Object.entries(g).sort((a, b) => b[1].adet - a[1].adet).map(([k, s]) => [k, s.kat, s.adet, s.tk.size, fmtMulti(s.top)]) };
+    return { title: 'Ürün raporu', cols: ['Ürün', 'Kategori', 'Toplam Adet', 'Sipariş Sayısı', 'Satır Toplamı (KDV hariç)'], rows: Object.entries(g).sort((a, b) => b[1].adet - a[1].adet).map(([k, s]) => [k, s.kat, s.adet, s.tk.size, fmtMulti(s.top)]) };
   }
   const g = {}; for (const { t, c } of ts) { const s = g[t.doviz] ||= { n: 0, ana: 0, isk: 0, kdv: 0, genel: 0, pes: 0, kal: 0 }; s.n++; for (const k of ['ana', 'isk', 'kdv', 'genel', 'pes']) s[k] = r2(s[k] + c[k]); s.kal = r2(s.kal + c.kalan); }
-  return { title: 'Finansal özet', cols: ['Döviz', 'Teklif', 'Ana Para', 'İskonto', 'KDV', 'Genel Toplam', 'Tahsilat', 'Kalan'], rows: CURS.filter(c => g[c]).map(c => { const s = g[c]; return [c, s.n, money(s.ana, c), money(s.isk, c), money(s.kdv, c), money(s.genel, c), money(s.pes, c), money(s.kal, c)]; }) };
+  return { title: 'Finansal özet', cols: ['Döviz', 'Sipariş', 'Ana Para', 'İskonto', 'KDV', 'Genel Toplam', 'Tahsilat', 'Kalan'], rows: CURS.filter(c => g[c]).map(c => { const s = g[c]; return [c, s.n, money(s.ana, c), money(s.isk, c), money(s.kdv, c), money(s.genel, c), money(s.pes, c), money(s.kal, c)]; }) };
 }
 function drawRep() {
   const box = $('#rep'); if (!box) return;
@@ -3345,8 +3345,8 @@ function drawRep() {
     const bek = all.filter(t => t.durum === 'Beklemede').sort((a, b) => b.tarih.localeCompare(a.tarih)).slice(0, 8);
     const log = Local.get('log', []).slice(0, 10);
     const mini = (arr, f) => arr.length ? html`<div class="tw"><table class="tbl"><tbody>${arr.map(t => html`<tr data-act="openTeklif" data-id="${t.id}"><td class="mn-td"><div class="mn1"><b>${t.no}</b> · ${t.cariSnap.unvan}</div><div class="mn2"><span>${f(t)}</span><b>${money(calc(t, pm[t.id]).genel, t.doviz)}</b></div></td></tr>`)}</tbody></table></div>` : html`<div class="empty card" style="padding:24px">Kayıt yok</div>`;
-    mount(box, html`<div class="stats"><div class="stat"><div class="muted sm">Teklif sayısı</div><div class="v">${D.ts.length}</div></div><div class="stat"><div class="muted sm">Teklif toplamı</div><div class="v">${fmtMulti(top)}</div></div><div class="stat"><div class="muted sm">Tahsilat</div><div class="v">${fmtMulti(pes)}</div></div><div class="stat"><div class="muted sm">Kalan</div><div class="v">${fmtMulti(kal)}</div></div></div>
-      <div class="dgrid"><div><h3 style="margin-bottom:10px">Önümüzdeki 7 gün teslimatlar</h3>${mini(up, t => fmtDate(t.teslim))}</div><div><h3 style="margin-bottom:10px">Bekleyen teklifler</h3>${mini(bek, t => fmtDate(t.tarih))}</div>
+    mount(box, html`<div class="stats"><div class="stat"><div class="muted sm">Sipariş sayısı</div><div class="v">${D.ts.length}</div></div><div class="stat"><div class="muted sm">Sipariş toplamı</div><div class="v">${fmtMulti(top)}</div></div><div class="stat"><div class="muted sm">Tahsilat</div><div class="v">${fmtMulti(pes)}</div></div><div class="stat"><div class="muted sm">Kalan</div><div class="v">${fmtMulti(kal)}</div></div></div>
+      <div class="dgrid"><div><h3 style="margin-bottom:10px">Önümüzdeki 7 gün teslimatlar</h3>${mini(up, t => fmtDate(t.teslim))}</div><div><h3 style="margin-bottom:10px">Bekleyen siparişler</h3>${mini(bek, t => fmtDate(t.tarih))}</div>
       <div><h3 style="margin-bottom:10px">Bu cihazdaki son işlemler</h3>${log.length ? html`<div class="card" style="padding:6px 14px">${log.map(l => html`<div style="padding:8px 0;border-bottom:1px solid var(--border)"><div>${l.msg}</div><div class="muted sm">${fmtDT(l.ts)}</div></div>`)}</div>` : html`<div class="empty card" style="padding:24px">Kayıt yok</div>`}</div></div>`);
     return;
   }
@@ -3507,7 +3507,7 @@ const yedekOzet = oz => Object.entries(oz || {}).filter(([k]) => YEDEK_AD[k]).ma
 async function setYedek(b) {
   mount(b, html`<div class="card"><div class="card-h"><h3>Yedekler</h3><button class="btn sm primary" data-yal>Şimdi yedekle</button></div>
     <p class="muted sm" style="margin-top:0">Her Pazar gecesi otomatik yedek alınır (son 4 hafta saklanır). İstediğiniz an elle de yedekleyebilirsiniz (son 5 saklanır). Fotoğraflar haftalık dış yedekte (GitHub) durur.<br>
-    <b>Geri yükleme</b>: silinen ve değişen teklif/cari/ödeme/ürün kayıtları yedekteki haline döner; yedekten sonra eklenenler silinmez. Geri yüklemeden hemen önce şimdiki durum da yedeklenir. Sipariş Takibi verisi buradan değişmez.</p>
+    <b>Geri yükleme</b>: silinen ve değişen sipariş/cari/ödeme/ürün kayıtları yedekteki haline döner; yedekten sonra eklenenler silinmez. Geri yüklemeden hemen önce şimdiki durum da yedeklenir. Sipariş Takibi verisi buradan değişmez.</p>
     <div data-yliste><div class="empty" style="padding:24px">Yükleniyor…</div></div></div>`);
   const ciz = async () => {
     const box = $('[data-yliste]', b); if (!box) return;
@@ -3534,7 +3534,7 @@ async function setYedek(b) {
     passPad({ title: 'Geri yükleme', sub: 'Devam etmek için Ayarlar şifresini girin', button: 'Devam', submit: async p => {
       const r = await checkPassword(p); if (!r.ok) return r;
       setTimeout(() => modal({ title: 'Yedekten geri yükle', size: 'sm', body: html`<p style="margin-top:0"><b>${tarih}</b> tarihli yedek geri yüklenecek.</p>
-          <p class="sm">Silinen ve değişen teklif, cari, ödeme, ürün ve personel kayıtları bu yedekteki haline döner. Yedekten sonra eklenenler <b>silinmez</b>. Şimdiki durum da önce yedeklenir. Tüm Teklif bilgisayarlarını etkiler.</p>
+          <p class="sm">Silinen ve değişen sipariş, cari, ödeme, ürün ve personel kayıtları bu yedekteki haline döner. Yedekten sonra eklenenler <b>silinmez</b>. Şimdiki durum da önce yedeklenir. Tüm Sipariş bilgisayarlarını etkiler.</p>
           <div class="field"><label>Onaylamak için <b>GERİ YÜKLE</b> yazın</label><input class="inp" data-yonay autocomplete="off" maxlength="20" autofocus></div>`,
         foot: html`<button class="btn" data-x>Vazgeç</button><button class="btn danger solid" data-ytamam disabled>Geri yükle</button>`,
         onMount: m => {
@@ -3560,7 +3560,7 @@ async function setYedek(b) {
 function setCop(b) {
   purgeBin();
   const ts = DB.teklif.all().filter(t => t.deletedAt).sort((a, c) => c.deletedAt - a.deletedAt), pm = payMap();
-  mount(b, html`<div class="card"><div class="card-h"><h3>Geri Dönüşüm Kutusu (${ts.length})</h3>${ts.length ? html`<button class="btn sm danger" data-bos>Kutuyu Boşalt</button>` : ''}</div><p class="muted sm" style="margin-top:0">Silinen teklifler ödemeleriyle birlikte 7 gün burada kalır, sonra otomatik olarak kalıcı silinir.</p>
+  mount(b, html`<div class="card"><div class="card-h"><h3>Geri Dönüşüm Kutusu (${ts.length})</h3>${ts.length ? html`<button class="btn sm danger" data-bos>Kutuyu Boşalt</button>` : ''}</div><p class="muted sm" style="margin-top:0">Silinen siparişler ödemeleriyle birlikte 7 gün burada kalır, sonra otomatik olarak kalıcı silinir.</p>
     ${ts.length ? html`<div class="tw"><table class="tbl static resp"><thead><tr>${['No', 'Müşteri', 'Genel Toplam', 'Silinme', 'Kalan süre', ''].map(h => html`<th><div class="thi">${h}</div></th>`)}</tr></thead><tbody>
       ${ts.map(t => html`<tr><td class="b">${t.no}</td><td>${t.cariSnap.unvan}</td><td>${money(calc(t, pm[t.id]).genel, t.doviz)}</td><td>${fmtDT(t.deletedAt)}</td><td>${Math.max(0, Math.ceil((t.deletedAt + 7 * 864e5 - Date.now()) / 864e5))} gün</td>
         <td class="nowrap"><button class="btn sm" data-rs="${t.id}">Geri Yükle</button> <button class="btn sm danger" data-pd="${t.id}">Kalıcı Sil</button></td></tr>`)}</tbody></table>
@@ -3572,17 +3572,17 @@ function setCop(b) {
       if (await kimSor('Geri dönüşüm kutusunu boşalt') === null) return;
       const ids = new Set(L.map(t => t.id)), O = DB.odeme.all().filter(p => ids.has(p.teklifId));
       if (!await confirmBox({ title: 'Geri Dönüşüm Kutusunu Boşalt', danger: true, ok: 'Yedeği İndir ve Devam Et',
-        body: html`<p style="margin:0"><b>${L.length} teklif</b> ve bunlara ait <b>${O.length} ödeme</b> kalıcı olarak silinecek.</p><p class="muted sm" style="margin:10px 0 0">Önce bu kayıtlar bilgisayarınıza yedek dosyası (JSON) olarak indirilir; dosyayı saklayın. Sonra son onay istenir.</p>` })) return;
+        body: html`<p style="margin:0"><b>${L.length} sipariş</b> ve bunlara ait <b>${O.length} ödeme</b> kalıcı olarak silinecek.</p><p class="muted sm" style="margin:10px 0 0">Önce bu kayıtlar bilgisayarınıza yedek dosyası (JSON) olarak indirilir; dosyayı saklayın. Sonra son onay istenir.</p>` })) return;
       const d = new Date(), p2 = n => String(n).padStart(2, '0'), stamp = `${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}`;
       downloadBlob(new Blob([JSON.stringify({ tur: 'PRONTO Teklif - geri donusum kutusu yedegi', tarih: d.toISOString(), teklifler: L, odemeler: O }, null, 1)], { type: 'application/json' }), `PRONTO-Teklif-cop-yedek-${stamp}.json`);
       if (!await confirmBox({ title: 'Son onay', danger: true, ok: 'Kalıcı Sil',
-        body: html`<p style="margin:0">Yedek dosyası indirildi (İndirilenler klasörü).</p><p style="margin:10px 0 0">Şimdi <b>${L.length} teklif</b> ve ödemeleri kalıcı silinsin mi? <b>Bu işlem geri alınamaz.</b></p>` })) return;
+        body: html`<p style="margin:0">Yedek dosyası indirildi (İndirilenler klasörü).</p><p style="margin:10px 0 0">Şimdi <b>${L.length} sipariş</b> ve ödemeleri kalıcı silinsin mi? <b>Bu işlem geri alınamaz.</b></p>` })) return;
       L.forEach(t => DB.teklif.remove(t.id)); O.forEach(p => DB.odeme.remove(p.id));
-      logAct(`Geri dönüşüm kutusu boşaltıldı (${L.length} teklif)`); toast(`${L.length} teklif kalıcı olarak silindi`); go('ayarlar', { sec: 'cop' }); return;
+      logAct(`Geri dönüşüm kutusu boşaltıldı (${L.length} sipariş)`); toast(`${L.length} sipariş kalıcı olarak silindi`); go('ayarlar', { sec: 'cop' }); return;
     }
-    const rs = e.target.closest('[data-rs]'); if (rs) { const t = DB.teklif.find(rs.dataset.rs); DB.teklif.upsert({ ...t, deletedAt: null, durum: 'Beklemede' }); logAct(`Teklif ${t.no} geri yüklendi`); toast(`Teklif ${t.no} geri yüklendi`); go('ayarlar', { sec: 'cop' }); }
-    const pd = e.target.closest('[data-pd]'); if (pd) { const t = DB.teklif.find(pd.dataset.pd); if (await kimSor('Teklifi kalıcı sil') === null) return; if (!await confirmBox({ title: 'Kalıcı olarak sil', danger: true, ok: 'Kalıcı Sil', body: html`${teklifOzet(t)}<p style="margin:14px 0 0">Bu teklif ve ödemeleri kalıcı olarak silinecek. Bu işlem geri alınamaz.</p>` })) return;
-      DB.teklif.remove(t.id); DB.odeme.all().filter(p => p.teklifId === t.id).forEach(p => DB.odeme.remove(p.id)); toast('Teklif kalıcı olarak silindi'); go('ayarlar', { sec: 'cop' }); }
+    const rs = e.target.closest('[data-rs]'); if (rs) { const t = DB.teklif.find(rs.dataset.rs); DB.teklif.upsert({ ...t, deletedAt: null, durum: 'Beklemede' }); logAct(`Sipariş ${t.no} geri yüklendi`); toast(`Sipariş ${t.no} geri yüklendi`); go('ayarlar', { sec: 'cop' }); }
+    const pd = e.target.closest('[data-pd]'); if (pd) { const t = DB.teklif.find(pd.dataset.pd); if (await kimSor('Siparişi kalıcı sil') === null) return; if (!await confirmBox({ title: 'Kalıcı olarak sil', danger: true, ok: 'Kalıcı Sil', body: html`${teklifOzet(t)}<p style="margin:14px 0 0">Bu sipariş ve ödemeleri kalıcı olarak silinecek. Bu işlem geri alınamaz.</p>` })) return;
+      DB.teklif.remove(t.id); DB.odeme.all().filter(p => p.teklifId === t.id).forEach(p => DB.odeme.remove(p.id)); toast('Sipariş kalıcı olarak silindi'); go('ayarlar', { sec: 'cop' }); }
   });
 }
 
@@ -3697,11 +3697,11 @@ function kimSor(islem) {
     iv = setInterval(() => { if (!m.el.isConnected) bit(null); }, 250);
   });
 }
-/* Açılan teklif formu: yeni ya da başka bir teklife geçerken sorulur */
+/* Açılan sipariş formu: yeni ya da başka bir siparişe geçerken sorulur */
 const _kimPanelAc = tkPanelAc;
 tkPanelAc = async function (id) {
   const ayni = tkPanel.el && (state.draft?.id || null) === (id || null);
-  if (!ayni) { const k = await kimSor(id ? 'Teklif düzenleme' : 'Yeni teklif'); if (k === null) return; tkKisi = k; }
+  if (!ayni) { const k = await kimSor(id ? 'Sipariş düzenleme' : 'Yeni teklif'); if (k === null) return; tkKisi = k; }
   return _kimPanelAc.apply(this, arguments);
 };
 const _kimPanelKapat = tkPanelKapat;
@@ -3711,7 +3711,7 @@ const _kimLog = logAct;
 logAct = function (msg) { const k = kimTemiz(Local.get('kisi', '')); return _kimLog(k ? `${k}: ${msg}` : msg); };
 function kimKV(t) {
   const z = ms => ms ? fmtDT(ms) : '';
-  return html`${t.olusturan ? html`<dt>Oluşturan</dt><dd>${t.olusturan}<span class="muted sm"> · ${z(t.olusturanAt)}</span></dd>` : ''}${t.duzenleyen && t.duzenleyenAt !== t.olusturanAt ? html`<dt>Son düzenleyen</dt><dd>${t.duzenleyen}<span class="muted sm"> · ${z(t.duzenleyenAt)}</span></dd>` : ''}${t.gonderen ? html`<dt>Siparişe gönderen</dt><dd>${t.gonderen}<span class="muted sm"> · ${z(t.gonderenAt)}</span></dd>` : ''}`;
+  return html`${t.olusturan ? html`<dt>Oluşturan</dt><dd>${t.olusturan}<span class="muted sm"> · ${z(t.olusturanAt)}</span></dd>` : ''}${t.duzenleyen && t.duzenleyenAt !== t.olusturanAt ? html`<dt>Son düzenleyen</dt><dd>${t.duzenleyen}<span class="muted sm"> · ${z(t.duzenleyenAt)}</span></dd>` : ''}${t.gonderen ? html`<dt>Sipariş Takibi’ne gönderen</dt><dd>${t.gonderen}<span class="muted sm"> · ${z(t.gonderenAt)}</span></dd>` : ''}`;
 }
 </script>
 <style id="pf-css">
@@ -3767,20 +3767,20 @@ function pfSayCiz() {
 }
 function pfBannerCiz() {
   const el = document.getElementById('pfBanner'); if (!el) return; const n = pfSay();
-  mount(el, n ? html`<div class="pf-banner">${I('pf')}<span><b>${n} açık proforma</b> bu listede ve toplamlarda yok. Burada yalnızca kesin teklifler var.</span><button class="btn sm" data-act="nav" data-v="proformalar">Proformalara git →</button></div>` : '');
+  mount(el, n ? html`<div class="pf-banner">${I('pf')}<span><b>${n} açık proforma</b> bu listede ve toplamlarda yok. Burada yalnızca kesin siparişler var.</span><button class="btn sm" data-act="nav" data-v="proformalar">Proformalara git →</button></div>` : '');
   pfSayCiz();
 }
 function pfBant(t) {
-  if (!isPf(t)) return t.pfNo ? html`<div class="muted sm" style="margin:0 0 10px">Proforma ${t.pfNo} olarak hazırlandı${t.donusturuldu ? `, ${fmtDT(t.donusturuldu)}` : ''} teklife dönüştü${t.donusturen ? ` (${t.donusturen})` : ''}.</div>` : '';
+  if (!isPf(t)) return t.pfNo ? html`<div class="muted sm" style="margin:0 0 10px">Proforma ${t.pfNo} olarak hazırlandı${t.donusturuldu ? `, ${fmtDT(t.donusturuldu)}` : ''} siparişe dönüştü${t.donusturen ? ` (${t.donusturen})` : ''}.</div>` : '';
   const k = pfKalan(t), kay = t.pfDurum === 'kaybedildi';
   if (kay) return html`<div class="pf-bant"><div class="t"><b>Kaybedildi${t.kayipNeden ? ' · ' + t.kayipNeden : ''}</b><span class="muted sm">${t.kayipNot ? t.kayipNot + ' · ' : ''}${t.kayipAt ? fmtDT(t.kayipAt) : ''}${t.kaybeden ? ' · ' + t.kaybeden : ''} — kayıt silinmedi</span></div><button class="btn" data-act="pfAc" data-id="${t.id}">Yeniden aç</button></div>`;
-  return html`<div class="pf-bant${k != null && k < 0 ? ' gec' : ''}"><div class="t"><b>Proforma — müşteriden cevap bekleniyor</b><span class="muted sm">Geçerlilik: ${t.gecerlilik ? fmtDate(t.gecerlilik) : '—'}${k != null ? (k < 0 ? ` · süresi ${-k} gün önce doldu` : ` · ${k} gün kaldı`) : ''}. Teklifler listesine ve toplamlara girmez.</span></div>
+  return html`<div class="pf-bant${k != null && k < 0 ? ' gec' : ''}"><div class="t"><b>Proforma — müşteriden cevap bekleniyor</b><span class="muted sm">Geçerlilik: ${t.gecerlilik ? fmtDate(t.gecerlilik) : '—'}${k != null ? (k < 0 ? ` · süresi ${-k} gün önce doldu` : ` · ${k} gün kaldı`) : ''}. Siparişler listesine ve toplamlara girmez.</span></div>
     <button class="btn" data-act="pfUzat" data-id="${t.id}">Süreyi uzat</button><button class="btn primary" data-act="pfKarar" data-id="${t.id}">Müşteri cevap verdi →</button></div>`;
 }
 /* --- Proformalar sayfası --- */
 const PS = { q: '', f: 'acik' };
 VIEWS.proformalar = main => {
-  mount(main, html`<div class="page fill"><div class="ph"><div><h1>Proformalar</h1><div class="muted sm">Müşteriye gönderilen, henüz onaylanmamış teklifler. Teklifler listesinde ve toplamlarda görünmez.</div></div>
+  mount(main, html`<div class="page fill"><div class="ph"><div><h1>Proformalar</h1><div class="muted sm">Müşteriye gönderilen, henüz onaylanmamış teklifler. Siparişler listesinde ve toplamlarda görünmez.</div></div>
     <div class="ph-act"><button class="btn primary" data-act="pfYeni">${I('plus')} Yeni Proforma</button></div></div>
     <div class="offer-kpis" id="pfKpi"></div>
     <div class="toolbar"><div class="search"><span>${I('search')}</span><input class="inp" id="pfq" placeholder="Proformalarda ara" value="${PS.q}" maxlength="80"></div><div class="pf-flt" id="pfFlt"></div></div>
@@ -3805,8 +3805,8 @@ function pfCiz() {
   let L = tum.filter(t => PS.f === 'tum' || grup(t) === PS.f);
   if (q) L = L.filter(t => trAra([t.no, t.pfNo, t.cariSnap?.unvan, t.personelAd, ...t.items.flatMap(i => [i.kategori, i.model, i.renk])].join(' ')).includes(q));
   L.sort((a, b) => grup(a) === 'acik' && grup(b) === 'acik' ? String(a.gecerlilik || '9').localeCompare(String(b.gecerlilik || '9')) : String(b.tarih).localeCompare(String(a.tarih)));
-  if (!L.length) return mount(tw, html`<div class="empty"><b>${tum.length ? 'Bu filtrede proforma yok' : 'Henüz proforma yok'}</b>${tum.length ? '' : html`Müşteri karar vermediyse <button class="btn sm primary" data-act="pfYeni">+ Yeni Proforma</button> hazırlayın ya da Teklifler'de "Proformaya taşı" deyin.`}</div>`);
-  const dur = t => grup(t) === 'donen' ? html`<span class="pfc pf-don">✓ Teklif ${t.no} oldu</span>` : pfTag(t);
+  if (!L.length) return mount(tw, html`<div class="empty"><b>${tum.length ? 'Bu filtrede proforma yok' : 'Henüz proforma yok'}</b>${tum.length ? '' : html`Müşteri karar vermediyse <button class="btn sm primary" data-act="pfYeni">+ Yeni Proforma</button> hazırlayın ya da Siparişler'de "Proformaya taşı" deyin.`}</div>`);
+  const dur = t => grup(t) === 'donen' ? html`<span class="pfc pf-don">✓ Sipariş ${t.no} oldu</span>` : pfTag(t);
   const btn = t => grup(t) === 'acik' ? html`<button class="btn sm primary" data-act="pfKarar" data-id="${t.id}">Cevap →</button>` : grup(t) === 'kayip' ? html`<button class="btn sm" data-act="pfAc" data-id="${t.id}">Yeniden aç</button>` : '';
   mount(tw, html`<table class="tbl offers resp"><thead><tr>${['Proforma No', 'Müşteri Ünvanı', 'Adet', 'Toplam Tutar', 'Tarih|Geçerlilik', 'Personel', 'Durum', ''].map((h, i) => { const [a, b] = h.split('|'); return html`<th class="${i === 2 || i === 3 ? 'r' : ''}"><div class="thi">${a}${b ? html`<span class="alt">${b}</span>` : ''}</div></th>`; })}</tr></thead><tbody>
     ${L.map(t => { const c = calc(t, pm[t.id]); return html`<tr data-act="openTeklif" data-id="${t.id}"><td class="b">${isPf(t) ? t.no : t.pfNo}</td><td class="mus">${t.cariSnap?.unvan || ''}</td><td class="r">${c.adet}</td><td class="r b">${money(c.genel, t.doviz)}</td><td>${fmtDate(t.pfTarih || t.tarih)}<span class="alt">${isPf(t) && t.gecerlilik ? fmtDate(t.gecerlilik) : '—'}</span></td><td>${t.personelAd}</td><td>${dur(t)}</td><td class="nowrap">${btn(t)}</td></tr>`; })}
@@ -3817,14 +3817,14 @@ function pfCiz() {
   pfSayCiz();
 }
 A.pfFiltre = el => { PS.f = el.dataset.k; pfCiz(); };
-/* --- Yeni: Proforma mı Kesin Teklif mi? --- */
+/* --- Yeni: Proforma mı Sipariş mi? --- */
 let pfYeniTur = null;
 function pfTurSor() {
   return new Promise(res => {
     let bitti = false;
     const m = modal({ title: 'Ne hazırlıyorsunuz?', size: 'sm', body: html`<div class="pf-ch"><button type="button" data-tur="proforma"><b>${I('pf')} Proforma</b><span class="muted sm">Müşteri henüz karar vermedi. Proformalar bölümünde durur, toplamlara girmez. ${PF_GUN} gün geçerli.</span></button>
-      <button type="button" data-tur="teklif"><b>${I('doc')} Kesin Teklif</b><span class="muted sm">Müşteri onayladı. Doğrudan Teklifler listesine girer, Siparişe gönderilebilir.</span></button></div>
-      <p class="muted sm" style="margin:12px 0 0">Emin değilseniz Proforma seçin; onaylanınca tek tuşla teklife dönüşür.</p>`,
+      <button type="button" data-tur="teklif"><b>${I('doc')} Sipariş</b><span class="muted sm">Müşteri onayladı. Doğrudan Siparişler listesine girer, Sipariş Takibi’ne gönderilebilir.</span></button></div>
+      <p class="muted sm" style="margin:12px 0 0">Emin değilseniz Proforma seçin; onaylanınca tek tuşla siparişe dönüşür.</p>`,
       foot: html`<button class="btn" data-no>Vazgeç</button>`,
       onMount: mm => mm.el.addEventListener('click', e => { const b = e.target.closest('[data-tur]'); if (b) { bit(b.dataset.tur); } else if (e.target.closest('[data-no]')) bit(null); }) });
     const bit = v => { if (bitti) return; bitti = true; clearInterval(iv); if (m.el.isConnected) m.close(); res(v); };
@@ -3844,9 +3844,9 @@ tkPanelAc = async function (id) {
 };
 A.pfYeni = () => { pfYeniTur = 'proforma'; go('teklifForm', {}); };
 function pfPanelIsaret() { if (tkPanel.el) tkPanel.el.classList.toggle('tkp-pf', !!(state.draft && state.draft.tur === 'proforma')); }
-/* --- Siparişe gönder: proforma doğrudan gidemez --- */
+/* --- Sipariş Takibi’ne gönder: proforma doğrudan gidemez --- */
 const _pfSipGonder = sipGonder;
-sipGonder = async function (t, o) { if (isPf(DB.teklif.find(t && t.id) || t)) { toast('Proforma siparişe gönderilemez. Önce "Müşteri cevap verdi → Onayladı" deyin.', 'err', 6000); return null; } return _pfSipGonder.apply(this, arguments); };
+sipGonder = async function (t, o) { if (isPf(DB.teklif.find(t && t.id) || t)) { toast('Proforma Sipariş Takibi’ne gönderilemez. Önce "Müşteri cevap verdi → Onayladı" deyin.', 'err', 6000); return null; } return _pfSipGonder.apply(this, arguments); };
 const _pfASip = A.sipGonder;
 A.sipGonder = async el => { const t = DB.teklif.find(el.dataset.id); if (isPf(t)) return pfKarar(t); return _pfASip(el); };
 /* --- Karar: onayladı / vazgeçti --- */
@@ -3856,8 +3856,8 @@ async function pfKarar(t) {
   const sec = await new Promise(res => {
     let bitti = false;
     const m = modal({ title: `${t.no} · ${t.cariSnap?.unvan || ''}`, size: 'sm', body: html`<p style="margin:0 0 12px">Müşteri ne dedi?</p><div class="pf-op">
-      <button type="button" data-k="gonder"><b>✓ Onayladı — Teklife dönüştür ve Siparişe gönder</b><span class="muted sm">Teklif numarası alır, Teklifler listesine geçer, Sipariş Takibi'ne onaya gider.</span></button>
-      <button type="button" data-k="donustur"><b>Onayladı — Sadece teklife dönüştür</b><span class="muted sm">Teklifler listesine geçer; siparişe daha sonra gönderirsiniz.</span></button>
+      <button type="button" data-k="gonder"><b>✓ Onayladı — Siparişe dönüştür ve Sipariş Takibi’ne gönder</b><span class="muted sm">Sipariş numarası alır, Siparişler listesine geçer, Sipariş Takibi'ne onaya gider.</span></button>
+      <button type="button" data-k="donustur"><b>Onayladı — Sadece siparişe dönüştür</b><span class="muted sm">Siparişler listesine geçer; siparişe daha sonra gönderirsiniz.</span></button>
       <button type="button" data-k="kayip"><b>✗ Vazgeçti — Kaybedildi</b><span class="muted sm">Neden seçilir. Kayıt silinmez, Proformalar'da "Kaybedilen" altında durur.</span></button></div>`,
       foot: html`<button class="btn" data-no>Vazgeç</button>`,
       onMount: mm => mm.el.addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (b) bit(b.dataset.k); else if (e.target.closest('[data-no]')) bit(null); }) });
@@ -3866,16 +3866,16 @@ async function pfKarar(t) {
   });
   if (!sec) return;
   if (sec === 'kayip') return pfKaybet(t);
-  const k = await kimSor('Proformayı teklife dönüştür'); if (k === null) return;
-  if (!navigator.onLine) return toast('Teklif numarası almak için internet bağlantısı gerekli.', 'err');
+  const k = await kimSor('Proformayı siparişe dönüştür'); if (k === null) return;
+  if (!navigator.onLine) return toast('Sipariş numarası almak için internet bağlantısı gerekli.', 'err');
   const g = DB.teklif.find(t.id); if (!pfAcik(g)) return toast('Bu proforma başka bir yerde değişti.', 'err');
   let no = g.no;
   if (/^P-/.test(String(g.no))) { try { no = pad(await nextSeq('teklif')); } catch { return; } }
   const yeni = { ...g, no, pfNo: g.no, pfTarih: g.tarih, tarih: todayISO(), donusturuldu: Date.now(), donusturen: k, durum: 'Beklemede', updated: Date.now() };
   delete yeni.tur; delete yeni.pfDurum;
   if (sec === 'gonder' && k) Object.assign(yeni, { gonderen: k, gonderenAt: Date.now() });
-  DB.teklif.upsert(yeni); logAct(`Proforma ${g.no} → Teklif ${no}`);
-  toast(`Proforma ${g.no} → Teklif ${no} oldu, Teklifler listesine geçti.`, 'ok', 5000);
+  DB.teklif.upsert(yeni); logAct(`Proforma ${g.no} → Sipariş ${no}`);
+  toast(`Proforma ${g.no} → Sipariş ${no} oldu, Siparişler listesine geçti.`, 'ok', 5000);
   go('teklifDetay', { id: g.id });
   if (sec === 'gonder') await _pfSipGonder(yeni, { sessiz: true });
 }
@@ -3908,26 +3908,26 @@ A.pfUzat = async el => { const t = DB.teklif.find(el.dataset.id); if (!pfAcik(t)
   const r = await choiceBox({ title: 'Geçerlilik süresini uzat', body: html`<p style="margin-top:0">Şu an: ${t.gecerlilik ? fmtDate(t.gecerlilik) : '—'}. Bugünden itibaren:</p>`, options: [{ v: '7', l: '+7 gün' }, { v: '15', l: '+15 gün', primary: true }, { v: '30', l: '+30 gün' }] });
   if (!r) return;
   DB.teklif.upsert({ ...t, gecerlilik: pfGunEkle(todayISO(), +r), updated: Date.now() }); logAct(`Proforma ${t.no} süresi uzatıldı (+${r} gün)`); go('teklifDetay', { id: t.id }); };
-/* --- Teklifler'den proformaya taşı (siparişe gönderilmemiş "Beklemede" teklifler) --- */
+/* --- Siparişler'den proformaya taşı (Sipariş Takibi’ne gönderilmemiş "Beklemede" siparişler) --- */
 async function pfTasi(ids) {
   const L = ids.map(id => DB.teklif.find(id)).filter(t => gonderilmedi(t));
-  if (!L.length) return toast('Yalnızca siparişe gönderilmemiş "Beklemede" teklifler taşınabilir.', 'err');
-  if (!await confirmBox({ title: 'Proformaya taşı', body: html`<p style="margin-top:0"><b>${L.length} teklif</b> Proformalar bölümüne taşınacak; Teklifler listesinden ve toplamlardan çıkar.</p><p class="muted sm">Teklif numaraları aynı kalır. Onaylanınca aynı numarayla geri döner. Süre: bugünden ${PF_GUN} gün.</p>`, ok: 'Taşı' })) return;
+  if (!L.length) return toast('Yalnızca Sipariş Takibi’ne gönderilmemiş "Beklemede" siparişler taşınabilir.', 'err');
+  if (!await confirmBox({ title: 'Proformaya taşı', body: html`<p style="margin-top:0"><b>${L.length} sipariş</b> Proformalar bölümüne taşınacak; Siparişler listesinden ve toplamlardan çıkar.</p><p class="muted sm">Sipariş numaraları aynı kalır. Onaylanınca aynı numarayla geri döner. Süre: bugünden ${PF_GUN} gün.</p>`, ok: 'Taşı' })) return;
   const k = await kimSor('Proformaya taşı'); if (k === null) return;
   const gec = pfGunEkle(todayISO(), PF_GUN);
   L.forEach(t => DB.teklif.upsert({ ...DB.teklif.find(t.id), tur: 'proforma', pfDurum: 'acik', gecerlilik: gec, updated: Date.now() }));
-  logAct(`${L.length} teklif proformaya taşındı (${L.map(t => t.no).join(', ')})`);
-  toast(`${L.length} teklif Proformalar'a taşındı.`, 'ok', 5000);
+  logAct(`${L.length} sipariş proformaya taşındı (${L.map(t => t.no).join(', ')})`);
+  toast(`${L.length} sipariş Proformalar'a taşındı.`, 'ok', 5000);
   state.view === 'teklifler' ? drawList() : go('teklifler');
 }
 function pfTasiSec() {
   const L = DB.teklif.all().filter(t => gonderilmedi(t)).sort((a, b) => String(b.tarih).localeCompare(String(a.tarih)));
-  if (!L.length) return toast('Siparişe gönderilmemiş "Beklemede" teklif yok.');
+  if (!L.length) return toast('Sipariş Takibi’ne gönderilmemiş "Beklemede" sipariş yok.');
   const pm = payMap();
-  modal({ title: 'Proformaya taşı', size: 'sm', body: html`<p class="muted sm" style="margin:0 0 8px">Müşteri henüz karar vermediyse seçin. Yalnızca siparişe gönderilmemiş teklifler listelenir.</p>
+  modal({ title: 'Proformaya taşı', size: 'sm', body: html`<p class="muted sm" style="margin:0 0 8px">Müşteri henüz karar vermediyse seçin. Yalnızca Sipariş Takibi’ne gönderilmemiş siparişler listelenir.</p>
     <div class="pf-sec">${L.map(t => html`<label><input type="checkbox" value="${t.id}"><span><b>${t.no}</b> · ${t.cariSnap?.unvan || ''}<br><span class="muted sm">${fmtDate(t.tarih)} · ${money(calc(t, pm[t.id]).genel, t.doviz)}</span></span></label>`)}</div>`,
     foot: html`<button class="btn" data-x>Vazgeç</button><button class="btn primary" data-tasi>Seçilenleri taşı</button>`,
-    onMount: m => m.el.addEventListener('click', e => { if (!e.target.closest('[data-tasi]')) return; const ids = [...m.el.querySelectorAll('input:checked')].map(i => i.value); if (!ids.length) return toast('En az bir teklif seçin.', 'err'); m.close(); pfTasi(ids); }) });
+    onMount: m => m.el.addEventListener('click', e => { if (!e.target.closest('[data-tasi]')) return; const ids = [...m.el.querySelectorAll('input:checked')].map(i => i.value); if (!ids.length) return toast('En az bir sipariş seçin.', 'err'); m.close(); pfTasi(ids); }) });
 }
 /* Proforma detayında menüde "Proformalar" seçili görünür */
 const _pfMarkNav = markNav;

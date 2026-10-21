@@ -699,20 +699,6 @@ tr.ps-off td, .lcard.ps-off{opacity:.62}
 .ky-on.bir{background:#fff4d6;color:#5c4400}
 .ky-on ul{margin:6px 0 0;padding-left:18px}
 @media (max-width:560px){.ky-b{width:100%}.ky-b .btn{flex:1 1 auto}}
-.fat-k{margin:0 0 14px}
-.fat-oz{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:2px 0 10px}
-.fat-oz div{padding:8px 10px;border-radius:10px;background:var(--surface-2);min-width:0}.fat-oz small{display:block;font-size:11.5px;color:var(--muted)}.fat-oz b{font-size:14px;white-space:nowrap}
-.fat-oz .uy b{color:var(--warn,#b7791f)}
-.fat-bar{display:flex;height:7px;border-radius:7px;overflow:hidden;background:var(--surface-2);margin-bottom:10px}.fat-bar i{display:block;height:100%}.fat-bar .k{background:#2f9e5b}.fat-bar .p{background:#e0a72e}
-.fat-l{display:flex;flex-direction:column;gap:6px}
-.fat-r{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 10px;border:1px solid var(--border);border-radius:10px;cursor:pointer;background:var(--surface)}
-.fat-r:hover{border-color:var(--border-2)}.fat-r.ip{opacity:.55;text-decoration:line-through}
-.fat-r .a{flex:1 1 220px;min-width:0;font-size:13px}.fat-r .a span{color:var(--muted);font-size:12px}.fat-r .t{font-weight:700;white-space:nowrap}
-.fat-d{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:700}
-.fat-d.kesildi{background:#e3f5ea;color:#1f7a45}.fat-d.kesilecek{background:#fff4d6;color:#7a5a00}.fat-d.iptal{background:#eceff3;color:#5b6472}
-.fat-uy{margin:0 0 10px;padding:8px 10px;border-radius:10px;background:#fdecec;color:#9b1c1c;font-size:13px}
-.fat-seg{display:flex;gap:6px;flex-wrap:wrap}.fat-seg button{flex:1 1 90px}.fat-seg .btn:not(.primary){background:var(--surface);color:var(--text)}
-@media (max-width:560px){.fat-oz{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 <style id="klavye-css">
 /* telefon/tablet: 16px altı yazı iPhone'da otomatik yakınlaştırır -> tüm kutular 16px */
@@ -2586,7 +2572,7 @@ VIEWS.teklifDetay = (main, { id, tab = 'urunler' }) => {
           ${pays.length ? html`<dt>Diğer ödemeler</dt><dd>${money(r2(c.pes - (+t.pesinat || 0)), t.doviz)}</dd>` : ''}
           <dt>Toplam alınan</dt><dd>${money(c.pes, t.doviz)}</dd><dt>Kalan</dt><dd class="b">${money(c.kalan, t.doviz)}</dd><dt>Ödeme sayısı</dt><dd>${payCount}</dd></dl>
         <div class="prog"><i style="width:${pct.toFixed(1)}%"></i></div></div></div>
-    ${pfBant(t)}${fatKart(t)}${sipPanel(t)}<div class="tabs" role="tablist"><button class="${tab === 'urunler' ? 'on' : ''}" data-act="dTab" data-id="${t.id}" data-t="urunler">Ürünler (${t.items.length})</button><button class="${tab === 'odemeler' ? 'on' : ''}" data-act="dTab" data-id="${t.id}" data-t="odemeler">Ödemeler (${payCount})</button></div>
+    ${pfBant(t)}${sipPanel(t)}<div class="tabs" role="tablist"><button class="${tab === 'urunler' ? 'on' : ''}" data-act="dTab" data-id="${t.id}" data-t="urunler">Ürünler (${t.items.length})</button><button class="${tab === 'odemeler' ? 'on' : ''}" data-act="dTab" data-id="${t.id}" data-t="odemeler">Ödemeler (${payCount})</button></div>
     ${tab === 'urunler' ? html`<div class="tw"><table class="tbl static resp"><thead><tr>${['', 'Ürün', ...(sipBag(t) ? ['Sipariş'] : []), 'Ölçü', 'Renk', 'Yön', 'Adet', 'Birim Fiyat', 'Toplam', 'Açıklama'].map((h, i, a) => html`<th class="${i >= a.length - 4 && i <= a.length - 2 ? 'r' : ''}"><div class="thi">${h}</div></th>`)}</tr></thead><tbody>
         ${t.items.map(it => { const f = safeImg(offerFotoGet(it)); return html`<tr><td>${f ? html`<img class="thumb" src="${f}" alt="" data-act="img">` : html`<span class="thumb">Fotoğraf Yok</span>`}</td><td class="b">${itemTitle(it)}</td>${sipBag(t) ? html`<td class="nowrap">${sipKalemTag(t, it) || html`<span class="muted sm">—</span>`}</td>` : ''}<td>${it.olcu || '—'}</td><td>${it.renk || '—'}</td><td>${it.yon || '—'}</td><td class="r">${it.adet}</td><td class="r">${money(it.fiyat, t.doviz)}</td><td class="r b">${money(it.fiyat * it.adet, t.doviz)}</td><td class="wrap" style="min-width:180px">${it.aciklama || ''}</td></tr>`; })}</tbody></table>
         <div class="cards">${t.items.map(it => { const f = safeImg(offerFotoGet(it)); return html`<div class="lcard" style="cursor:default"><div class="row" style="justify-content:flex-start">${f ? html`<img class="thumb" src="${f}" alt="" data-act="img">` : html`<span class="thumb">Fotoğraf Yok</span>`}<div style="min-width:0"><div class="ttl">${itemTitle(it)}</div><div class="muted sm">${[it.olcu, it.renk, it.yon].filter(Boolean).join(' · ')}</div></div></div>
@@ -3399,74 +3385,6 @@ async function katYonet() {
   yukle();
 }
 A.katYonet = () => katYonet();
-/* =====================================================================
-   KISMİ FATURA TAKİBİ — sipariş tutarının tamamı KDV'li; fatura parçalar halinde kesilebilir
-   ===================================================================== */
-const FAT_DURUM = { kesilecek: 'Kesilecek', kesildi: 'Kesildi', iptal: 'İptal' };
-const fatTop = f => r2((+f.matrah || 0) * (1 + (+f.kdvOran || 0) / 100));
-function fatOzet(t) {
-  const genel = calc(t, payMap()[t.id] || []).genel, L = Array.isArray(t.faturalar) ? t.faturalar : [];
-  const kes = r2(L.filter(f => f.durum === 'kesildi').reduce((a, f) => a + fatTop(f), 0));
-  const pl = r2(L.filter(f => f.durum === 'kesilecek').reduce((a, f) => a + fatTop(f), 0));
-  return { genel, kes, pl, kalan: r2(genel - kes - pl), L };
-}
-function fatKart(t) {
-  if (!t || t.tur === 'proforma') return '';
-  const o = fatOzet(t), d = t.doviz, pk = o.genel > 0 ? Math.min(100, o.kes / o.genel * 100) : 0, pp = o.genel > 0 ? Math.min(100 - pk, o.pl / o.genel * 100) : 0;
-  const sira = o.L.map((f, i) => ({ f, i })).sort((a, b) => String(a.f.tarih || '').localeCompare(String(b.f.tarih || '')) || a.i - b.i);
-  return html`<div class="card fat-k"><div class="card-h"><h3>Fatura takibi</h3><button class="btn sm" data-act="fatEkle" data-id="${t.id}">${I('plus')} Fatura</button></div>
-    <div class="fat-oz"><div><small>Sipariş toplamı (KDV dahil)</small><b>${money(o.genel, d)}</b></div><div><small>Kesildi</small><b>${money(o.kes, d)}</b></div><div><small>Kesilecek</small><b>${money(o.pl, d)}</b></div>
-      <div class="${o.kalan > 0.009 ? 'uy' : ''}"><small>Faturası planlanmamış</small><b>${money(Math.max(0, o.kalan), d)}</b></div></div>
-    <div class="fat-bar" title="Yeşil: kesildi · Sarı: kesilecek"><i class="k" style="width:${pk.toFixed(1)}%"></i><i class="p" style="width:${pp.toFixed(1)}%"></i></div>
-    ${o.kalan < -0.009 ? html`<div class="fat-uy">Fatura toplamı sipariş tutarını ${money(-o.kalan, d)} aşıyor. Lütfen kontrol edin.</div>` : ''}
-    ${sira.length ? html`<div class="fat-l">${sira.map(({ f }, n) => html`<div class="fat-r ${f.durum === 'iptal' ? 'ip' : ''}" data-act="fatDuz" data-id="${t.id}" data-f="${f.id}">
-        <div class="a"><b>${n + 1}. fatura</b> · ${fmtDate(f.tarih)}${f.no ? html` · ${f.no}` : ''}<br><span>${money(f.matrah, d)} + KDV %${NF.format(+f.kdvOran || 0).replace(',00', '')} ${money(r2(fatTop(f) - (+f.matrah || 0)), d)}${f.not ? ` · ${f.not}` : ''}</span></div>
-        <span class="t">${money(fatTop(f), d)}</span><span class="fat-d ${f.durum}">${FAT_DURUM[f.durum] || ''}</span></div>`)}</div>`
-      : html`<div class="muted sm">Henüz fatura girilmedi. Fatura parça parça kesilebilir (ör. siparişte bir kısmı, teslimde kalanı); toplamı siparişin KDV dahil tutarına eşit olmalı.</div>`}</div>`;
-}
-function fatForm(t, f) {
-  const o = fatOzet(t);
-  const v = f ? { ...f } : { tarih: todayISO(), no: '', matrah: '', kdvOran: +t.kdv || 0, durum: 'kesilecek', not: '' };
-  const kalanMatrah = kdv => r2(Math.max(0, o.kalan + (f && f.durum !== 'iptal' ? fatTop(f) : 0)) / (1 + (+kdv || 0) / 100));
-  modal({ title: f ? 'Faturayı düzenle' : 'Fatura ekle', size: 'sm', body: html`<div class="grid g2">
-      <div class="field"><label>Tarih <span class="req">*</span></label><input type="date" class="inp" data-v="tarih" value="${v.tarih}"></div>
-      <div class="field"><label>Fatura No</label><input class="inp" data-v="no" maxlength="30" value="${v.no || ''}" placeholder="isteğe bağlı"></div>
-      <div class="field"><label>Tutar (KDV hariç) <span class="req">*</span></label><input class="inp" inputmode="decimal" data-v="matrah" value="${numStr(v.matrah)}" placeholder="0,00" autofocus></div>
-      <div class="field"><label>KDV %</label><input class="inp" inputmode="decimal" data-v="kdvOran" value="${numStr(v.kdvOran)}"></div>
-      <div class="field span2"><label>Durum</label><div class="fat-seg">${Object.entries(FAT_DURUM).filter(([k]) => f || k !== 'iptal').map(([k, l]) => html`<button type="button" class="btn ${v.durum === k ? 'primary' : ''}" data-d="${k}">${l}</button>`)}</div></div>
-      <div class="field span2"><label>Not</label><input class="inp" data-v="not" maxlength="200" value="${v.not || ''}" placeholder="ör. teslimde kesilecek"></div>
-      <div class="span2 muted sm" data-hes></div>
-      <div class="span2"><button type="button" class="btn sm" data-kalan>Kalanın tamamı</button></div></div>`,
-    foot: html`<button class="btn" data-x>Vazgeç</button><button class="btn primary" data-save>${f ? 'Değişikliği Kaydet' : 'Faturayı Ekle'}</button>`,
-    onMount: m => {
-      const upd = () => {
-        const mt = num(v.matrah), kd = num(v.kdvOran);
-        m.$('[data-hes]').textContent = mt > 0 && kd >= 0 ? `KDV ${money(r2(mt * kd / 100), t.doviz)} · Fatura toplamı ${money(r2(mt * (1 + kd / 100)), t.doviz)} · Planlanmamış: ${money(Math.max(0, o.kalan), t.doviz)}` : `Faturası planlanmamış tutar: ${money(Math.max(0, o.kalan), t.doviz)} (KDV dahil)`;
-        m.el.querySelectorAll('[data-d]').forEach(b => b.classList.toggle('primary', b.dataset.d === v.durum));
-      };
-      upd();
-      m.el.addEventListener('input', e => { const k = e.target.dataset.v; if (k) { v[k] = e.target.value; upd(); } });
-      m.el.addEventListener('click', async e => {
-        const d = e.target.closest('[data-d]'); if (d) { v.durum = d.dataset.d; upd(); return; }
-        if (e.target.closest('[data-kalan]')) { v.matrah = kalanMatrah(num(v.kdvOran)); m.$('[data-v="matrah"]').value = numStr(v.matrah); upd(); return; }
-        if (!e.target.closest('[data-save]')) return;
-        const mt = num(v.matrah), kd = num(v.kdvOran), tarih = String(v.tarih || '');
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(tarih)) return toast('Tarih girin', 'err');
-        if (!(mt > 0) || mt > 1e10) return toast('Tutarı girin (KDV hariç)', 'err');
-        if (!(kd >= 0 && kd <= 100)) return toast('KDV oranı 0 ile 100 arasında olmalı', 'err');
-        if (!FAT_DURUM[v.durum]) return toast('Durum seçin', 'err');
-        const k = await kimSor(f ? 'Fatura düzenleme' : 'Fatura ekleme'); if (k === null) return;
-        const cur = DB.teklif.find(t.id); if (!cur) return;
-        const kay = { ...(f || { id: uid(), giren: k, girenAt: Date.now() }), tarih, no: clean(v.no, 30), matrah: r2(mt), kdvOran: r2(kd), durum: v.durum, not: clean(v.not, 200), ...(f ? { duzenleyen: k, duzenleyenAt: Date.now() } : {}) };
-        const L = (Array.isArray(cur.faturalar) ? cur.faturalar : []).filter(x => x.id !== kay.id).concat(kay).slice(-100);
-        DB.teklif.upsert({ ...cur, faturalar: L });
-        logAct(`Sipariş ${cur.no}: fatura ${f ? 'düzenlendi' : 'eklendi'} (${FAT_DURUM[kay.durum]}, ${money(fatTop(kay), cur.doviz)})`);
-        m.close(); toast(f ? 'Fatura güncellendi' : 'Fatura eklendi'); go('teklifDetay', { id: t.id, tab: state.params?.tab });
-      });
-    } });
-}
-A.fatEkle = el => { const t = DB.teklif.find(el.dataset.id); if (t) fatForm(t, null); };
-A.fatDuz = el => { const t = DB.teklif.find(el.dataset.id); const f = t && (t.faturalar || []).find(x => x.id === el.dataset.f); if (f) fatForm(t, f); };
 /* =====================================================================
    ÜRÜNLER
    ===================================================================== */

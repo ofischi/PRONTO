@@ -699,6 +699,16 @@ tr.ps-off td, .lcard.ps-off{opacity:.62}
 .ky-on.bir{background:#fff4d6;color:#5c4400}
 .ky-on ul{margin:6px 0 0;padding-left:18px}
 @media (max-width:560px){.ky-b{width:100%}.ky-b .btn{flex:1 1 auto}}
+.pd-not{margin-top:6mm;padding:3mm 4mm;border-left:2px solid #1d1d1f;background:#f6f6f4;font-size:9pt;white-space:pre-wrap;break-inside:avoid;page-break-inside:avoid}
+.pd-not b{display:block;font-size:8pt;letter-spacing:.06em;text-transform:uppercase;margin-bottom:1.5mm}
+.not-g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.not-g .field textarea{min-height:74px;resize:vertical}
+.not-tag{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;font-size:10.5px;font-weight:600;background:rgba(120,130,145,.18);color:var(--muted);text-transform:none;letter-spacing:0}
+.not-k{margin:0 0 14px}.not-k .nt{white-space:pre-wrap;font-size:13.5px;line-height:1.5;overflow-wrap:anywhere}
+.not-k .nb{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.sih-not{margin-top:2px}.sih-not summary{cursor:pointer;font-weight:600;padding:8px 0;list-style:none}.sih-not summary::-webkit-details-marker{display:none}
+.sih-not .field{margin-top:8px}.sih-not textarea{min-height:70px}
+@media (max-width:640px){.not-g,.not-k .nb{grid-template-columns:1fr}}
 </style>
 <style id="klavye-css">
 /* telefon/tablet: 16px altı yazı iPhone'da otomatik yakınlaştırır -> tüm kutular 16px */
@@ -1718,6 +1728,11 @@ VIEWS.teklifForm = (main, { id, taslak }) => {
         </div></div>
         <div class="card sticky"><div class="card-h"><h3>TOPLAMLAR</h3></div><div id="tots"></div></div>
       </div>
+      <div class="card"><div class="card-h"><h3>NOTLAR</h3><span class="muted sm">isteğe bağlı</span></div>
+        <div class="not-g">
+          <div class="field"><label>SİPARİŞ NOTU <span class="not-tag">PDF'te görünür</span></label><textarea class="inp" data-d="genelNot" maxlength="1000" placeholder="Örn. tüm masalar aynı lot cevizden üretilecek">${d.genelNot || ''}</textarea></div>
+          <div class="field"><label>İÇ NOT <span class="not-tag">Müşteri görmez</span></label><textarea class="inp" data-d="icNot" maxlength="1000" placeholder="Örn. 3. kat, asansör yok">${d.icNot || ''}</textarea></div>
+        </div></div>
     </div></div></div>`);
   drawFormCari(); drawFormPers(); drawPickFilters(); drawPick(); drawItems(); drawTots();
   const pg = main.querySelector('.page');
@@ -1959,6 +1974,12 @@ function pdfAlinan(t, pays, L) {
   const parca = Object.entries(g).filter(([, v]) => v).map(([d, v]) => money(v, d));
   return `${L.fxTop}: ${parca.join(' + ')} = ${money(r2(top), t.doviz)}`;
 }
+function notKart(t) {
+  if (!t || (!t.genelNot && !t.icNot)) return '';
+  return html`<div class="card not-k"><div class="card-h"><h3>Notlar</h3><button class="btn sm" data-act="editTeklif" data-id="${t.id}">${I('edit')} Düzenle</button></div><div class="nb">
+    <div><div class="muted sm" style="margin-bottom:4px">Sipariş notu <span class="not-tag">PDF'te görünür</span></div><div class="nt">${t.genelNot || '—'}</div></div>
+    <div><div class="muted sm" style="margin-bottom:4px">İç not <span class="not-tag">Müşteri görmez</span></div><div class="nt">${t.icNot || '—'}</div></div></div></div>`;
+}
 function odYon(p, L) { const y = DB.yontem.find(p.yontemId)?.ad || ''; return p.pesinat ? (y ? L.pes + ' · ' + y : L.pes) : y; }
 function drawTots() { const d = state.draft; mount($('#tots'), totsHTML(calc(d, d.id ? payMap()[d.id] : []), d)); }
 function totsHTML(c, t) { return html`<div class="tots">
@@ -2160,6 +2181,7 @@ A.saveTeklif = async el => {
     return { ...rest, ...(fotoRef ? { fotoRef } : {}), kategori: U(i.kategori), model: U(i.model), modul: U(i.modul), olcu: U(i.olcu), renk: U(i.renk),
       yon: ({ sag: 'SAĞ', sol: 'SOL', cift: 'ÇİFT', yok: 'YOK' }[normYon(i.yon)] || U(i.yon)), aciklama: cleanML(i.aciklama, 1000).toLocaleUpperCase('tr-TR') };
   });
+  for (const k of ['genelNot', 'icNot']) { const v = cleanML(t[k], 1000).replace(/\n{3,}/g, '\n\n').toLocaleUpperCase('tr-TR'); if (v) t[k] = v; else delete t[k]; }
   t.iskontoTip = 'tutar'; t.iskontoDeger = 0; t.iskontoTutar = r2(Math.max(0, +t.iskontoTutar || 0)); t.pesinat = r2(+t.pesinat || 0); t.pesinatTarih = t.pesinat > 0 ? (t.pesinatTarih || '') : '';
   t.updated = Date.now();
   if (tkKisi) { if (!d.id) { t.olusturan = tkKisi; t.olusturanAt = t.updated; } t.duzenleyen = tkKisi; t.duzenleyenAt = t.updated; }
@@ -2435,7 +2457,12 @@ function sihAdim4() {
     <div class="sih-g2">${num2('iskontoTutar', `İskonto (${SYM[d.doviz] || ''})`)}${num2('kdv', 'KDV %')}</div>
     <div class="sih-g2">${num2('pesinat', `Alınan peşinat (${SYM[d.doviz] || ''})`)}
       <div class="field"><label>Peşinat tarihi ${d.pesinat > 0 ? html`<span class="req">*</span>` : ''}</label><input type="date" class="inp ${sihHataVar('pesinatTarih') ? 'bad' : ''}" data-sd="pesinatTarih" value="${d.pesinatTarih || ''}" ${d.pesinat > 0 ? '' : 'disabled'}>${sihHataMsg('pesinatTarih')}</div></div>
-    <div class="sih-kart" id="sihTots">${totsHTML(calc(d, d.id ? payMap()[d.id] : []), d)}</div></div>`;
+    <div class="sih-kart" id="sihTots">${totsHTML(calc(d, d.id ? payMap()[d.id] : []), d)}</div>
+    <details class="sih-kart sih-not" ${d.genelNot || d.icNot ? 'open' : ''}><summary>${d.genelNot || d.icNot ? 'Notlar' : '＋ Not ekle'} <span class="muted sm">(isteğe bağlı)</span></summary>
+      <div class="not-g">
+          <div class="field"><label>SİPARİŞ NOTU <span class="not-tag">PDF'te görünür</span></label><textarea class="inp" data-sd="genelNot" maxlength="1000" placeholder="Örn. tüm masalar aynı lot cevizden üretilecek">${d.genelNot || ''}</textarea></div>
+          <div class="field"><label>İÇ NOT <span class="not-tag">Müşteri görmez</span></label><textarea class="inp" data-sd="icNot" maxlength="1000" placeholder="Örn. 3. kat, asansör yok">${d.icNot || ''}</textarea></div>
+        </div></details></div>`;
 }
 
 /* ---------- alt çubuk ---------- */
@@ -2471,6 +2498,7 @@ function sihGirdi(e) {
   if (t.dataset.sq === 'cari') { if (e.type !== 'input') return; SIH.mq = clean(t.value, 60); mount($('#sihCari'), sihCariListe()); return; }
   if (t.dataset.sq === 'urun') { if (e.type !== 'input') return; SIH.q = clean(t.value, 60); $('.sih-ara-x')?.classList.toggle('hidden', !SIH.q); $('#sihSecim')?.classList.toggle('hidden', !!SIH.q); mount($('#sihUrun'), sihUrunListe()); return; }
   const k = t.dataset.sd; if (!k) return;
+  if (k === 'genelNot' || k === 'icNot') { if (e.type === 'input' || e.type === 'change') d[k] = String(t.value).slice(0, 1000); return; }
   t.classList.remove('bad'); SIH.hata = SIH.hata.filter(h => h.k !== k); t.closest('.field')?.querySelector('.sih-e')?.remove();
   if (['iskontoTutar', 'pesinat', 'kdv'].includes(k)) {
     t.value = t.value.replace(/[^0-9.,]/g, ''); const v = num(t.value);
@@ -2572,7 +2600,7 @@ VIEWS.teklifDetay = (main, { id, tab = 'urunler' }) => {
           ${pays.length ? html`<dt>Diğer ödemeler</dt><dd>${money(r2(c.pes - (+t.pesinat || 0)), t.doviz)}</dd>` : ''}
           <dt>Toplam alınan</dt><dd>${money(c.pes, t.doviz)}</dd><dt>Kalan</dt><dd class="b">${money(c.kalan, t.doviz)}</dd><dt>Ödeme sayısı</dt><dd>${payCount}</dd></dl>
         <div class="prog"><i style="width:${pct.toFixed(1)}%"></i></div></div></div>
-    ${pfBant(t)}${sipPanel(t)}<div class="tabs" role="tablist"><button class="${tab === 'urunler' ? 'on' : ''}" data-act="dTab" data-id="${t.id}" data-t="urunler">Ürünler (${t.items.length})</button><button class="${tab === 'odemeler' ? 'on' : ''}" data-act="dTab" data-id="${t.id}" data-t="odemeler">Ödemeler (${payCount})</button></div>
+    ${notKart(t)}${pfBant(t)}${sipPanel(t)}<div class="tabs" role="tablist"><button class="${tab === 'urunler' ? 'on' : ''}" data-act="dTab" data-id="${t.id}" data-t="urunler">Ürünler (${t.items.length})</button><button class="${tab === 'odemeler' ? 'on' : ''}" data-act="dTab" data-id="${t.id}" data-t="odemeler">Ödemeler (${payCount})</button></div>
     ${tab === 'urunler' ? html`<div class="tw"><table class="tbl static resp"><thead><tr>${['', 'Ürün', ...(sipBag(t) ? ['Sipariş'] : []), 'Ölçü', 'Renk', 'Yön', 'Adet', 'Birim Fiyat', 'Toplam', 'Açıklama'].map((h, i, a) => html`<th class="${i >= a.length - 4 && i <= a.length - 2 ? 'r' : ''}"><div class="thi">${h}</div></th>`)}</tr></thead><tbody>
         ${t.items.map(it => { const f = safeImg(offerFotoGet(it)); return html`<tr><td>${f ? html`<img class="thumb" src="${f}" alt="" data-act="img">` : html`<span class="thumb">Fotoğraf Yok</span>`}</td><td class="b">${itemTitle(it)}</td>${sipBag(t) ? html`<td class="nowrap">${sipKalemTag(t, it) || html`<span class="muted sm">—</span>`}</td>` : ''}<td>${it.olcu || '—'}</td><td>${it.renk || '—'}</td><td>${it.yon || '—'}</td><td class="r">${it.adet}</td><td class="r">${money(it.fiyat, t.doviz)}</td><td class="r b">${money(it.fiyat * it.adet, t.doviz)}</td><td class="wrap" style="min-width:180px">${it.aciklama || ''}</td></tr>`; })}</tbody></table>
         <div class="cards">${t.items.map(it => { const f = safeImg(offerFotoGet(it)); return html`<div class="lcard" style="cursor:default"><div class="row" style="justify-content:flex-start">${f ? html`<img class="thumb" src="${f}" alt="" data-act="img">` : html`<span class="thumb">Fotoğraf Yok</span>`}<div style="min-width:0"><div class="ttl">${itemTitle(it)}</div><div class="muted sm">${[it.olcu, it.renk, it.yon].filter(Boolean).join(' · ')}</div></div></div>
@@ -2657,11 +2685,11 @@ function payForm(t, p) {
 const PL = {
   tr: { teklif: 'SİPARİŞ FORMU', no: 'Sipariş No', tarih: 'Sipariş Tarihi', teslim: 'Teslim Tarihi', doviz: 'Döviz', montaj: 'Montaj', nakliye: 'Nakliye', yer: 'Teslim Yeri', dahil: 'Dahil', haric: 'Hariç', fabrika: 'Fabrika', adres: 'Adres',
     foto: 'Fotoğraf', urun: 'Ürün', olcu: 'Ölçü', renk: 'Renk', yon: 'Yön', birim: 'Birim Fiyat', adet: 'Adet', toplam: 'Toplam Fiyat', yok: 'Fotoğraf Yok',
-    fxTarih: 'Tarih', fxTutar: 'Alınan', fxKur: 'Kur', fxKars: 'Karşılığı', fxYon: 'Yöntem', fxTop: 'Toplam alınan', ana: 'Ana Para', isk: 'İskonto', ara: 'Ara Toplam', kdv: 'KDV', genel: 'Genel Toplam', pes: 'Alınan Peşinat', kalan: 'Kalan Tutar', odemeler: 'Ödemeler', sayfa: 'Sayfa',
+    notlar: 'Notlar', fxTarih: 'Tarih', fxTutar: 'Alınan', fxKur: 'Kur', fxKars: 'Karşılığı', fxYon: 'Yöntem', fxTop: 'Toplam alınan', ana: 'Ana Para', isk: 'İskonto', ara: 'Ara Toplam', kdv: 'KDV', genel: 'Genel Toplam', pes: 'Alınan Peşinat', kalan: 'Kalan Tutar', odemeler: 'Ödemeler', sayfa: 'Sayfa',
     yetkili: 'Yetkili', gsm: 'GSM', sabit: 'Tel', eposta: 'E-posta', vkn: 'VKN', tckn: 'TCKN', vd: 'Vergi Dairesi' },
   en: { teklif: 'ORDER FORM', no: 'Order No', tarih: 'Order Date', teslim: 'Delivery Date', doviz: 'Currency', montaj: 'Assembly', nakliye: 'Shipping', yer: 'Delivery', dahil: 'Included', haric: 'Excluded', fabrika: 'Ex-works', adres: 'To address',
     foto: 'Photo', urun: 'Product', olcu: 'Size', renk: 'Color', yon: 'Side', birim: 'Unit Price', adet: 'Qty', toplam: 'Total', yok: 'No Photo',
-    fxTarih: 'Date', fxTutar: 'Received', fxKur: 'Rate', fxKars: 'Equivalent', fxYon: 'Method', fxTop: 'Total received', ana: 'Subtotal', isk: 'Discount', ara: 'Net', kdv: 'VAT', genel: 'Grand Total', pes: 'Paid', kalan: 'Balance', odemeler: 'Payments', sayfa: 'Page',
+    notlar: 'Notes', fxTarih: 'Date', fxTutar: 'Received', fxKur: 'Rate', fxKars: 'Equivalent', fxYon: 'Method', fxTop: 'Total received', ana: 'Subtotal', isk: 'Discount', ara: 'Net', kdv: 'VAT', genel: 'Grand Total', pes: 'Paid', kalan: 'Balance', odemeler: 'Payments', sayfa: 'Page',
     yetkili: 'Contact', gsm: 'Mobile', sabit: 'Phone', eposta: 'E-mail', vkn: 'Tax No', tckn: 'ID No', vd: 'Tax Office' }
 };
 /* Siparişte müşteri bilgileri: caride girilen her bilgi yazılır, boş olan hiç görünmez */
@@ -2703,6 +2731,7 @@ function pdfDoc(t, o) {
       <div class="pd-tot"><div><span>${L.ana}</span><span>${money(c.ana, t.doviz)}</span></div><div><span>${L.isk}</span><span>${c.isk ? '-' + money(c.isk, t.doviz) : money(0, t.doviz)}</span></div>
         <div><span>${L.ara}</span><span>${money(c.ara, t.doviz)}</span></div><div><span>${L.kdv} %${NF.format(t.kdv).replace(',00', '')}</span><span>${money(c.kdv, t.doviz)}</span></div>
         <div class="g"><span>${L.genel}</span><span>${money(c.genel, t.doviz)}</span></div><div><span>${L.pes}</span><span>${money(c.pes, t.doviz)}</span></div><div><span>${L.kalan}</span><span>${money(c.kalan, t.doviz)}</span></div></div></div>
+    ${t.genelNot ? html`<div class="pd-not"><b>${L.notlar}</b>${enT(L, t.genelNot)}</div>` : ''}
     <div class="pd-foot"><span>${[S.firma.ad, S.firma.tel, S.firma.adres, S.firma.eposta].filter(Boolean).join('  |  ')}</span><span class="pg">${L.sayfa} 1 / 1</span></div></div>`;
 }
 const cssStr = s => '"' + String(s).replace(/[\\"]/g, '\\$&').replace(/[\r\n]+/g, ' ') + '"';
@@ -2847,7 +2876,8 @@ async function tkPdfBlob(t, o) {
       { columns: [{ width: '*', stack: [logoNode].concat(cust) }, right], columnGap: 16, margin: [0, 0, 0, 16] },
       table,
       { columns: [payNode, totNode], columnGap: 24, margin: [0, 16, 0, 0], unbreakable: true }
-    ]
+    ].concat(t.genelNot ? [{ unbreakable: true, margin: [0, 16, 0, 0], table: { widths: ['*'], body: [[{ stack: [{ text: L.notlar.toLocaleUpperCase(L === PL.en ? 'en-US' : 'tr-TR'), bold: true, fontSize: 7.5, characterSpacing: 0.6, margin: [0, 0, 0, 3] }, { text: enT(L, t.genelNot), fontSize: 8.4 }], fillColor: '#f6f6f4' }]] },
+        layout: { hLineWidth: () => 0, vLineWidth: (i) => (i === 0 ? 1.6 : 0), vLineColor: () => INK, paddingLeft: () => 9, paddingRight: () => 9, paddingTop: () => 7, paddingBottom: () => 7 } }] : [])
   };
   return new Promise((ok, no) => { try { window.pdfMake.createPdf(dd).getBlob(b => ok(b)); } catch (e) { no(e); } });
 }
@@ -4164,6 +4194,7 @@ function enT(L, v) { return L === PL.en ? enCevir(v, null) : v; }
 function enEksikler(t) {
   const e = new Set();
   for (const it of t.items || []) [it.kategori, itemTitle(it), it.olcu, it.renk, it.yon, it.aciklama].forEach(v => enCevir(v, e));
+  if (t.genelNot) enCevir(t.genelNot, e);
   return [...e];
 }
 function enEksikCiz(m, t, o, render) {

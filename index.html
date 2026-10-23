@@ -731,6 +731,21 @@ tr.ps-off td, .lcard.ps-off{opacity:.62}
 .bk-gh{margin:14px 0 6px;font-size:13px;color:var(--muted);letter-spacing:.04em}.bk-pasif td{opacity:.5}.bk-pasif td.r{opacity:1}
 .chk{display:flex;gap:8px;align-items:center;cursor:pointer;font-size:14px}.chk input{width:18px;height:18px;flex:0 0 18px}
 .bk-iban{font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.03em}
+.tah-b{display:block;width:fit-content;margin-top:3px;font-size:11px;font-weight:700;border-radius:999px;padding:1px 8px;white-space:nowrap}
+.tah-b.amb{background:#fff1c7;color:#7a5a00}.tah-b.red{background:#fde3e3;color:#b42318}
+[data-theme=dark] .tah-b.amb{background:rgba(224,168,22,.2);color:#f3c94f}[data-theme=dark] .tah-b.red{background:rgba(220,60,60,.2);color:#ff9b9b}
+.card-h+.tah-b{margin:-4px 0 8px}
+.tah-wa{color:#1f9d55}.tah-btn .tah-n{display:inline-block;min-width:20px;padding:0 6px;border-radius:999px;background:rgba(120,130,145,.18);font-size:12px;text-align:center}
+.tah-btn.on{background:var(--text);color:var(--bg);border-color:var(--text)}.tah-btn.on .tah-n{background:rgba(255,255,255,.25)}
+.graf{margin-bottom:14px}.graf-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.graf-h .chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.graf-ara{width:10px}
+.graf-leg{display:flex;gap:14px;font-size:12.5px;color:var(--muted)}.graf-leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.graf-leg i.s,.graf .gs{background:var(--text);fill:var(--text)}.graf-leg i.t,.graf .gt{background:var(--accent);fill:var(--accent)}
+.graf-svg{width:100%;height:auto;display:block}.graf .gl{stroke:var(--border);stroke-width:1}.graf .gy,.graf .gx{fill:var(--muted);font-size:12px;font-family:inherit}
+.graf .gh{fill:transparent}.graf .gb{cursor:pointer}.graf .gb:hover .gh{fill:color-mix(in srgb,var(--accent) 8%,transparent)}
+.graf-st{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:10px}.graf-st>div{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:8px 12px;min-width:0}
+.graf-st span{display:block;font-size:12px;color:var(--muted)}.graf-st b{font-size:15px;overflow-wrap:anywhere}.graf-st .pos{color:#1a7f37}.graf-st .neg{color:#b42318}
+@media (max-width:700px){.graf-st{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .pd-bank{margin-top:6mm;font-size:9pt;break-inside:avoid;page-break-inside:avoid}
 .pd-bank>b{display:block;font-size:8pt;letter-spacing:.06em;margin-bottom:1.5mm}
 .pd-bk{border-left:2px solid #1d1d1f;background:#f6f6f4;padding:2.5mm 4mm}
@@ -1613,10 +1628,25 @@ function presetRange(p) {
 }
 const TARIH_L = { bugun: 'Bugün', hafta: 'Bu Hafta', ay: 'Bu Ay', yil: 'Bu Yıl', ozel: 'Özel Tarih' };
 function rangeOf(f) { return f.tarih === 'ozel' ? [f.from || '0000-01-01', f.to || '9999-12-31'] : presetRange(f.tarih); }
+/* ---------- Tahsilat takibi: kalan ödemesi olan siparişler (sunucuya istek yok) ---------- */
+const TAH_GUN = 7;
+function tahDurum(t, c) {
+  if (!t || t.deletedAt || t.tur === 'proforma' || !(c.kalan > 0.004)) return null;
+  const d = tkDurum(t); if (d === 'İptal' || d === 'Reddedildi') return null;
+  if (d === 'Teslim Edildi' || d === 'SSH') return { k: 'red', m: 'Teslim edildi · ödeme bekliyor' };
+  if (!t.teslim) return { k: '', m: '' };
+  const gun = Math.round((new Date(t.teslim + 'T12:00:00') - new Date(todayISO() + 'T12:00:00')) / 864e5);
+  if (gun < 0) return { k: 'red', m: 'Teslim tarihi geçti · ödeme bekliyor' };
+  if (gun <= TAH_GUN) return { k: 'amb', m: gun === 0 ? 'Teslim bugün · kalan var' : `Teslime ${gun} gün · kalan var` };
+  return { k: '', m: '' };
+}
+const tahRozet = td => td && td.k ? html`<span class="tah-b ${td.k}">${td.m}</span>` : '';
+A.tahFiltre = () => { LS.f.tahsilat = LS.f.tahsilat ? '' : '1'; LS.limit = 20; drawList(); };
 function listRows() {
   const pm = payMap(); const f = LS.f; const q = trAra(LS.q); const rg = rangeOf(f);
   let rows = DB.teklif.all().filter(t => !t.deletedAt && t.tur !== 'proforma').map(t => ({ t, c: calc(t, pm[t.id]) }));
   rows = rows.filter(({ t, c }) => {
+    if (f.tahsilat && !tahDurum(t, c)) return false;
     if (f.cari && t.cariId !== f.cari) return false;
     if (f.durum && tkDurum(t) !== f.durum) return false;
     if (f.personel && t.personelId !== f.personel) return false;
@@ -1636,7 +1666,7 @@ VIEWS.teklifler = main => {
       <div class="ph-act"><button class="btn primary" data-act="newTeklif">${I('plus')} Yeni Sipariş</button><button class="btn" data-act="refreshList" aria-label="Yenile">${I('refresh')} Yenile</button><button class="btn icon" data-act="listMore" aria-label="Diğer işlemler">${I('dots')}</button></div></div>
     <div id="pfBanner"></div><div class="offer-kpis" id="offerKpis"></div>
     <div class="toolbar"><div class="search"><span>${I('search')}</span><input class="inp" id="q" placeholder="Tüm sipariş alanlarında ara" value="${LS.q}" maxlength="80"></div>
-      <button class="btn" data-act="openFilter">${I('filter')} Filtre</button><button class="btn" data-act="sortMenu">${I('sort')} <span id="sortLbl"></span></button></div>
+      <button class="btn tah-btn" data-act="tahFiltre" id="tahBtn" aria-pressed="false">Tahsilat bekleyen <span class="tah-n" id="tahN"></span></button><button class="btn" data-act="openFilter">${I('filter')} Filtre</button><button class="btn" data-act="sortMenu">${I('sort')} <span id="sortLbl"></span></button></div>
     <div class="tags" id="tags"></div>
     <div class="tw" id="tw"></div></div>`);
   $('#q').addEventListener('input', debounce(e => { LS.q = clean(e.target.value, 80); LS.limit = 20; drawList(); }));
@@ -1663,7 +1693,9 @@ function drawList(keepScroll) {
   if (f.durum) tg.push(['durum', 'Durum: ' + f.durum]);
   if (f.personel) tg.push(['personel', 'Personel: ' + (DB.personel.find(f.personel)?.ad || '—')]);
   if (f.tarih) tg.push(['tarih', 'Tarih: ' + (f.tarih === 'ozel' ? `${fmtDate(f.from)} – ${fmtDate(f.to)}` : TARIH_L[f.tarih])]);
-  mount($('#tags'), tg.map(([k, l]) => html`<button class="ftag" data-act="openFilter" data-k="${k}">${l}</button>`));
+  mount($('#tags'), [...tg.map(([k, l]) => html`<button class="ftag" data-act="openFilter" data-k="${k}">${l}</button>`), ...(f.tahsilat ? [html`<button class="ftag" data-act="tahFiltre">Tahsilat bekleyen ✕</button>`] : [])]);
+  { const pm = payMap(), nT = DB.teklif.all().filter(t => tahDurum(t, calc(t, pm[t.id]))).length, b = $('#tahBtn');
+    if (b) { b.classList.toggle('on', !!f.tahsilat); b.setAttribute('aria-pressed', f.tahsilat ? 'true' : 'false'); $('#tahN').textContent = nT; } }
   const tw = $('#tw'); const st = tw.scrollTop;
   const any = DB.teklif.all().some(t => !t.deletedAt && t.tur !== 'proforma'); pfBannerCiz();
   if (!rows.length) { mount(tw, html`<div class="empty"><b>${any ? 'Aramayla eşleşen sipariş yok' : 'Henüz sipariş yok'}</b>${any ? 'Arama metnini veya filtreleri değiştirin.' : html`İlk siparişi oluşturmak için <button class="btn sm primary" data-act="newTeklif">+ Yeni Sipariş</button>`}</div>`); return; }
@@ -1676,16 +1708,16 @@ function drawList(keepScroll) {
       <td class="r">${money(c.ara, t.doviz)}<span class="alt">${money(c.kdv, t.doviz)}</span></td>
       <td class="r b">${money(c.genel, t.doviz)}</td>
       <td class="r">${money(c.pes, t.doviz)}<span class="alt">${money(c.kalan, t.doviz)}</span></td>
-      <td>${fmtDate(t.tarih)}<span class="alt">${fmtDate(t.teslim)}</span></td>
+      <td>${fmtDate(t.tarih)}<span class="alt">${fmtDate(t.teslim)}</span>${tahRozet(tahDurum(t, c))}</td>
       <td>${t.personelAd}<span class="alt">${t.doviz}</span></td>
       <td>${durumTag(t)}</td>
-      <td><button class="btn ghost icon sm" data-act="rowMenu" data-id="${t.id}" aria-label="İşlemler">${I('dots')}</button></td></tr>`)}
+      <td class="nowrap">${tahDurum(t, c) ? html`<button class="btn ghost icon sm tah-wa" data-act="ibanWa" data-id="${t.id}" title="Ödeme hatırlat (WhatsApp)" aria-label="Ödeme hatırlat">${I('wa')}</button>` : ''}<button class="btn ghost icon sm" data-act="rowMenu" data-id="${t.id}" aria-label="İşlemler">${I('dots')}</button></td></tr>`)}
   </tbody></table>
   <div class="cards">${vis.map(({ t, c }) => html`<div class="lcard${gonderilmedi(t) ? ' gonder-yok' : ''}" data-act="openTeklif" data-id="${t.id}">
     <div class="row"><span class="ttl">${t.cariSnap.unvan}</span><button class="btn ghost icon sm" data-act="rowMenu" data-id="${t.id}" aria-label="İşlemler">${I('dots')}</button></div>
     <div class="row sm muted"><span>#${t.no} · ${fmtDate(t.tarih)}</span><span>Teslim ${fmtDate(t.teslim)}</span></div>
     <div class="row"><span class="b">${money(c.genel, t.doviz)}</span>${durumTag(t)}</div>
-    <div class="row sm"><span class="muted">Kalan</span><span>${money(c.kalan, t.doviz)}</span></div></div>`)}</div>
+    <div class="row sm"><span class="muted">Kalan</span><span>${money(c.kalan, t.doviz)}</span></div>${tahDurum(t, c) ? html`<div class="row sm">${tahRozet(tahDurum(t, c)) || html`<span></span>`}<button class="btn ghost icon sm tah-wa" data-act="ibanWa" data-id="${t.id}" aria-label="Ödeme hatırlat">${I('wa')}</button></div>` : ''}</div>`)}</div>
   ${LS.limit < rows.length ? html`<div class="more-l">Aşağı kaydırdıkça yükleniyor…</div>` : ''}`);
   if (keepScroll) tw.scrollTop = st;
   // Büyük ekranda liste kutuyu dolduramazsa kaydırma çubuğu çıkmaz; kalanlar kendiliğinden yüklenir
@@ -2128,12 +2160,14 @@ A.ibanKopya = async el => {
 /* WhatsApp: müşteriye IBAN + kalan tutar; tür yazılmaz. Sunucuya istek yok (wa.me bağlantısı). */
 A.ibanWa = el => {
   const t = DB.teklif.find(el.dataset.id); if (!t) return;
-  const bks = (Array.isArray(t.bankalar) ? t.bankalar : []).filter(b => b && b.iban); if (!bks.length) return;
-  const c = calc(t, payMap()[t.id]), cs = t.cariSnap || {};
-  const satir = [`Sayın ${clean(cs.unvan, 120)},`, `Sipariş No: ${t.no}`, `Kalan tutar: ${money(Math.max(0, c.kalan), t.doviz)}`, ''];
+  const bks = (Array.isArray(t.bankalar) ? t.bankalar : []).filter(b => b && b.iban);
+  const c = calc(t, payMap()[t.id]), cs = t.cariSnap || {}, kalan = Math.max(0, c.kalan);
+  const satir = [`Sayın ${clean(cs.unvan, 120)},`, kalan > 0 ? `Sipariş No ${t.no} için kalan ödeme: ${money(kalan, t.doviz)}` : `Sipariş No: ${t.no}`];
+  if (kalan > 0 && t.teslim) satir.push(`Teslim tarihi: ${fmtDate(t.teslim)}`);
+  satir.push('');
   for (const b of bks) { if (b.banka) satir.push(`Banka: ${clean(b.banka, 60)}`); satir.push(`Ünvan: ${clean(b.unvan, 120)}`, `IBAN: ${ibanFmt(b.iban)}`); if (t.doviz !== 'TRY' && b.swift) satir.push(`SWIFT: ${swiftTemiz(b.swift)}`); satir.push(''); }
   satir.push(`Lütfen ödeme açıklamasına sipariş no (${t.no}) yazınız.`, clean(S.firma.ad, 80));
-  const tel = waPhone(cs.gsm), txt = encodeURIComponent(satir.join('\n').trim());
+  const tel = waPhone(cs.gsm), txt = encodeURIComponent(satir.join('\n').replace(/\n{3,}/g, '\n\n').trim());
   openOut(`https://wa.me/${tel}?text=${txt}`);
 };
 function odYon(p, L) { const y = DB.yontem.find(p.yontemId)?.ad || ''; return p.pesinat ? (y ? L.pes + ' · ' + y : L.pes) : y; }
@@ -2758,7 +2792,7 @@ VIEWS.teklifDetay = (main, { id, tab = 'urunler' }) => {
       <div class="card"><div class="card-h"><h3>Müşteri</h3></div><dl class="kv"><dt>Ünvan</dt><dd>${cs.unvan}</dd>${cs.yetkili ? html`<dt>Yetkili</dt><dd>${cs.yetkili}</dd>` : ''}<dt>Telefon</dt><dd>${cs.gsm || '—'}</dd>${cs.sabit ? html`<dt>Sabit No</dt><dd>${cs.sabit}</dd>` : ''}<dt>E-posta</dt><dd>${cs.eposta || '—'}</dd><dt>Adres</dt><dd>${[cs.adres, cs.ilce, cs.sehir, cs.ulke].filter(Boolean).join(', ')}</dd>${cs.vd ? html`<dt>Vergi Dairesi</dt><dd>${cs.vd}</dd>` : ''}${cs.vkn ? html`<dt>${String(cs.vkn).length === 11 ? 'TCKN' : 'VKN'}</dt><dd>${cs.vkn}</dd>` : ''}</dl></div>
       <div class="card"><div class="card-h"><h3>Sipariş</h3></div><dl class="kv"><dt>Sipariş Tarihi</dt><dd>${fmtDate(t.tarih)}</dd><dt>Teslim Tarihi</dt><dd>${fmtDate(t.teslim)}</dd><dt>Döviz</dt><dd>${t.doviz}${t.hesapTur ? ' · ' + BK_TUR[t.hesapTur] : ''}</dd><dt>Personel</dt><dd>${t.personelAd}</dd>${kimKV(t)}
         <dt>Montaj</dt><dd>${LBL[t.montaj]}</dd><dt>Nakliye</dt><dd>${LBL[t.nakliye]}</dd><dt>Teslim Yeri</dt><dd>${LBL[t.teslimYeri]}</dd></dl></div>
-      <div class="card"><div class="card-h"><h3>Ödeme özeti</h3><button class="btn sm" data-act="addPay" data-id="${t.id}">${I('plus')} Ödeme</button></div>
+      <div class="card"><div class="card-h"><h3>Ödeme özeti</h3><span class="nowrap">${!(t.bankalar || []).length && tahDurum(t, c) ? html`<button class="btn ghost icon sm tah-wa" data-act="ibanWa" data-id="${t.id}" title="Ödeme hatırlat (WhatsApp)" aria-label="Ödeme hatırlat">${I('wa')}</button> ` : ''}<button class="btn sm" data-act="addPay" data-id="${t.id}">${I('plus')} Ödeme</button></span></div>${tahRozet(tahDurum(t, c))}
         <dl class="kv"><dt>Genel Toplam</dt><dd class="b">${money(c.genel, t.doviz)}</dd>
           ${t.pesinat > 0 ? html`<dt>Peşinat${t.pesinatTarih ? ` (${fmtDate(t.pesinatTarih)})` : ''}</dt><dd>${money(t.pesinat, t.doviz)}</dd>` : ''}
           ${pays.length ? html`<dt>Diğer ödemeler</dt><dd>${money(r2(c.pes - (+t.pesinat || 0)), t.doviz)}</dd>` : ''}
@@ -3677,7 +3711,53 @@ A.urunMenu = (el, e) => { e.stopPropagation(); const u = DB.urun.find(el.dataset
 /* =====================================================================
    RAPORLAR
    ===================================================================== */
-const RQ = { p: 'ay', from: '', to: '', tab: 'genel' };
+const RQ = { p: 'ay', from: '', to: '', tab: 'genel', gd: 'TRY', gt: '' };
+/* ---------- Aylık grafik (Genel Bakış üstü): son 12 ay sipariş toplamı + tahsilat; kütüphane yok, SVG ---------- */
+const AY_K = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
+const ayKey = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+const ayAd = k => AY_K[+k.slice(5, 7) - 1] + ' ' + k.slice(0, 4);
+const kisaPara = n => { const a = Math.abs(n); return a >= 1e6 ? NF.format(Math.round(n / 1e5) / 10).replace(/,0+$/, '') + ' Mn' : a >= 1e3 ? Math.round(n / 1e3) + ' B' : String(Math.round(n)); };
+function grafVeri(dv, tur) {
+  const now = new Date(), aylar = [];
+  for (let i = 11; i >= 0; i--) aylar.push(ayKey(new Date(now.getFullYear(), now.getMonth() - i, 1)));
+  const gecen = ayKey(new Date(now.getFullYear() - 1, now.getMonth(), 1));
+  const sip = {}, tah = {}, pm = payMap();
+  for (const t of DB.teklif.all()) {
+    if (t.deletedAt || t.tur === 'proforma' || t.doviz !== dv || (dv === 'TRY' && tur && t.hesapTur !== tur)) continue;
+    if (tkDurum(t) === 'İptal') continue;
+    const c = calc(t, pm[t.id]); addTo(sip, (t.tarih || '').slice(0, 7), c.genel);
+    if (t.pesinat > 0) addTo(tah, (t.pesinatTarih || t.tarih || '').slice(0, 7), +t.pesinat);
+    for (const p of pm[t.id] || []) addTo(tah, (p.tarih || '').slice(0, 7), +p.cevrilmis || 0);
+  }
+  return { aylar, sip, tah, gecen };
+}
+function grafHTML() {
+  const dv = CURS.includes(RQ.gd) ? RQ.gd : 'TRY', tur = dv === 'TRY' && BK_TUR[RQ.gt] ? RQ.gt : '';
+  const { aylar, sip, tah, gecen } = grafVeri(dv, tur);
+  const S1 = aylar.map(k => sip[k] || 0), S2 = aylar.map(k => tah[k] || 0);
+  const top1 = r2(S1.reduce((a, b) => a + b, 0)), top2 = r2(S2.reduce((a, b) => a + b, 0));
+  const mx = Math.max(...S1, ...S2, 0);
+  const ust = (() => { if (!mx) return 1; const e = Math.pow(10, Math.floor(Math.log10(mx))); for (const k of [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]) if (k * e >= mx) return k * e; return 10 * e; })();
+  const dar = matchMedia('(max-width:700px)').matches, W = dar ? 420 : 1000, H = dar ? 220 : 230, PL = dar ? 40 : 52, PT = 8, alan = W - PL, bw = alan / 12;   /* telefonda yazılar okunur kalsın */
+  const y = v => PT + (H - PT) * (1 - v / ust);
+  const enIyi = S1.some(v => v) ? aylar[S1.indexOf(Math.max(...S1))] : '';
+  const bu = sip[aylar[11]] || 0, gy = sip[gecen] || 0, fark = gy ? Math.round((bu - gy) / gy * 100) : null;
+  const chip = (act, v, l, on) => html`<button type="button" class="chip ${on ? 'on' : ''}" data-act="${act}" data-v="${v}">${l}</button>`;
+  return html`<div class="card graf"><div class="graf-h"><div class="chips">${CURS.map(c => chip('grafD', c, c, c === dv))}${dv === 'TRY' ? html`<span class="graf-ara"></span>${chip('grafT', '', 'Hepsi', !tur)}${chip('grafT', 'resmi', 'Resmi', tur === 'resmi')}${chip('grafT', 'gayri', 'Gayri resmi', tur === 'gayri')}` : ''}</div>
+      <div class="graf-leg"><span><i class="s"></i>Sipariş toplamı</span><span><i class="t"></i>Tahsilat</span></div></div>
+    ${top1 || top2 ? html`<svg class="graf-svg" viewBox="0 0 ${W} ${H + 26}" role="img" aria-label="Son 12 ay sipariş ve tahsilat">
+      ${[0, .25, .5, .75, 1].map(f => html`<line x1="${PL}" x2="${W}" y1="${y(ust * f)}" y2="${y(ust * f)}" class="gl"></line><text x="${PL - 8}" y="${y(ust * f) + 4}" text-anchor="end" class="gy">${kisaPara(ust * f)}</text>`)}
+      ${aylar.map((k, i) => { const x = PL + i * bw, w = bw * .3; return html`<g class="gb" data-act="grafAy" data-ay="${k}"><rect x="${x}" y="0" width="${bw}" height="${H}" class="gh"></rect>
+        <rect x="${x + bw * .17}" y="${y(S1[i])}" width="${w}" height="${Math.max(0, H - y(S1[i]))}" rx="3" class="gs"></rect><rect x="${x + bw * .17 + w + 3}" y="${y(S2[i])}" width="${w}" height="${Math.max(0, H - y(S2[i]))}" rx="3" class="gt"></rect>
+        <text x="${x + bw / 2}" y="${H + 18}" text-anchor="middle" class="gx">${AY_K[+k.slice(5) - 1]}</text><title>${ayAd(k)} — Sipariş: ${money(S1[i], dv)} · Tahsilat: ${money(S2[i], dv)} (tıklayın: o ayın siparişleri)</title></g>`; })}
+    </svg>` : html`<div class="empty sm" style="padding:30px 0">Son 12 ayda ${dv}${tur ? ' ' + BK_TUR[tur].toLocaleLowerCase('tr-TR') : ''} sipariş yok</div>`}
+    <div class="graf-st"><div><span>12 ay sipariş</span><b>${money(top1, dv)}</b></div><div><span>12 ay tahsilat</span><b>${money(top2, dv)}</b></div><div><span>En iyi ay</span><b>${enIyi ? ayAd(enIyi) : '—'}</b></div>
+      <div><span>Bu ay / geçen yıl aynı ay</span><b class="${fark == null ? '' : fark >= 0 ? 'pos' : 'neg'}">${fark == null ? '—' : (fark > 0 ? '+' : '') + fark + '%'}</b></div></div></div>`;
+}
+A.grafD = el => { RQ.gd = el.dataset.v; if (RQ.gd !== 'TRY') RQ.gt = ''; const g = $('#grafK'); if (g) mount(g, grafHTML()); };
+A.grafT = el => { RQ.gt = el.dataset.v; const g = $('#grafK'); if (g) mount(g, grafHTML()); };
+A.grafAy = el => { const k = el.dataset.ay; if (!/^\d{4}-\d{2}$/.test(k)) return; const [yy, mm] = k.split('-').map(Number);
+  RQ.p = 'ozel'; RQ.from = k + '-01'; RQ.to = isoOf(new Date(yy, mm, 0)); RQ.tab = 'teklif'; go('raporlar'); };
 VIEWS.raporlar = main => {
   mount(main, html`<div class="page"><div class="ph"><div><h1>Raporlar</h1><div class="muted sm" id="rrange"></div></div>
       <div class="ph-act"><button class="btn" data-act="repXls">${I('xls')} Excel</button><button class="btn" data-act="repPrint">${I('print')} PDF / Yazdır</button></div></div>
@@ -3743,7 +3823,7 @@ function drawRep() {
     const bek = all.filter(t => t.durum === 'Beklemede').sort((a, b) => b.tarih.localeCompare(a.tarih)).slice(0, 8);
     const log = Local.get('log', []).slice(0, 10);
     const mini = (arr, f) => arr.length ? html`<div class="tw"><table class="tbl"><tbody>${arr.map(t => html`<tr data-act="openTeklif" data-id="${t.id}"><td class="mn-td"><div class="mn1"><b>${t.no}</b> · ${t.cariSnap.unvan}</div><div class="mn2"><span>${f(t)}</span><b>${money(calc(t, pm[t.id]).genel, t.doviz)}</b></div></td></tr>`)}</tbody></table></div>` : html`<div class="empty card" style="padding:24px">Kayıt yok</div>`;
-    mount(box, html`<div class="stats"><div class="stat"><div class="muted sm">Sipariş sayısı</div><div class="v">${D.ts.length}</div></div><div class="stat"><div class="muted sm">Sipariş toplamı</div><div class="v">${fmtMulti(top)}</div></div><div class="stat"><div class="muted sm">Tahsilat</div><div class="v">${fmtMulti(pes)}</div></div><div class="stat"><div class="muted sm">Kalan</div><div class="v">${fmtMulti(kal)}</div></div></div>
+    mount(box, html`<div id="grafK">${grafHTML()}</div><div class="stats"><div class="stat"><div class="muted sm">Sipariş sayısı</div><div class="v">${D.ts.length}</div></div><div class="stat"><div class="muted sm">Sipariş toplamı</div><div class="v">${fmtMulti(top)}</div></div><div class="stat"><div class="muted sm">Tahsilat</div><div class="v">${fmtMulti(pes)}</div></div><div class="stat"><div class="muted sm">Kalan</div><div class="v">${fmtMulti(kal)}</div></div></div>
       <div class="dgrid"><div><h3 style="margin-bottom:10px">Önümüzdeki 7 gün teslimatlar</h3>${mini(up, t => fmtDate(t.teslim))}</div><div><h3 style="margin-bottom:10px">Bekleyen siparişler</h3>${mini(bek, t => fmtDate(t.tarih))}</div>
       <div><h3 style="margin-bottom:10px">Bu cihazdaki son işlemler</h3>${log.length ? html`<div class="card" style="padding:6px 14px">${log.map(l => html`<div style="padding:8px 0;border-bottom:1px solid var(--border)"><div>${l.msg}</div><div class="muted sm">${fmtDT(l.ts)}</div></div>`)}</div>` : html`<div class="empty card" style="padding:24px">Kayıt yok</div>`}</div></div>`);
     return;
@@ -4415,51 +4495,83 @@ setTimeout(() => { try { pfSayCiz(); } catch (_) {} }, 800);
 </style>
 <script id="en-js">
 /* ===== İngilizce PDF: ürün çevirisi ===== */
-const EN_HAZIR = new Map('MAKAM MASASI=EXECUTIVE DESK;MAKAM TAKIMI=EXECUTIVE SET;MAKAM KOLTUĞU=EXECUTIVE CHAIR;MAKAM KOLTUGU=EXECUTIVE CHAIR;MAKAM=EXECUTIVE;;ÇALIŞMA MASASI=OFFICE DESK;PERSONEL MASASI=STAFF DESK;YÖNETİCİ MASASI=MANAGER DESK;YÖNETİCİ=MANAGER;OPERASYONEL MASA=OPERATIONAL DESK;OPERASYONEL=OPERATIONAL;;TOPLANTI MASASI=MEETING TABLE;KONFERANS MASASI=CONFERENCE TABLE;TOPLANTI=MEETING;KONFERANS=CONFERENCE;L MASA=L-SHAPED DESK;L TİPİ=L-SHAPED;;SAĞ DÖNÜŞ=RIGHT RETURN;SOL DÖNÜŞ=LEFT RETURN;DÖNÜŞ MASASI=RETURN DESK;YAN DÖNÜŞ=SIDE RETURN;DÖNÜŞ=RETURN;DÖNÜŞLÜ=WITH RETURN;;MASA TAKIMI=DESK SET;MASA TAKIMLARI=DESK SETS;MASA ÜSTÜ=DESKTOP;MASAÜSTÜ=DESKTOP;MASA=DESK;MASASI=DESK;MASALAR=DESKS;;ÇALIŞMA İSTASYONU=WORKSTATION;İSTASYON=STATION;WORKSTATION=WORKSTATION;BENCH MASA=BENCH DESK;ÖĞRETMEN MASASI=TEACHER DESK;ÖĞRENCİ MASASI=STUDENT DESK;ÖĞRENCİ=STUDENT;;YEMEK MASASI=DINING TABLE;BAR MASASI=BAR TABLE;ÇALIŞMA=WORK;;ORTA SEHPA=COFFEE TABLE;YAN SEHPA=SIDE TABLE;KÖŞE SEHPA=CORNER TABLE;SEHPA=COFFEE TABLE;SEHPASI=TABLE;;ÇEKMECELİ KESON=DRAWER PEDESTAL;MOBİL KESON=MOBILE PEDESTAL;SABİT KESON=FIXED PEDESTAL;KESON=PEDESTAL;KESONU=PEDESTAL;ÇEKMECE=DRAWER;ÇEKMECELİ=WITH DRAWERS;;DOSYA DOLABI=FILING CABINET;ARŞİV DOLABI=ARCHIVE CABINET;ARKA DOLAP=BACK CABINET;ARKA ÜNİTE=CREDENZA;YAN ÜNİTE=SIDE UNIT;KREDANS=CREDENZA;DOLAP=CABINET;DOLABI=CABINET;DOLAPLI=WITH CABINET;;KAPAKLI=WITH DOORS;KAPAKSIZ=OPEN;CAM KAPAKLI=GLASS DOOR;SÜRGÜ KAPAKLI=SLIDING DOOR;SÜRGÜLÜ=SLIDING;KAPAK=DOOR;KİLİTLİ=LOCKABLE;KİLİT=LOCK;;RAF=SHELF;RAFLI=WITH SHELVES;ETAJER=SHELF UNIT;KİTAPLIK=BOOKCASE;KİTAPLIKLI=WITH BOOKCASE;VİTRİN=DISPLAY CABINET;TV ÜNİTESİ=TV UNIT;ÜNİTE=UNIT;ÜNİTESİ=UNIT;KONSOL=CONSOLE;;RESEPSİYON BANKOSU=RECEPTION COUNTER;SEKRETER BANKOSU=SECRETARY COUNTER;KARŞILAMA BANKOSU=RECEPTION DESK;BANKO=COUNTER;BANKOSU=COUNTER;RESEPSİYON=RECEPTION;SEKRETER=SECRETARY;;KOLTUK TAKIMI=SOFA SET;ÇALIŞMA KOLTUĞU=TASK CHAIR;PERSONEL KOLTUĞU=STAFF CHAIR;MİSAFİR KOLTUĞU=VISITOR CHAIR;BEKLEME KOLTUĞU=WAITING CHAIR;KONFERANS KOLTUĞU=CONFERENCE CHAIR;;TOPLANTI KOLTUĞU=MEETING CHAIR;AMFİ KOLTUĞU=AUDITORIUM SEAT;OFİS KOLTUKLARI=OFFICE CHAIRS;OFİS KOLTUĞU=OFFICE CHAIR;KOLTUK=CHAIR;KOLTUĞU=CHAIR;KOLTUKLU=WITH CHAIRS;;MİSAFİR=VISITOR;PERSONEL=STAFF;BEKLEME=WAITING;AMFİ=AUDITORIUM;BAR TABURESİ=BAR STOOL;TABURE=STOOL;SANDALYE=CHAIR;SANDALYESİ=CHAIR;KANEPE=SOFA;BERJER=ARMCHAIR;PUF=POUF;;OTURMA GRUBU=SEATING GROUP;OTURMA GRUPLARI=SEATING GROUPS;OTURMA=SEATING;GRUBU=GROUP;GRUP=GROUP;TAKIM HALİNDE=AS A SET;TAKIM=SET;TAKIMI=SET;TAKIMLARI=SETS;;OFİS=OFFICE;BÜRO=OFFICE;MOBİLYA=FURNITURE;MOBİLYASI=FURNITURE;MOBİLYALARI=FURNITURE;MODÜL=MODULE;MODÜLER=MODULAR;;BÖLME PANELİ=PARTITION PANEL;BÖLME=PARTITION;PANEL=PANEL;PANELİ=PANEL;SEPERATÖR=SCREEN;SEPARATÖR=SCREEN;PARAVAN=SCREEN;AKUSTİK=ACOUSTIC;;KABLO KANALI=CABLE TRAY;KABLO GEÇİŞ KAPAĞI=CABLE GROMMET;KABLO GEÇİŞ=CABLE GROMMET;KABLO=CABLE;KANAL=CHANNEL;KANALI=TRAY;GEÇİŞ=PASSAGE;PRİZ=SOCKET;ELEKTRİK=ELECTRICAL;KUTUSU=BOX;KUTU=BOX;;METAL AYAK=METAL LEG;KROM AYAK=CHROME BASE;ALÜMİNYUM AYAK=ALUMINIUM BASE;AHŞAP AYAK=WOODEN LEG;AYAK=LEG;AYAKLI=LEGGED;AYAKLAR=LEGS;;METAL=METAL;KROM=CHROME;ALÜMİNYUM=ALUMINIUM;ÇELİK=STEEL;AHŞAP=WOODEN;PLASTİK=PLASTIC;NAYLON=NYLON;POLİAMİD=POLYAMIDE;;TEKERLEK=CASTOR;TEKERLEKLİ=ON CASTORS;AMORTİSÖR=GAS LIFT;MEKANİZMA=MECHANISM;MEKANİZMALI=WITH MECHANISM;SENKRON=SYNCHRO;;KOLÇAK=ARMREST;KOLÇAKLI=WITH ARMS;KOLÇAKSIZ=ARMLESS;YÜKSEKLİK AYARLI=HEIGHT ADJUSTABLE;AYARLI=ADJUSTABLE;ELEKTRİKLİ=ELECTRIC;BAŞLIK=HEADREST;BAŞLIKLI=WITH HEADREST;;FİLE SIRT=MESH BACK;YÜKSEK SIRT=HIGH BACK;ALÇAK SIRT=LOW BACK;ORTA SIRT=MID BACK;SIRT=BACK;SIRTLI=BACKED;FİLE=MESH;OTURAK=SEAT;MİNDER=CUSHION;;SUNİ DERİ=FAUX LEATHER;HAKİKİ DERİ=GENUINE LEATHER;DERİ=LEATHER;KUMAŞ=FABRIC;KUMAŞI=FABRIC;KADİFE=VELVET;KETEN=LINEN;DÖŞEME=UPHOLSTERY;DÖŞEMELİ=UPHOLSTERED;SÜNGER=FOAM;;MELAMİN=MELAMINE;LAMİNAT=LAMINATE;LAMİNE=LAMINATED;MDF=MDF;SUNTA=CHIPBOARD;LAM=LAMINATED;LAKE=LACQUER;LAKELİ=LACQUERED;PARLAK=GLOSSY;MAT=MATT;;TEMPERLİ CAM=TEMPERED GLASS;BUZLU CAM=FROSTED GLASS;CAM=GLASS;AYNA=MIRROR;MERMER=MARBLE;KAPLAMA=VENEER;DOĞAL=NATURAL;MASİF=SOLID WOOD;;DOĞAL MEŞE=NATURAL OAK;MEŞE=OAK;CEVİZ=WALNUT;KAYIN=BEECH;AKÇAAĞAÇ=MAPLE;TİK=TEAK;WENGE=WENGE;ZEBRANO=ZEBRANO;ARDIÇ=JUNIPER;;AÇIK GRİ=LIGHT GREY;KOYU GRİ=DARK GREY;BEYAZ=WHITE;SİYAH=BLACK;GRİ=GREY;ANTRASİT=ANTHRACITE;FÜME=SMOKED;KAHVE=BROWN;KAHVERENGİ=BROWN;BEJ=BEIGE;KREM=CREAM;VİZON=TAUPE;;LACİVERT=NAVY BLUE;MAVİ=BLUE;KIRMIZI=RED;BORDO=BURGUNDY;YEŞİL=GREEN;SARI=YELLOW;TURUNCU=ORANGE;MOR=PURPLE;PEMBE=PINK;TURKUAZ=TURQUOISE;;GÜMÜŞ=SILVER;ALTIN=GOLD;BRONZ=BRONZE;BAKIR=COPPER;RENK=COLOUR;RENKLİ=COLOURED;AÇIK=LIGHT;KOYU=DARK;;SAĞ=RIGHT;SOL=LEFT;ÇİFT=DOUBLE;YOK=NONE;SAĞA=RIGHT;SOLA=LEFT;ÖN=FRONT;ARKA=BACK;ALT=BOTTOM;ÜST=TOP;YAN=SIDE;ORTA=MIDDLE;;KÖŞE=CORNER;KÖŞELİ=CORNER;YUVARLAK=ROUND;OVAL=OVAL;KARE=SQUARE;DİKDÖRTGEN=RECTANGULAR;BÜYÜK=LARGE;KÜÇÜK=SMALL;;ÇİFTLİ=DOUBLE;İKİLİ=DOUBLE;TEKLİ=SINGLE;ÜÇLÜ=TRIPLE;DÖRTLÜ=FOUR-SEATER;ALTILI=SIX-SEATER;KİŞİLİK=PERSON;;STANDART=STANDARD;ÖZEL ÖLÇÜ=CUSTOM SIZE;ÖZEL=CUSTOM;ÖLÇÜ=SIZE;ÖLÇÜLÜ=SIZED;GENİŞLİK=WIDTH;DERİNLİK=DEPTH;YÜKSEKLİK=HEIGHT;BOY=LENGTH;ADET=PCS;;İLE=WITH;VE=AND;VEYA=OR;DAHİL=INCLUDED;HARİÇ=EXCLUDED;İÇİN=FOR;;KUMAŞ DEĞİŞİMİ YAPILACAK=FABRIC TO BE CHANGED;DEĞİŞİMİ YAPILACAK=TO BE CHANGED;DEĞİŞİMİ=CHANGE;YAPILACAK=TO BE DONE;;MONTAJ=ASSEMBLY;MONTAJLI=ASSEMBLED;MONTAJSIZ=UNASSEMBLED;NAKLİYE=SHIPPING;TESLİM=DELIVERY;GARANTİ=WARRANTY;YIL=YEAR;YENİ=NEW;;MODEL=MODEL;SERİ=SERIES;SERİSİ=SERIES;KOLEKSİYON=COLLECTION;LOGOLU=WITH LOGO;LOGO=LOGO;BASKI=PRINT;BASKILI=PRINTED;;ASKILIK=COAT STAND;PORTMANTO=COAT RACK;ÇÖP KOVASI=WASTE BIN;SAKSI=PLANTER;LAMBA=LAMP;AYDINLATMA=LIGHTING;HALI=CARPET;PERDE=CURTAIN;STOR=ROLLER BLIND;JALUZİ=VENETIAN BLIND;;KOMODİN=NIGHTSTAND;LABORATUVAR=LABORATORY;KAFETERYA=CAFETERIA;YEMEKHANE=DINING HALL;YEMEK=DINING;BAR=BAR;ÇAY OCAĞI=KITCHENETTE;MUTFAK=KITCHEN;TEZGAH=WORKTOP;SIRA=SCHOOL DESK;;EŞLİ=PAIRED;TAKIMLI=WITH SET;SET=SET;CM=CM;MM=MM;MT=M;KG=KG;X=X;'.split(';').filter(Boolean).map(x => { const i = x.indexOf('='); return [x.slice(0, i).trim(), x.slice(i + 1).trim()]; }));
+const EN_HAZIR = new Map('MAKAM MASASI=EXECUTIVE DESK;MAKAM TAKIMI=EXECUTIVE SET;MAKAM KOLTUĞU=EXECUTIVE CHAIR;MAKAM KOLTUGU=EXECUTIVE CHAIR;MAKAM=EXECUTIVE;;ÇALIŞMA MASASI=OFFICE DESK;PERSONEL MASASI=STAFF DESK;YÖNETİCİ MASASI=MANAGER DESK;YÖNETİCİ=MANAGER;OPERASYONEL MASA=OPERATIONAL DESK;OPERASYONEL=OPERATIONAL;;TOPLANTI MASASI=MEETING TABLE;KONFERANS MASASI=CONFERENCE TABLE;TOPLANTI=MEETING;KONFERANS=CONFERENCE;L MASA=L-SHAPED DESK;L TİPİ=L-SHAPED;;SAĞ DÖNÜŞ=RIGHT RETURN;SOL DÖNÜŞ=LEFT RETURN;DÖNÜŞ MASASI=RETURN DESK;YAN DÖNÜŞ=SIDE RETURN;DÖNÜŞ=RETURN;DÖNÜŞLÜ=WITH RETURN;;MASA TAKIMI=DESK SET;MASA TAKIMLARI=DESK SETS;MASA ÜSTÜ=DESKTOP;MASAÜSTÜ=DESKTOP;MASA=DESK;MASASI=DESK;MASALAR=DESKS;;ÇALIŞMA İSTASYONU=WORKSTATION;İSTASYON=STATION;WORKSTATION=WORKSTATION;BENCH MASA=BENCH DESK;ÖĞRETMEN MASASI=TEACHER DESK;ÖĞRENCİ MASASI=STUDENT DESK;ÖĞRENCİ=STUDENT;;YEMEK MASASI=DINING TABLE;BAR MASASI=BAR TABLE;ÇALIŞMA=WORK;;ORTA SEHPA=COFFEE TABLE;YAN SEHPA=SIDE TABLE;KÖŞE SEHPA=CORNER TABLE;SEHPA=COFFEE TABLE;SEHPASI=TABLE;;ÇEKMECELİ KESON=DRAWER PEDESTAL;MOBİL KESON=MOBILE PEDESTAL;SABİT KESON=FIXED PEDESTAL;KESON=PEDESTAL;KESONU=PEDESTAL;ÇEKMECE=DRAWER;ÇEKMECELİ=WITH DRAWERS;;DOSYA DOLABI=FILING CABINET;ARŞİV DOLABI=ARCHIVE CABINET;ARKA DOLAP=BACK CABINET;ARKA ÜNİTE=CREDENZA;YAN ÜNİTE=SIDE UNIT;KREDANS=CREDENZA;DOLAP=CABINET;DOLABI=CABINET;DOLAPLI=WITH CABINET;;KAPAKLI=WITH DOORS;KAPAKSIZ=OPEN;CAM KAPAKLI=GLASS DOOR;SÜRGÜ KAPAKLI=SLIDING DOOR;SÜRGÜLÜ=SLIDING;KAPAK=DOOR;KİLİTLİ=LOCKABLE;KİLİT=LOCK;;RAF=SHELF;RAFLI=WITH SHELVES;ETAJER=SHELF UNIT;KİTAPLIK=BOOKCASE;KİTAPLIKLI=WITH BOOKCASE;VİTRİN=DISPLAY CABINET;TV ÜNİTESİ=TV UNIT;ÜNİTE=UNIT;ÜNİTESİ=UNIT;KONSOL=CONSOLE;;RESEPSİYON BANKOSU=RECEPTION COUNTER;SEKRETER BANKOSU=SECRETARY COUNTER;KARŞILAMA BANKOSU=RECEPTION DESK;BANKO=COUNTER;BANKOSU=COUNTER;RESEPSİYON=RECEPTION;SEKRETER=SECRETARY;;KOLTUK TAKIMI=SOFA SET;ÇALIŞMA KOLTUĞU=TASK CHAIR;PERSONEL KOLTUĞU=STAFF CHAIR;MİSAFİR KOLTUĞU=VISITOR CHAIR;BEKLEME KOLTUĞU=WAITING CHAIR;KONFERANS KOLTUĞU=CONFERENCE CHAIR;;TOPLANTI KOLTUĞU=MEETING CHAIR;AMFİ KOLTUĞU=AUDITORIUM SEAT;OFİS KOLTUKLARI=OFFICE CHAIRS;OFİS KOLTUĞU=OFFICE CHAIR;KOLTUK=CHAIR;KOLTUĞU=CHAIR;KOLTUKLU=WITH CHAIRS;;MİSAFİR=VISITOR;PERSONEL=STAFF;BEKLEME=WAITING;AMFİ=AUDITORIUM;BAR TABURESİ=BAR STOOL;TABURE=STOOL;SANDALYE=CHAIR;SANDALYESİ=CHAIR;KANEPE=SOFA;BERJER=ARMCHAIR;PUF=POUF;;OTURMA GRUBU=SEATING GROUP;OTURMA GRUPLARI=SEATING GROUPS;OTURMA=SEATING;GRUBU=GROUP;GRUP=GROUP;TAKIM HALİNDE=AS A SET;TAKIM=SET;TAKIMI=SET;TAKIMLARI=SETS;;OFİS=OFFICE;BÜRO=OFFICE;MOBİLYA=FURNITURE;MOBİLYASI=FURNITURE;MOBİLYALARI=FURNITURE;MODÜL=MODULE;MODÜLER=MODULAR;;BÖLME PANELİ=PARTITION PANEL;BÖLME=PARTITION;PANEL=PANEL;PANELİ=PANEL;SEPERATÖR=SCREEN;SEPARATÖR=SCREEN;PARAVAN=SCREEN;AKUSTİK=ACOUSTIC;;KABLO KANALI=CABLE TRAY;KABLO GEÇİŞ KAPAĞI=CABLE GROMMET;KABLO GEÇİŞ=CABLE GROMMET;KABLO=CABLE;KANAL=CHANNEL;KANALI=TRAY;GEÇİŞ=PASSAGE;PRİZ=SOCKET;ELEKTRİK=ELECTRICAL;KUTUSU=BOX;KUTU=BOX;;METAL AYAK=METAL LEG;KROM AYAK=CHROME BASE;ALÜMİNYUM AYAK=ALUMINIUM BASE;AHŞAP AYAK=WOODEN LEG;AYAK=LEG;AYAKLI=LEGGED;AYAKLAR=LEGS;;METAL=METAL;KROM=CHROME;ALÜMİNYUM=ALUMINIUM;ÇELİK=STEEL;AHŞAP=WOODEN;PLASTİK=PLASTIC;NAYLON=NYLON;POLİAMİD=POLYAMIDE;;TEKERLEK=CASTOR;TEKERLEKLİ=ON CASTORS;AMORTİSÖR=GAS LIFT;MEKANİZMA=MECHANISM;MEKANİZMALI=WITH MECHANISM;SENKRON=SYNCHRO;;KOLÇAK=ARMREST;KOLÇAKLI=WITH ARMS;KOLÇAKSIZ=ARMLESS;YÜKSEKLİK AYARLI=HEIGHT ADJUSTABLE;AYARLI=ADJUSTABLE;ELEKTRİKLİ=ELECTRIC;BAŞLIK=HEADREST;BAŞLIKLI=WITH HEADREST;;FİLE SIRT=MESH BACK;YÜKSEK SIRT=HIGH BACK;ALÇAK SIRT=LOW BACK;ORTA SIRT=MID BACK;SIRT=BACK;SIRTLI=BACKED;FİLE=MESH;OTURAK=SEAT;MİNDER=CUSHION;;SUNİ DERİ=FAUX LEATHER;HAKİKİ DERİ=GENUINE LEATHER;DERİ=LEATHER;KUMAŞ=FABRIC;KUMAŞI=FABRIC;KADİFE=VELVET;KETEN=LINEN;DÖŞEME=UPHOLSTERY;DÖŞEMELİ=UPHOLSTERED;SÜNGER=FOAM;;MELAMİN=MELAMINE;LAMİNAT=LAMINATE;LAMİNE=LAMINATED;MDF=MDF;SUNTA=CHIPBOARD;LAM=LAMINATED;LAKE=LACQUER;LAKELİ=LACQUERED;PARLAK=GLOSSY;MAT=MATT;;TEMPERLİ CAM=TEMPERED GLASS;BUZLU CAM=FROSTED GLASS;CAM=GLASS;AYNA=MIRROR;MERMER=MARBLE;KAPLAMA=VENEER;DOĞAL=NATURAL;MASİF=SOLID WOOD;;DOĞAL MEŞE=NATURAL OAK;MEŞE=OAK;CEVİZ=WALNUT;KAYIN=BEECH;AKÇAAĞAÇ=MAPLE;TİK=TEAK;WENGE=WENGE;ZEBRANO=ZEBRANO;ARDIÇ=JUNIPER;;AÇIK GRİ=LIGHT GREY;KOYU GRİ=DARK GREY;BEYAZ=WHITE;SİYAH=BLACK;GRİ=GREY;ANTRASİT=ANTHRACITE;FÜME=SMOKED;KAHVE=BROWN;KAHVERENGİ=BROWN;BEJ=BEIGE;KREM=CREAM;VİZON=TAUPE;;LACİVERT=NAVY BLUE;MAVİ=BLUE;KIRMIZI=RED;BORDO=BURGUNDY;YEŞİL=GREEN;SARI=YELLOW;TURUNCU=ORANGE;MOR=PURPLE;PEMBE=PINK;TURKUAZ=TURQUOISE;;GÜMÜŞ=SILVER;ALTIN=GOLD;BRONZ=BRONZE;BAKIR=COPPER;RENK=COLOUR;RENKLİ=COLOURED;AÇIK=LIGHT;KOYU=DARK;;SAĞ=RIGHT;SOL=LEFT;ÇİFT=DOUBLE;YOK=NONE;SAĞA=RIGHT;SOLA=LEFT;ÖN=FRONT;ARKA=BACK;ALT=BOTTOM;ÜST=TOP;YAN=SIDE;ORTA=MIDDLE;;KÖŞE=CORNER;KÖŞELİ=CORNER;YUVARLAK=ROUND;OVAL=OVAL;KARE=SQUARE;DİKDÖRTGEN=RECTANGULAR;BÜYÜK=LARGE;KÜÇÜK=SMALL;;ÇİFTLİ=DOUBLE;İKİLİ=DOUBLE;TEKLİ=SINGLE;ÜÇLÜ=TRIPLE;DÖRTLÜ=FOUR-SEATER;ALTILI=SIX-SEATER;KİŞİLİK=PERSON;;STANDART=STANDARD;ÖZEL ÖLÇÜ=CUSTOM SIZE;ÖZEL=CUSTOM;ÖLÇÜ=SIZE;ÖLÇÜLÜ=SIZED;GENİŞLİK=WIDTH;DERİNLİK=DEPTH;YÜKSEKLİK=HEIGHT;BOY=LENGTH;ADET=PCS;;İLE=WITH;VE=AND;VEYA=OR;DAHİL=INCLUDED;HARİÇ=EXCLUDED;İÇİN=FOR;;KUMAŞ DEĞİŞİMİ YAPILACAK=FABRIC TO BE CHANGED;DEĞİŞİMİ YAPILACAK=TO BE CHANGED;DEĞİŞİMİ=CHANGE;YAPILACAK=TO BE DONE;;MONTAJ=ASSEMBLY;MONTAJLI=ASSEMBLED;MONTAJSIZ=UNASSEMBLED;NAKLİYE=SHIPPING;TESLİM=DELIVERY;GARANTİ=WARRANTY;YIL=YEAR;YENİ=NEW;;MODEL=MODEL;SERİ=SERIES;SERİSİ=SERIES;KOLEKSİYON=COLLECTION;LOGOLU=WITH LOGO;LOGO=LOGO;BASKI=PRINT;BASKILI=PRINTED;;ASKILIK=COAT STAND;PORTMANTO=COAT RACK;ÇÖP KOVASI=WASTE BIN;SAKSI=PLANTER;LAMBA=LAMP;AYDINLATMA=LIGHTING;HALI=CARPET;PERDE=CURTAIN;STOR=ROLLER BLIND;JALUZİ=VENETIAN BLIND;;KOMODİN=NIGHTSTAND;LABORATUVAR=LABORATORY;KAFETERYA=CAFETERIA;YEMEKHANE=DINING HALL;YEMEK=DINING;BAR=BAR;ÇAY OCAĞI=KITCHENETTE;MUTFAK=KITCHEN;TEZGAH=WORKTOP;SIRA=SCHOOL DESK;;EŞLİ=PAIRED;TAKIMLI=WITH SET;SET=SET;CM=CM;MM=MM;MT=M;KG=KG;X=X;;;KİŞİ=PERSON;ÇEKMECELER=DRAWERS;ÇEKMECESİ=DRAWER;KESONLU=WITH PEDESTAL;KAPAKLAR=DOORS;KAPAĞI=DOOR;RAFLAR=SHELVES;RAFI=SHELF;AYAKLARI=LEGS;AYAĞI=LEG;TEKERLEKLER=CASTORS;TEKER=CASTOR;TEKERLİ=ON CASTORS;KULP=HANDLE;KULPLU=WITH HANDLES;KULPSUZ=HANDLELESS;KULBU=HANDLE;MENTEŞE=HINGE;RAY=RUNNER;RAYLI=WITH RUNNERS;FREN=BRAKE;FRENLİ=WITH BRAKES;GÖVDE=BODY;GÖVDESİ=BODY;TABLA=TOP;TABLASI=TOP;MASA TABLASI=DESKTOP;ÜST TABLA=TOP;ALT TABLA=BOTTOM;KENAR=EDGE;KENARI=EDGE;PVC KENAR=PVC EDGE;BANT=EDGE BAND;KALINLIK=THICKNESS;KALINLIĞI=THICKNESS;ÇERÇEVE=FRAME;ÇERÇEVELİ=FRAMED;İSKELET=FRAME;KASA=CARCASS;KASASI=CARCASS;PROFİL=PROFILE;BORU=TUBE;KARE PROFİL=SQUARE PROFILE;ELEKTROSTATİK BOYA=POWDER COATED;BOYA=PAINT;BOYALI=PAINTED;BOYASIZ=UNPAINTED;TOZ BOYA=POWDER COATING;PASLANMAZ=STAINLESS;PASLANMAZ ÇELİK=STAINLESS STEEL;DÖKÜM=CAST;ALÜMİNYUM DÖKÜM=CAST ALUMINIUM;ENJEKSİYON=INJECTION;POLİPROPİLEN=POLYPROPYLENE;SIRTLIK=BACKREST;OTURMA MİNDERİ=SEAT CUSHION;YASTIK=CUSHION;YASTIKLI=WITH CUSHIONS;BEL DESTEĞİ=LUMBAR SUPPORT;BEL DESTEKLİ=WITH LUMBAR SUPPORT;BOYUN DESTEĞİ=NECK SUPPORT;AYAK DESTEĞİ=FOOTREST;GAZ PİSTONU=GAS LIFT;PİSTON=GAS LIFT;YILDIZ AYAK=STAR BASE;SABİT=FIXED;HAREKETLİ=MOVABLE;KATLANIR=FOLDING;İSTİFLENEBİLİR=STACKABLE;DÖNER=SWIVEL;SALLANIR=ROCKING;AYARLANABİLİR=ADJUSTABLE;YÜKSEKLİĞİ AYARLANABİLİR=HEIGHT ADJUSTABLE;KİLİTLENEBİLİR=LOCKABLE;MERKEZİ KİLİT=CENTRAL LOCK;ANAHTAR=KEY;ANAHTARLI=WITH KEY;ŞİFRELİ=WITH COMBINATION LOCK;DOSYA=FILE;DOSYALIK=FILE STORAGE;ASKILI DOSYA=HANGING FILE;KLASÖR=BINDER;KLASÖRLÜK=BINDER SHELF;ARŞİV=ARCHIVE;EVRAK=DOCUMENT;EVRAKLIK=DOCUMENT TRAY;GARDIROP=WARDROBE;SOYUNMA DOLABI=LOCKER;KİLİTLİ DOLAP=LOCKER;ÇELİK DOLAP=STEEL CABINET;ÇELİK ARŞİV=STEEL FILING CABINET;KASA DOLABI=SAFE;PERSONEL DOLABI=STAFF LOCKER;ALT DOLAP=LOW CABINET;ÜST DOLAP=WALL CABINET;ORTA DOLAP=MID CABINET;YÜKSEK DOLAP=TALL CABINET;ALÇAK DOLAP=LOW CABINET;KÖŞE DOLAP=CORNER CABINET;ÇALIŞMA ALANI=WORKSPACE;OPEN OFİS=OPEN OFFICE;AÇIK OFİS=OPEN OFFICE;ODA=ROOM;TOPLANTI ODASI=MEETING ROOM;BEKLEME SALONU=WAITING AREA;LOBİ=LOBBY;EĞİTİM MASASI=TRAINING TABLE;EĞİTİM=TRAINING;SINIF=CLASSROOM;KÜTÜPHANE=LIBRARY;OKUMA=READING;KATLANIR MASA=FOLDING TABLE;AYAKTA ÇALIŞMA=STANDING DESK;DİZÜSTÜ=LAPTOP;MONİTÖR=MONITOR;MONİTÖR KOLU=MONITOR ARM;KLAVYE=KEYBOARD;KLAVYE RAFI=KEYBOARD TRAY;CPU=CPU;CPU TUTUCU=CPU HOLDER;PRİZ KUTUSU=POWER BOX;ÜÇLÜ PRİZ=3-WAY SOCKET;USB=USB;ŞARJ=CHARGING;KABLO TAVASI=CABLE TRAY;KABLO SPİRALİ=CABLE SPINE;KAPI=DOOR;KAPILI=WITH DOORS;ÇİFT KAPAKLI=DOUBLE DOOR;TEK KAPAKLI=SINGLE DOOR;AÇILIR KAPAK=HINGED DOOR;KAYAR KAPAK=SLIDING DOOR;CAMLI=GLAZED;CAM KAPAK=GLASS DOOR;ŞEFFAF=TRANSPARENT;BUZLU=FROSTED;FÜME CAM=SMOKED GLASS;TEMPERLİ=TEMPERED;DEKOR=DECOR;DESEN=PATTERN;DESENLİ=PATTERNED;DOKU=TEXTURE;DOKULU=TEXTURED;MAT LAKE=MATT LACQUER;PARLAK LAKE=GLOSS LACQUER;ANTİK=ANTIQUE;MODERN=MODERN;KLASİK=CLASSIC;LÜKS=LUXURY;EKONOMİK=ECONOMY;PREMİUM=PREMIUM;ORİJİNAL=ORIGINAL;KATALOG=CATALOGUE;KATALOG RENGİ=CATALOGUE COLOUR;RENGİ=COLOUR;RENKLERİ=COLOURS;NUMUNE=SAMPLE;TEK=SINGLE;ÇİFT KİŞİLİK=DOUBLE;İKİ=TWO;ÜÇ=THREE;DÖRT=FOUR;BEŞ=FIVE;ALTI=SIX;SEKİZ=EIGHT;ON=TEN;ON İKİ=TWELVE;KISA=SHORT;UZUN=LONG;GENİŞ=WIDE;DAR=NARROW;YÜKSEK=HIGH;ALÇAK=LOW;DERİN=DEEP;İNCE=THIN;KALIN=THICK;YARIM=HALF;TAM=FULL;KISMİ=PARTIAL;BİRLEŞİK=COMBINED;BİRLEŞTİRİLEBİLİR=MODULAR;UZATMA=EXTENSION;EK=EXTENSION;EK MASA=EXTENSION DESK;ÜRETİM=PRODUCTION;ÖZEL ÜRETİM=CUSTOM MADE;İMALAT=MANUFACTURING;STOKTAN=FROM STOCK;SİPARİŞ=ORDER;HAZIR=READY;DEMONTE=FLAT-PACK;NOT=NOTE;AÇIKLAMA=DESCRIPTION;RENKLERİNDE=IN COLOURS;RENGİNDE=IN COLOUR;GİBİ=AS;AYNI=SAME;FARKLI=DIFFERENT;ŞEKİL=SHAPE;ŞEKLİNDE=SHAPED;U MASA=U-SHAPED TABLE;U TİPİ=U-SHAPED;T AYAK=T-LEG;X AYAK=X-LEG;U AYAK=U-LEG;H AYAK=H-LEG;A AYAK=A-LEG;PANEL AYAK=PANEL LEG;KIZAK=SLED BASE;KIZAK AYAK=SLED BASE;SEHPA TAKIMI=COFFEE TABLE SET;ZİGON=NESTING TABLES;BANK=BENCH;BANKET=BENCH;PUF KOLTUK=POUF;ÜÇLÜ KANEPE=3-SEATER SOFA;İKİLİ KANEPE=2-SEATER SOFA;TEKLİ KOLTUK=ARMCHAIR'.split(';').filter(Boolean).map(x => { const i = x.indexOf('='); return [x.slice(0, i).trim(), x.slice(i + 1).trim()]; }));
 const enUp = s => String(s == null ? '' : s).toLocaleUpperCase('tr-TR');
 const enTemiz = (s, n = 80) => String(s == null ? '' : s).replace(/[\u0000-\u001F\u007F<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, n);
-function enSoz() { const v = mem('meta').get('sozluk_en') || {}; return { s: v.s && typeof v.s === 'object' ? v.s : {}, k: Array.isArray(v.k) ? v.k : [] }; }
+/* İngilizce karşılık İngilizce kurala göre büyütülür (office → OFFICE, OFFİCE değil); eski kayıtlardaki İ/ı okurken onarılır */
+const enIng = s => String(s == null ? '' : s).toUpperCase().replace(/İ/g, 'I').replace(/I\u0307/g, 'I');
+function enSoz() { const v = mem('meta').get('sozluk_en') || {}; const s = {};
+  if (v.s && typeof v.s === 'object') for (const [a, b] of Object.entries(v.s)) s[a] = enIng(b);
+  return { s, k: Array.isArray(v.k) ? v.k : [] }; }
 function enKaydet(z) {
   const s = {}, k = [];
-  for (const [a, b] of Object.entries(z.s || {}).slice(0, 2000)) { const A = enUp(enTemiz(a, 80)), B = enUp(enTemiz(b, 120)); if (A && B) s[A] = B; }
+  for (const [a, b] of Object.entries(z.s || {}).slice(0, 2000)) { const A = enUp(enTemiz(a, 80)), B = enIng(enTemiz(b, 120)); if (A && B) s[A] = B; }
   for (const a of (z.k || []).slice(0, 2000)) { const A = enUp(enTemiz(a, 80)); if (A && !k.includes(A)) k.push(A); }
   Sync.put('meta', 'sozluk_en', { s, k, updated: Date.now() });
 }
 const EN_HARF = /[A-ZÇĞİÖŞÜ]/;
-/* Bir metni çevirir; çevrilemeyen kelimeleri "eksik" kümesine ekler. En uzun ifade önce (4 kelimeye kadar). */
+/* Bir metni çevirir; çevrilemeyen kelimeleri "eksik" kümesine ekler. En uzun ifade önce (4 kelimeye kadar).
+   - Noktalama (virgül, nokta, parantez…) ifadeyi bozmaz: "TOPLANTI MASASI," → "MEETING TABLE,"
+   - "/" ayraçtır: "DOSYA DOLABI/KİTAPLIK" → "FILING CABINET/BOOKCASE"
+   - -lı/-li/-lu/-lü ("WITH …") isimden sonra gelir: "KAPAKLI ÇEKMECELİ DOLAP" → "CABINET WITH DOORS AND DRAWERS" */
+const EN_SAYILMAZ = new Set(['GLASS', 'METAL', 'WOOD', 'LEATHER', 'FABRIC', 'MESH', 'ALUMINIUM', 'CHROME', 'STEEL', 'MELAMINE', 'LAMINATE', 'VENEER', 'MARBLE', 'PLASTIC', 'LACQUER', 'UPHOLSTERY', 'SPONGE', 'FOAM', 'MDF', 'LOGO', 'MECHANISM', 'LOCK', 'KEY', 'LIGHTING', 'ELECTRICITY', 'USB']);
+const enCogul = r => { const w = r.split(' '), son = w.pop();
+  if (EN_SAYILMAZ.has(son) || /S$/.test(son) || /\d/.test(son)) return r;
+  const c = son === 'SHELF' ? 'SHELVES' : /(SH|CH|X|Z)$/.test(son) ? son + 'ES' : /[^AEIOU]Y$/.test(son) ? son.slice(0, -1) + 'IES' : son + 'S';
+  return [...w, c].join(' '); };
 function enCevir(metin, eksik) {
   if (metin == null || metin === '') return metin;
   const z = enSoz(), kul = z.s, tut = new Set(z.k);
   const bul = k => (k in kul ? kul[k] : EN_HAZIR.get(k));
   const tek = w => {
-    let r = bul(w); if (r != null) return r;
+    let r = bul(w) ?? (w.includes('İ') ? bul(w.replace(/İ/g, 'I')) : null); if (r != null) return r;   /* İngilizce kelime Türkçe büyütülmüşse (WORKSTATİON) */
+    const li = /^(.{3,})(LI|Lİ|LU|LÜ)$/.exec(w);
+    if (li) { const kok = li[1]; const k = bul(kok) ?? bul(kok.replace(/Ğ$/, 'K')); if (k != null && !/^WITH /.test(k)) return 'WITH ' + enCogul(k); }
     for (const [ek, cog] of [['LARI', 1], ['LERİ', 1], ['LAR', 1], ['LER', 1], ['LERİN', 1], ['LARIN', 1], ['Sİ', 0], ['SI', 0], ['SU', 0], ['SÜ', 0], ['İ', 0], ['I', 0], ['U', 0], ['Ü', 0]]) {
       if (w.length > ek.length + 2 && w.endsWith(ek)) { const kok = w.slice(0, -ek.length); r = bul(kok) ?? bul(kok.replace(/Ğ$/, 'K')); if (r != null) return cog && !/S$/.test(r) ? r + 'S' : r; }
     }
     return null;
   };
-  const satir = String(metin).split('\n');
-  return satir.map(line => {
-    const tok = enUp(line).split(/(\s+)/), ham = line.split(/(\s+)/);
-    const out = []; let i = 0;
+  const NOK = /^([^A-ZÇĞİÖŞÜ0-9]*)(.*?)([^A-ZÇĞİÖŞÜ0-9]*)$/;
+  const ayir = t => { const m = NOK.exec(t); return m ? [m[1], m[2], m[3]] : ['', t, '']; };
+  const ayrac = t => /^\s+$/.test(t), bolen = t => t === '/';
+  return String(metin).split('\n').map(line => {
+    const ham = line.split(/(\s+|\/)/).filter(x => x !== ''), tok = ham.map(enUp);
+    const out = []; let i = 0;   /* out: { t: metin, w: true → "WITH …" sıfatı, s: ayraç } */
     while (i < tok.length) {
-      if (/^\s*$/.test(tok[i])) { out.push(tok[i]); i++; continue; }
+      if (ayrac(tok[i]) || bolen(tok[i])) { out.push({ t: ham[i], s: true }); i++; continue; }
       let ok = false;
       for (let n = 4; n >= 2 && !ok; n--) {
-        const parts = []; let j = i, c = 0; while (j < tok.length && c < n) { if (!/^\s+$/.test(tok[j])) { parts.push(tok[j]); c++; } j++; }
+        const parca = []; let j = i, c = 0;
+        while (j < tok.length && c < n && !bolen(tok[j])) { if (!ayrac(tok[j])) { parca.push(j); c++; } j++; }
         if (c < n) continue;
-        const k = parts.join(' '), r = bul(k);
-        if (r != null && !/[^\wÇĞİÖŞÜçğıöşü\-]$/.test(k)) { out.push(r); i = j; ok = true; }
+        const ilk = ayir(tok[parca[0]]), son = ayir(tok[parca[n - 1]]);
+        if (ilk[2] || parca.slice(1, -1).some(x => ayir(tok[x])[0] || ayir(tok[x])[2]) || (n > 1 && son[0])) continue;   /* araya noktalama girmişse ifade sayılmaz */
+        const kel = parca.map((x, q) => q === 0 ? ilk[1] : q === n - 1 ? son[1] : tok[x]);
+        const r = bul(kel.join(' '));
+        if (r != null) { out.push({ t: ilk[0] + r + son[2], w: /^WITH /.test(r) && !ilk[0] && !son[2] }); i = j; ok = true; }
       }
       if (ok) continue;
-      const m = tok[i].match(/^([^A-ZÇĞİÖŞÜ0-9]*)(.*?)([^A-ZÇĞİÖŞÜ0-9]*)$/), on = m ? m[1] : '', w = m ? m[2] : tok[i], son = m ? m[3] : '';
+      const [on, w, son] = ayir(tok[i]);
       let r = w ? tek(w) : null;
       if (r == null && w.includes('-')) { const p = w.split('-').map(x => tek(x)); if (p.every(x => x != null)) r = p.join('-'); }
-      if (r == null) { r = ham[i]; if (w && EN_HARF.test(w) && !/\d/.test(w) && w.length > 1 && !tut.has(w) && eksik) eksik.add(w); }
-      else r = on + r + son;
-      out.push(r); i++;
+      if (r == null) { out.push({ t: ham[i] }); if (w && EN_HARF.test(w) && !/\d/.test(w) && w.length > 1 && !tut.has(w) && eksik) eksik.add(w); }
+      else out.push({ t: on + r + son, w: /^WITH /.test(r) && !on && !son });
+      i++;
     }
-    return out.join('');
+    /* "WITH …" sıfatlarını arkasındaki isimden sonraya al; birden çoksa AND ile birleştir */
+    const S = [];
+    for (let k = 0; k < out.length; k++) {
+      if (!out[k].w) { S.push(out[k].t); continue; }
+      const grup = []; let m = k;
+      while (m < out.length && (out[m].w || (out[m].s && /^\s+$/.test(out[m].t) && out[m + 1]?.w))) { if (out[m].w) grup.push(out[m].t.replace(/^WITH /, '')); m++; }
+      let n = m; while (n < out.length && out[n].s && /^\s+$/.test(out[n].t)) n++;
+      if (n < out.length && !out[n].s && !out[n].w && EN_HARF.test(out[n].t) && !/[^A-Z0-9)\-]$/.test(out[n].t.replace(/[,.;:]$/, ''))) {
+        const isim = out[n].t, nok = /[,.;:]$/.exec(isim)?.[0] || '';
+        S.push(isim.slice(0, isim.length - nok.length) + ' WITH ' + grup.join(' AND ') + nok); k = n;
+      } else { S.push('WITH ' + grup.join(' AND ')); k = m - 1; }
+    }
+    return S.join('').replace(/(\d+) PERSON\b/g, '$1-PERSON');
   }).join('\n');
 }
 function enT(L, v) { return L === PL.en ? enCevir(v, null) : v; }

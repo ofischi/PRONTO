@@ -701,6 +701,26 @@ tr.ps-off td, .lcard.ps-off{opacity:.62}
 @media (max-width:560px){.ky-b{width:100%}.ky-b .btn{flex:1 1 auto}}
 .pd-not{margin-top:6mm;padding:3mm 4mm;border-left:2px solid #1d1d1f;background:#f6f6f4;font-size:9pt;white-space:pre-wrap;break-inside:avoid;page-break-inside:avoid}
 .pd-not b{display:block;font-size:8pt;letter-spacing:.06em;text-transform:uppercase;margin-bottom:1.5mm}
+.pd-bank{margin-top:6mm;padding:3mm 4mm;border:1px solid #d5d8dd;border-radius:2mm;font-size:9pt;break-inside:avoid;page-break-inside:avoid}
+.bk-sec{margin:10px 0 14px;display:grid;gap:10px}.bk-sec .field{margin:0}
+.bk-list{display:grid;gap:6px}
+.bk-opt{display:flex;gap:10px;align-items:flex-start;text-align:left;width:100%;padding:9px 11px;border:1px solid var(--border-2);border-radius:var(--r-sm);background:transparent;color:inherit;cursor:pointer}
+.bk-opt.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,transparent)}
+.bk-opt .bk-cb{flex:0 0 18px;height:18px;margin-top:1px;border:1.5px solid var(--border-2);border-radius:4px;display:grid;place-items:center}
+.bk-opt.on .bk-cb{background:var(--accent);border-color:var(--accent)}.bk-opt.on .bk-cb::after{content:'';width:5px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:translateY(-1px) rotate(45deg)}
+.bk-opt .t{display:flex;flex-direction:column;min-width:0}.bk-opt .t span{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;letter-spacing:.02em;overflow-wrap:anywhere}
+.bk-opt .t i{font-style:normal;font-size:11.5px;color:var(--muted)}
+.bk-seg button{height:34px}
+.sih-bk{margin-top:6px}.sih-bk.bad .bk-seg{border-color:var(--danger,#c62828)}
+.bk-kl{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}.bk-kl>div{display:flex;flex-direction:column;gap:2px}
+.bk-kl code,.bk-ib{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;letter-spacing:.02em;overflow-wrap:anywhere}
+.bk-gh{margin:14px 0 6px;font-size:13px;color:var(--muted);letter-spacing:.04em}.bk-pasif td{opacity:.5}.bk-pasif td.r{opacity:1}
+.chk{display:flex;gap:8px;align-items:center;cursor:pointer;font-size:14px}.chk input{width:18px;height:18px;flex:0 0 18px}
+.bk-iban{font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.03em}
+.pd-bank>b{display:block;font-size:8pt;letter-spacing:.06em;margin-bottom:1.5mm}
+.pd-bank table{width:100%;border-collapse:collapse}.pd-bank td{padding:1.2mm 4mm 1.2mm 0;vertical-align:top}
+.pd-bank tr+tr td{border-top:1px solid #eceef1}.pd-bank td span{display:block;font-size:7pt;color:#6b707c}
+.pd-bank td b{font-weight:700;letter-spacing:.02em}
 .not-g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .not-g .field textarea{min-height:74px;resize:vertical}
 .not-tag{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;font-size:10.5px;font-weight:600;background:rgba(120,130,145,.18);color:var(--muted);text-transform:none;letter-spacing:0}
@@ -1204,12 +1224,66 @@ const modelFoto = {
 
 /* ---------- ayarlar (ortak) + tema (cihaza özel) ---------- */
 const DEF = { doviz:'TRY', kdv:10, firma:{ ad:'PRONTO Mobilya', tel:'', adres:'İnegöl / Bursa', eposta:'' }, logoSize:40,
-  brand:{ size:13, weight:600, color:'' }, menuW:248, menuFont:15, cariTurleri:['Bireysel','Kurumsal','Bayi'],
+  brand:{ size:13, weight:600, color:'' }, menuW:248, menuFont:15, cariTurleri:['Bireysel','Kurumsal','Bayi'], bankalar:[],
   pdf:{ lang:'tr', size:'A4', orient:'portrait', foto:'m', logoPos:'left', logoSize:'m' } };
 const merge = (a, b) => { const o = deep(a); for (const k in b) o[k] = (b[k] && typeof b[k] === 'object' && !Array.isArray(b[k]) && o[k] && typeof o[k] === 'object') ? merge(o[k], b[k]) : b[k]; return o; };
 let S = merge(DEF, {});
 function loadSettings() { const th = Local.get('theme', 'light'); S = merge(DEF, mem('meta').get('settings') || {}); S.theme = th === 'dark' ? 'dark' : 'light'; }
 const saveS = () => { const s = deep(S); delete s.theme; Sync.put('meta', 'settings', s); return true; };
+
+/* ---------- BANKA HESAPLARI ----------
+   Hesaplar yalnız Ayarlar'da eklenir (S.bankalar, ortak ayar satırında — ek sunucu isteği yok).
+   Teklife seçilen hesapların KOPYASI yazılır (ünvan, IBAN, SWIFT): hesap sonradan değişse/silinse de eski teklif ve PDF aynı kalır.
+   Silinen hesap listeden kalkar ama kayıttan silinmez (silindi tarihi) — eski ödemelerde adı görünmeye devam eder.
+   PDF'te yalnız ünvan + IBAN (USD/EUR'da SWIFT) çıkar; tür, banka adı, şube, not asla çıkmaz. */
+const BK_TUR = { resmi: 'Resmi', gayri: 'Gayri resmi' };
+const ibanTemiz = s => String(s ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 34);
+const ibanFmt = s => ibanTemiz(s).replace(/(.{4})/g, '$1 ').trim();
+function ibanGecerli(s) {
+  const i = ibanTemiz(s);
+  if (!/^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$/.test(i) || (i.startsWith('TR') && !/^TR\d{24}$/.test(i))) return false;
+  let m = 0; for (const ch of (i.slice(4) + i.slice(0, 4)).replace(/[A-Z]/g, c => String(c.charCodeAt(0) - 55))) m = (m * 10 + +ch) % 97;
+  return m === 1;
+}
+const swiftTemiz = s => String(s ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 11);
+const swiftGecerli = s => /^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/.test(s);
+const bkTum = () => (Array.isArray(S.bankalar) ? S.bankalar : []).filter(b => b && b.id && !b.silindi);
+const bkBul = id => (Array.isArray(S.bankalar) ? S.bankalar : []).find(b => b && b.id === id);
+const bkAktif = (dv, tur) => bkTum().filter(b => b.aktif !== false && b.doviz === dv && (dv !== 'TRY' || b.tur === tur));
+const bkAd = b => b ? [b.banka || b.unvan, b.doviz, b.doviz === 'TRY' && BK_TUR[b.tur], '…' + ibanTemiz(b.iban).slice(-4)].filter(Boolean).join(' · ') : '';
+const bkKopya = b => ({ id: b.id, banka: clean(b.banka, 60), unvan: clean(b.unvan, 120), iban: ibanTemiz(b.iban), doviz: b.doviz, ...(b.doviz === 'TRY' ? { tur: b.tur } : (b.swift ? { swift: swiftTemiz(b.swift) } : {})) });
+function bkVarsayilan(d) {
+  if (!CURS.includes(d.doviz) || (d.doviz === 'TRY' && !BK_TUR[d.hesapTur])) return [];
+  return bkAktif(d.doviz, d.hesapTur).filter(b => b.varsayilan).map(bkKopya);
+}
+/* Döviz değişince: TL dışında tür yok; varsayılan hesaplar gelir; gayri resmiden çıkınca KDV geri gelir */
+function bkDovizUygula(d) {
+  const eski = d.hesapTur;
+  if (d.doviz !== 'TRY') delete d.hesapTur;
+  d.bankalar = bkVarsayilan(d);
+  if (eski === 'gayri' && d.hesapTur !== 'gayri') d.kdv = S.kdv;
+}
+function bkYenile() {
+  const d = state.draft; if (!d) return;
+  if (tkPanel.sih) { sihCiz(); return; }
+  const f = $('#fBanka'); if (f) mount(f, bkSecimHTML(d));
+  const k = $('[data-d="kdv"]'); if (k) { k.value = numStr(d.kdv) || '0'; k.disabled = d.hesapTur === 'gayri'; k.classList.remove('bad'); }
+  const kn = $('#kdvNot'); if (kn) kn.classList.toggle('hidden', d.hesapTur !== 'gayri');
+  if ($('#tots')) drawTots();
+}
+function bkSecimHTML(d) {
+  if (!CURS.includes(d.doviz)) return html`<div class="muted sm bk-bos">Banka hesapları döviz seçilince gelir.</div>`;
+  const tr = d.doviz === 'TRY';
+  const turH = tr ? html`<div class="field bk-turf"><label>HESAP TÜRÜ <span class="req">*</span></label><div class="seg bk-seg" data-d="hesapTur">${Object.entries(BK_TUR).map(([v, l]) => html`<button type="button" class="${d.hesapTur === v ? 'on' : ''}" data-act="bkTur" data-v="${v}">${l}</button>`)}</div>${d.hesapTur === 'gayri' ? html`<div class="muted sm">Gayri resmi teklifte KDV yok.</div>` : ''}</div>` : '';
+  if (tr && !BK_TUR[d.hesapTur]) return html`<div class="bk-sec">${turH}</div>`;
+  const secili = Array.isArray(d.bankalar) ? d.bankalar : [], ids = new Set(secili.map(b => b.id));
+  const list = bkAktif(d.doviz, d.hesapTur);
+  const diger = secili.filter(b => !list.some(x => x.id === b.id));   /* teklifte kayıtlı ama artık pasif/silinmiş */
+  const satir = (b, on, not) => html`<button type="button" class="bk-opt ${on ? 'on' : ''}" data-act="bkSec" data-id="${b.id}" aria-pressed="${on ? 'true' : 'false'}"><span class="bk-cb"></span><span class="t"><b>${b.banka || b.unvan}</b><span>${ibanFmt(b.iban)}</span>${not ? html`<i>${not}</i>` : ''}</span></button>`;
+  return html`<div class="bk-sec">${turH}<div class="field"><label>BANKA HESAPLARI <span class="muted" style="font-weight:500">— PDF'te ünvan + IBAN${tr ? '' : ' + SWIFT'}</span></label>
+    ${list.length || diger.length ? html`<div class="bk-list">${list.map(b => satir(b, ids.has(b.id), b.varsayilan ? 'Varsayılan' : ''))}${diger.map(b => satir(b, true, 'Teklifte kayıtlı (Ayarlar\'da pasif/silinmiş)'))}</div>`
+      : html`<div class="muted sm">${d.doviz}${tr ? ' ' + BK_TUR[d.hesapTur].toLocaleLowerCase('tr-TR') : ''} hesabı yok. Ayarlar → Banka Hesapları'ndan ekleyin.</div>`}</div></div>`;
+}
 
 /* ---------- hesaplama ---------- */
 function payMap() { const m = {}; for (const p of DB.odeme.all()) (m[p.teklifId] ||= []).push(p); return m; }
@@ -1450,6 +1524,24 @@ function openSettings() {
 
 /* ---------- global olay yönetimi ---------- */
 const A = {};
+/* Banka hesabı seçimi (teklif formu + telefon sihirbazı) */
+A.bkTur = async el => {
+  const d = state.draft, v = el.dataset.v; if (!d || !BK_TUR[v] || d.doviz !== 'TRY' || d.hesapTur === v) return;
+  if (d.id && d.hesapTur && !await confirmBox({ title: 'Hesap türü değişsin mi?', body: html`<p>Bu sipariş <b>${BK_TUR[d.hesapTur]}</b> kayıtlı. <b>${BK_TUR[v]}</b> yapılırsa banka hesapları ${v === 'gayri' ? 've KDV (0 olur)' : 've KDV (%' + NF.format(S.kdv).replace(',00', '') + ' olur)'} değişir.</p>`, ok: 'Değiştir' })) return;
+  const eski = d.hesapTur; d.hesapTur = v;
+  if (v === 'gayri') d.kdv = 0; else if (eski === 'gayri') d.kdv = S.kdv;
+  d.bankalar = bkVarsayilan(d);
+  if (tkPanel.sih) SIH.hata = SIH.hata.filter(h => h.k !== 'hesapTur' && h.k !== 'kdv');
+  el.closest('.field')?.classList.remove('validation-error');
+  bkYenile();
+};
+A.bkSec = el => {
+  const d = state.draft; if (!d) return;
+  const id = el.dataset.id, cur = Array.isArray(d.bankalar) ? d.bankalar : [];
+  if (cur.some(b => b.id === id)) d.bankalar = cur.filter(b => b.id !== id);
+  else { const b = bkBul(id); if (!b || b.silindi || b.aktif === false || b.doviz !== d.doviz) return; d.bankalar = [...cur, bkKopya(b)]; }
+  bkYenile();
+};
 document.addEventListener('click', e => { const el = e.target.closest('[data-act]'); if (!el || el.closest('.pin-ov')) return; const fn = A[el.dataset.act]; if (fn) fn(el, e); });
 A.nav = el => { cbKapat(); go(el.dataset.v); };
 function cbKapat() { const o = $('#cbOv'); if (o && !o.classList.contains('hidden')) { o.classList.add('hidden'); o.classList.remove('acik'); markNav(); } }
@@ -1683,7 +1775,7 @@ async function tkSilIste(t, b) {
    YENİ TEKLİF / DÜZENLE
    ===================================================================== */
 function catOrder() { const o = []; for (const u of DB.urun.all()) if (!o.includes(trLower(u.kategori))) o.push(trLower(u.kategori)); return o; }
-function newDraft() { return { tarih: todayISO(), teslim: '', doviz: '', cariId: '', personelId: '', items: [], iskontoTip: 'tutar', iskontoDeger: 0, iskontoTutar: 0, pesinat: 0, pesinatTarih: '', kdv: S.kdv, montaj: '', nakliye: '', teslimYeri: '', durum: 'Beklemede' }; }
+function newDraft() { return { tarih: todayISO(), teslim: '', doviz: '', cariId: '', personelId: '', items: [], iskontoTip: 'tutar', iskontoDeger: 0, iskontoTutar: 0, pesinat: 0, pesinatTarih: '', kdv: S.kdv, bankalar: [], montaj: '', nakliye: '', teslimYeri: '', durum: 'Beklemede' }; }
 const PK = { kat: '', model: '', katQ: '', modelQ: '' };
 VIEWS.teklifForm = (main, { id, taslak }) => {
   const edit = !!id; const src = id && DB.teklif.find(id);
@@ -1697,6 +1789,7 @@ VIEWS.teklifForm = (main, { id, taslak }) => {
     <div class="tf"><div>
       <div class="card offer-main-card"><div class="card-h"><h3>SİPARİŞ BİLGİLERİ</h3></div>
         <div class="offer-currency"><div class="field"><label>DÖVİZ <span class="req">*</span></label><select class="inp" data-d="doviz" ${edit ? 'disabled' : ''}><option value="">SEÇİN</option>${CURS.map(c => html`<option value="${c}" ${d.doviz === c ? 'selected' : ''}>${c}</option>`)}</select></div></div>
+        <div id="fBanka">${bkSecimHTML(d)}</div>
         <div class="grid g2 offer-dates">
           <div class="field"><label>SİPARİŞ TARİHİ <span class="req">*</span></label><input type="date" class="inp" data-d="tarih" value="${d.tarih}"></div>
           <div class="field"><label>TESLİM TARİHİ <span class="req">*</span></label><input type="date" class="inp" data-d="teslim" value="${d.teslim}" min="${d.tarih}"></div>
@@ -1724,7 +1817,7 @@ VIEWS.teklifForm = (main, { id, taslak }) => {
             <div class="field"><label>ALINAN PEŞİNAT</label><input class="inp" inputmode="decimal" data-d="pesinat" value="${numStr(d.pesinat) || '0'}" placeholder="0,00"></div>
             <div class="field"><label>PEŞİNAT TARİHİ <span class="req">*</span></label><input type="date" class="inp" data-d="pesinatTarih" value="${d.pesinatTarih || ''}" ${d.pesinat > 0 ? '' : 'disabled'}></div>
           </div>
-          <div class="field"><label>KDV (%)</label><input class="inp" inputmode="decimal" data-d="kdv" value="${numStr(d.kdv) || '0'}"></div>
+          <div class="field"><label>KDV (%)</label><input class="inp" inputmode="decimal" data-d="kdv" value="${numStr(d.kdv) || '0'}" ${d.hesapTur === 'gayri' ? 'disabled' : ''}><div class="muted sm ${d.hesapTur === 'gayri' ? '' : 'hidden'}" id="kdvNot">Gayri resmi teklifte KDV yok.</div></div>
         </div></div>
         <div class="card sticky"><div class="card-h"><h3>TOPLAMLAR</h3></div><div id="tots"></div></div>
       </div>
@@ -1774,6 +1867,7 @@ function formInput(e) {
   const d = state.draft, el = e.target;
   if (el.dataset.d) {
     const k = el.dataset.d;
+    if (k === 'kdv' && d.hesapTur === 'gayri') { d.kdv = 0; el.value = '0'; return; }
     if (['iskontoTutar','pesinat','kdv'].includes(k)) {
       el.value = el.value.replace(/[^0-9.,]/g, '');
       const v = num(el.value);
@@ -1784,7 +1878,7 @@ function formInput(e) {
       drawTots();
     }
     else if (el.type === 'radio') { if (el.checked) d[k] = el.value; }
-    else { d[k] = el.value; if (k === 'tarih') $('[data-d="teslim"]').min = el.value; if (k === 'doviz') { drawItems(); drawTots(); } }
+    else { d[k] = el.value; if (k === 'tarih') $('[data-d="teslim"]').min = el.value; if (k === 'doviz') { bkDovizUygula(d); bkYenile(); drawItems(); drawTots(); } }
   }
   if (el.dataset.if) {
     const it = d.items[+el.dataset.i]; const f = el.dataset.if;
@@ -1980,13 +2074,30 @@ function notKart(t) {
     <div><div class="muted sm" style="margin-bottom:4px">Sipariş notu <span class="not-tag">PDF'te görünür</span></div><div class="nt">${t.genelNot || '—'}</div></div>
     <div><div class="muted sm" style="margin-bottom:4px">İç not <span class="not-tag">Müşteri görmez</span></div><div class="nt">${t.icNot || '—'}</div></div></div></div>`;
 }
+function bankaKart(t) {
+  const bks = Array.isArray(t.bankalar) ? t.bankalar.filter(b => b && b.iban) : [];
+  if (!bks.length) return '';
+  return html`<div class="card bk-kart"><div class="card-h"><h3>Banka hesapları ${t.hesapTur ? html`<span class="not-tag">${BK_TUR[t.hesapTur]} — PDF'te yazmaz</span>` : ''}</h3><button class="btn sm" data-act="ibanWa" data-id="${t.id}">${I('share')} IBAN'ı WhatsApp'la gönder</button></div>
+    <div class="bk-kl">${bks.map(b => html`<div><b>${b.unvan}</b><span class="muted sm">${b.banka || ''}</span><code>${ibanFmt(b.iban)}</code>${b.swift ? html`<span class="sm">SWIFT: <b>${b.swift}</b></span>` : ''}</div>`)}</div></div>`;
+}
+/* WhatsApp: müşteriye IBAN + kalan tutar; tür yazılmaz. Sunucuya istek yok (wa.me bağlantısı). */
+A.ibanWa = el => {
+  const t = DB.teklif.find(el.dataset.id); if (!t) return;
+  const bks = (Array.isArray(t.bankalar) ? t.bankalar : []).filter(b => b && b.iban); if (!bks.length) return;
+  const c = calc(t, payMap()[t.id]), cs = t.cariSnap || {};
+  const satir = [`Sayın ${clean(cs.unvan, 120)},`, `Sipariş No: ${t.no}`, `Kalan tutar: ${money(Math.max(0, c.kalan), t.doviz)}`, ''];
+  for (const b of bks) { satir.push(`Ünvan: ${clean(b.unvan, 120)}`, `IBAN: ${ibanFmt(b.iban)}`); if (t.doviz !== 'TRY' && b.swift) satir.push(`SWIFT: ${swiftTemiz(b.swift)}`); satir.push(''); }
+  satir.push(`Lütfen ödeme açıklamasına sipariş no (${t.no}) yazınız.`, clean(S.firma.ad, 80));
+  const tel = waPhone(cs.gsm), txt = encodeURIComponent(satir.join('\n').trim());
+  openOut(`https://wa.me/${tel}?text=${txt}`);
+};
 function odYon(p, L) { const y = DB.yontem.find(p.yontemId)?.ad || ''; return p.pesinat ? (y ? L.pes + ' · ' + y : L.pes) : y; }
 function drawTots() { const d = state.draft; mount($('#tots'), totsHTML(calc(d, d.id ? payMap()[d.id] : []), d)); }
 function totsHTML(c, t) { return html`<div class="tots">
   <div class="row"><span>Ana Para</span><span>${money(c.ana, t.doviz)}</span></div>
   <div class="row"><span>İSKONTO TUTAR</span><span>${c.isk ? '-' + money(c.isk, t.doviz) : money(0, t.doviz)}</span></div>
   <div class="row"><span>Ara Toplam</span><span>${money(c.ara, t.doviz)}</span></div>
-  <div class="row"><span>KDV %${NF.format(t.kdv || 0).replace(',00', '')}</span><span>${money(c.kdv, t.doviz)}</span></div>
+  ${t.hesapTur === 'gayri' ? '' : html`<div class="row"><span>KDV %${NF.format(t.kdv || 0).replace(',00', '')}</span><span>${money(c.kdv, t.doviz)}</span></div>`}
   <div class="row gt"><span>Genel Toplam</span><span>${money(c.genel, t.doviz)}</span></div>
   <div class="row"><span>Alınan Peşinat</span><span>${money(c.pes, t.doviz)}</span></div>
   <div class="row"><span>Kalan</span><span>${money(c.kalan, t.doviz)}</span></div></div>`; }
@@ -2139,7 +2250,9 @@ function validateTeklif(d) {
     if (!clean(it.renk, 80)) add(s('renk'), 'Renk zorunlu.');
     if (trLower(itemTitle(it)).includes('masa') && !['sag','sol','cift','yok'].includes(normYon(it.yon))) add(s('yon'), 'Masa yönü seçin.');
   });
+  if (d.doviz === 'TRY' && !d.id && !BK_TUR[d.hesapTur]) add('[data-d="hesapTur"]', 'Hesap türü seçin (Resmi / Gayri resmi).');
   if (!(d.kdv >= 0 && d.kdv <= 100)) add('[data-d="kdv"]', 'KDV 0–100 arası olmalı.');
+  if (d.hesapTur === 'gayri' && +d.kdv !== 0) add('[data-d="kdv"]', 'Gayri resmi teklifte KDV 0 olmalı.');
   if (d.pesinat > 0 && !d.pesinatTarih) add('[data-d="pesinatTarih"]', 'Peşinat tarihi zorunlu.');
   const c = calc(d, []);
   if (d.pesinat > c.genel) add('[data-d="pesinat"]', 'Peşinat genel toplamdan büyük olamaz.');
@@ -2182,6 +2295,10 @@ A.saveTeklif = async el => {
       yon: ({ sag: 'SAĞ', sol: 'SOL', cift: 'ÇİFT', yok: 'YOK' }[normYon(i.yon)] || U(i.yon)), aciklama: cleanML(i.aciklama, 1000).toLocaleUpperCase('tr-TR') };
   });
   for (const k of ['genelNot', 'icNot']) { const v = cleanML(t[k], 1000).replace(/\n{3,}/g, '\n\n').toLocaleUpperCase('tr-TR'); if (v) t[k] = v; else delete t[k]; }
+  if (t.doviz !== 'TRY' || !BK_TUR[t.hesapTur]) delete t.hesapTur;
+  if (t.hesapTur === 'gayri') t.kdv = 0;
+  if (Array.isArray(t.bankalar)) t.bankalar = t.bankalar.filter(b => b && b.doviz === t.doviz && ibanGecerli(b.iban)).slice(0, 10).map(b => bkKopya(b));
+  else delete t.bankalar;
   t.iskontoTip = 'tutar'; t.iskontoDeger = 0; t.iskontoTutar = r2(Math.max(0, +t.iskontoTutar || 0)); t.pesinat = r2(+t.pesinat || 0); t.pesinatTarih = t.pesinat > 0 ? (t.pesinatTarih || '') : '';
   t.updated = Date.now();
   if (tkKisi) { if (!d.id) { t.olusturan = tkKisi; t.olusturanAt = t.updated; } t.duzenleyen = tkKisi; t.duzenleyenAt = t.updated; }
@@ -2433,13 +2550,14 @@ function sihAdim3() {
     ${SIH_SART.map(([k, l, o]) => html`<div class="sih-l">${l} <span class="req">*</span></div><div class="sih-tg">${o.map(([v, t]) => html`<button type="button" class="${d[k] === v ? 'on' : ''} ${sihHataVar(k) ? 'bad' : ''}" data-act="sihSec" data-k="${k}" data-v="${v}">${t}</button>`)}</div>${sihHataMsg(k)}`)}
     <div class="sih-l">Döviz</div>
     <div class="sih-chips">${CURS.map(c => html`<button type="button" class="sih-chip ${d.doviz === c ? 'on' : ''}" data-act="sihDoviz" data-v="${c}" ${edit ? 'disabled' : ''}>${SYM[c]} ${c}</button>`)}</div>${sihHataMsg('doviz')}
-    ${edit ? html`<p class="muted sm" style="margin:0">Kayıtlı siparişin dövizi değiştirilemez.</p>` : ''}</div>`;
+    ${edit ? html`<p class="muted sm" style="margin:0">Kayıtlı siparişin dövizi değiştirilemez.</p>` : ''}
+    <div class="sih-bk ${sihHataVar('hesapTur') ? 'bad' : ''}">${bkSecimHTML(d)}${sihHataMsg('hesapTur')}</div></div>`;
 }
 A.sihGun = el => { const d = state.draft, t = new Date((d.tarih || todayISO()) + 'T12:00:00'); t.setDate(t.getDate() + +el.dataset.g); d.teslim = isoOf(t); SIH.hata = SIH.hata.filter(h => h.k !== 'teslim'); sihCiz(); };
 A.sihSec = el => { state.draft[el.dataset.k] = el.dataset.v; SIH.hata = SIH.hata.filter(h => h.k !== el.dataset.k); sihCiz(); };
 A.sihDoviz = el => {
   const d = state.draft; if (d.id || d.doviz === el.dataset.v) return;
-  d.doviz = el.dataset.v; SIH.hata = SIH.hata.filter(h => h.k !== 'doviz'); sihCiz();
+  d.doviz = el.dataset.v; bkDovizUygula(d); SIH.hata = SIH.hata.filter(h => h.k !== 'doviz' && h.k !== 'hesapTur'); sihCiz();
   if (d.items.length) toast('Döviz değişti. Ürün fiyatlarını kontrol edin; çevrim yapılmaz.', 'err', 5000);
 };
 
@@ -2454,7 +2572,7 @@ function sihAdim4() {
     <button type="button" class="sih-r" data-act="sihGit" data-a="3"><span class="sih-av sih-arti">${I('doc')}</span><span class="t"><b>Teslim ${d.teslim ? fmtDate(d.teslim) : '—'} · ${d.doviz}</b><span>${sart}</span></span>${I('edit')}</button>
     <div class="sih-kart"><div class="sih-kart-h"><b>Ürünler (${d.items.length})</b><button type="button" class="btn ghost sm" data-act="sihGit" data-a="2">Düzenle</button></div>
       ${d.items.map(it => html`<div class="sih-sat"><span>${it.adet} × ${it.model || itemTitle(it)} <i>${[it.olcu, it.renk].filter(Boolean).join(' · ')}</i></span><b>${money((it.fiyat || 0) * (it.adet || 0), d.doviz)}</b></div>`)}</div>
-    <div class="sih-g2">${num2('iskontoTutar', `İskonto (${SYM[d.doviz] || ''})`)}${num2('kdv', 'KDV %')}</div>
+    <div class="sih-g2">${num2('iskontoTutar', `İskonto (${SYM[d.doviz] || ''})`)}${num2('kdv', d.hesapTur === 'gayri' ? 'KDV % (gayri resmi: yok)' : 'KDV %', d.hesapTur === 'gayri' ? 'disabled' : '')}</div>
     <div class="sih-g2">${num2('pesinat', `Alınan peşinat (${SYM[d.doviz] || ''})`)}
       <div class="field"><label>Peşinat tarihi ${d.pesinat > 0 ? html`<span class="req">*</span>` : ''}</label><input type="date" class="inp ${sihHataVar('pesinatTarih') ? 'bad' : ''}" data-sd="pesinatTarih" value="${d.pesinatTarih || ''}" ${d.pesinat > 0 ? '' : 'disabled'}>${sihHataMsg('pesinatTarih')}</div></div>
     <div class="sih-kart" id="sihTots">${totsHTML(calc(d, d.id ? payMap()[d.id] : []), d)}</div>
@@ -2500,6 +2618,7 @@ function sihGirdi(e) {
   const k = t.dataset.sd; if (!k) return;
   if (k === 'genelNot' || k === 'icNot') { if (e.type === 'input' || e.type === 'change') d[k] = String(t.value).slice(0, 1000); return; }
   t.classList.remove('bad'); SIH.hata = SIH.hata.filter(h => h.k !== k); t.closest('.field')?.querySelector('.sih-e')?.remove();
+  if (k === 'kdv' && d.hesapTur === 'gayri') { d.kdv = 0; t.value = '0'; return; }
   if (['iskontoTutar', 'pesinat', 'kdv'].includes(k)) {
     t.value = t.value.replace(/[^0-9.,]/g, ''); const v = num(t.value);
     t.classList.toggle('bad', !(v >= 0) || (k === 'kdv' && v > 100));
@@ -2517,7 +2636,7 @@ function sihGirdi(e) {
 
 /* ---------- gezinme, doğrulama, kayıt ---------- */
 function sihHatalar(d) {
-  const ADIM = { doviz: 3, tarih: 3, teslim: 3, nakliye: 3, montaj: 3, teslimYeri: 3, kdv: 4, pesinatTarih: 4, pesinat: 4, iskontoTutar: 4 };
+  const ADIM = { hesapTur: 3, doviz: 3, tarih: 3, teslim: 3, nakliye: 3, montaj: 3, teslimYeri: 3, kdv: 4, pesinatTarih: 4, pesinat: 4, iskontoTutar: 4 };
   return validateTeklif(d).map(({ sel, msg }) => {
     if (sel === '#fCari') return { adim: 1, k: 'cari', msg };
     if (sel === '#fPers') return { adim: 1, k: 'pers', msg };
@@ -2592,7 +2711,7 @@ VIEWS.teklifDetay = (main, { id, tab = 'urunler' }) => {
     <div class="ph-act"><button class="btn" data-act="editTeklif" data-id="${t.id}">${I('edit')} Düzenle</button><button class="btn primary" data-act="pdf" data-id="${t.id}">${I('pdf')} PDF</button>${!sipBag(t) && t.tur !== 'proforma' ? html`<button class="btn${gonderilmedi(t) ? ' btn-gonder' : ''}" data-act="sipGonder" data-id="${t.id}">${I('share')} Sipariş Takibi’ne Gönder</button>` : ''}<button class="btn icon" data-act="rowMenu" data-id="${t.id}" aria-label="Diğer">${I('dots')}</button></div></div>
     <div class="dgrid">
       <div class="card"><div class="card-h"><h3>Müşteri</h3></div><dl class="kv"><dt>Ünvan</dt><dd>${cs.unvan}</dd>${cs.yetkili ? html`<dt>Yetkili</dt><dd>${cs.yetkili}</dd>` : ''}<dt>Telefon</dt><dd>${cs.gsm || '—'}</dd>${cs.sabit ? html`<dt>Sabit No</dt><dd>${cs.sabit}</dd>` : ''}<dt>E-posta</dt><dd>${cs.eposta || '—'}</dd><dt>Adres</dt><dd>${[cs.adres, cs.ilce, cs.sehir, cs.ulke].filter(Boolean).join(', ')}</dd>${cs.vd ? html`<dt>Vergi Dairesi</dt><dd>${cs.vd}</dd>` : ''}${cs.vkn ? html`<dt>${String(cs.vkn).length === 11 ? 'TCKN' : 'VKN'}</dt><dd>${cs.vkn}</dd>` : ''}</dl></div>
-      <div class="card"><div class="card-h"><h3>Sipariş</h3></div><dl class="kv"><dt>Sipariş Tarihi</dt><dd>${fmtDate(t.tarih)}</dd><dt>Teslim Tarihi</dt><dd>${fmtDate(t.teslim)}</dd><dt>Döviz</dt><dd>${t.doviz}</dd><dt>Personel</dt><dd>${t.personelAd}</dd>${kimKV(t)}
+      <div class="card"><div class="card-h"><h3>Sipariş</h3></div><dl class="kv"><dt>Sipariş Tarihi</dt><dd>${fmtDate(t.tarih)}</dd><dt>Teslim Tarihi</dt><dd>${fmtDate(t.teslim)}</dd><dt>Döviz</dt><dd>${t.doviz}${t.hesapTur ? ' · ' + BK_TUR[t.hesapTur] : ''}</dd><dt>Personel</dt><dd>${t.personelAd}</dd>${kimKV(t)}
         <dt>Montaj</dt><dd>${LBL[t.montaj]}</dd><dt>Nakliye</dt><dd>${LBL[t.nakliye]}</dd><dt>Teslim Yeri</dt><dd>${LBL[t.teslimYeri]}</dd></dl></div>
       <div class="card"><div class="card-h"><h3>Ödeme özeti</h3><button class="btn sm" data-act="addPay" data-id="${t.id}">${I('plus')} Ödeme</button></div>
         <dl class="kv"><dt>Genel Toplam</dt><dd class="b">${money(c.genel, t.doviz)}</dd>
@@ -2600,21 +2719,21 @@ VIEWS.teklifDetay = (main, { id, tab = 'urunler' }) => {
           ${pays.length ? html`<dt>Diğer ödemeler</dt><dd>${money(r2(c.pes - (+t.pesinat || 0)), t.doviz)}</dd>` : ''}
           <dt>Toplam alınan</dt><dd>${money(c.pes, t.doviz)}</dd><dt>Kalan</dt><dd class="b">${money(c.kalan, t.doviz)}</dd><dt>Ödeme sayısı</dt><dd>${payCount}</dd></dl>
         <div class="prog"><i style="width:${pct.toFixed(1)}%"></i></div></div></div>
-    ${notKart(t)}${pfBant(t)}${sipPanel(t)}<div class="tabs" role="tablist"><button class="${tab === 'urunler' ? 'on' : ''}" data-act="dTab" data-id="${t.id}" data-t="urunler">Ürünler (${t.items.length})</button><button class="${tab === 'odemeler' ? 'on' : ''}" data-act="dTab" data-id="${t.id}" data-t="odemeler">Ödemeler (${payCount})</button></div>
+    ${notKart(t)}${bankaKart(t)}${pfBant(t)}${sipPanel(t)}<div class="tabs" role="tablist"><button class="${tab === 'urunler' ? 'on' : ''}" data-act="dTab" data-id="${t.id}" data-t="urunler">Ürünler (${t.items.length})</button><button class="${tab === 'odemeler' ? 'on' : ''}" data-act="dTab" data-id="${t.id}" data-t="odemeler">Ödemeler (${payCount})</button></div>
     ${tab === 'urunler' ? html`<div class="tw"><table class="tbl static resp"><thead><tr>${['', 'Ürün', ...(sipBag(t) ? ['Sipariş'] : []), 'Ölçü', 'Renk', 'Yön', 'Adet', 'Birim Fiyat', 'Toplam', 'Açıklama'].map((h, i, a) => html`<th class="${i >= a.length - 4 && i <= a.length - 2 ? 'r' : ''}"><div class="thi">${h}</div></th>`)}</tr></thead><tbody>
         ${t.items.map(it => { const f = safeImg(offerFotoGet(it)); return html`<tr><td>${f ? html`<img class="thumb" src="${f}" alt="" data-act="img">` : html`<span class="thumb">Fotoğraf Yok</span>`}</td><td class="b">${itemTitle(it)}</td>${sipBag(t) ? html`<td class="nowrap">${sipKalemTag(t, it) || html`<span class="muted sm">—</span>`}</td>` : ''}<td>${it.olcu || '—'}</td><td>${it.renk || '—'}</td><td>${it.yon || '—'}</td><td class="r">${it.adet}</td><td class="r">${money(it.fiyat, t.doviz)}</td><td class="r b">${money(it.fiyat * it.adet, t.doviz)}</td><td class="wrap" style="min-width:180px">${it.aciklama || ''}</td></tr>`; })}</tbody></table>
         <div class="cards">${t.items.map(it => { const f = safeImg(offerFotoGet(it)); return html`<div class="lcard" style="cursor:default"><div class="row" style="justify-content:flex-start">${f ? html`<img class="thumb" src="${f}" alt="" data-act="img">` : html`<span class="thumb">Fotoğraf Yok</span>`}<div style="min-width:0"><div class="ttl">${itemTitle(it)}</div><div class="muted sm">${[it.olcu, it.renk, it.yon].filter(Boolean).join(' · ')}</div></div></div>
           <div class="row sm"><span class="muted">${it.adet} × ${money(it.fiyat, t.doviz)}</span><span class="b">${money(it.fiyat * it.adet, t.doviz)}</span></div>${it.aciklama ? html`<div class="sm muted" style="white-space:pre-wrap">${it.aciklama}</div>` : ''}${sipKalemTag(t, it)}</div>`; })}</div></div>`
     : html`<div class="toolbar"><button class="btn primary" data-act="addPay" data-id="${t.id}">${I('plus')} Ödeme Ekle</button></div>
       ${payRows.length ? html`<div class="tw"><table class="tbl static resp"><thead><tr>${['Tarih', 'Tutar', 'Kur', `Karşılığı (${t.doviz})`, 'Yöntem', 'Açıklama', ''].map((h, i) => html`<th class="${i === 1 || i === 3 ? 'r' : ''}"><div class="thi">${h}</div></th>`)}</tr></thead><tbody>
-        ${payRows.map(p => html`<tr><td>${fmtDate(p.tarih)}</td><td class="r">${money(p.tutar, p.doviz)}</td><td>${p.doviz !== t.doviz ? kurText(p.doviz, t.doviz, p.kur) : '—'}</td><td class="r b">${money(p.cevrilmis, t.doviz)}</td><td>${p.pesinat ? 'Peşinat' : (DB.yontem.find(p.yontemId)?.ad || '—')}</td><td class="wrap">${p.aciklama || ''}</td>
+        ${payRows.map(p => html`<tr><td>${fmtDate(p.tarih)}</td><td class="r">${money(p.tutar, p.doviz)}</td><td>${p.doviz !== t.doviz ? kurText(p.doviz, t.doviz, p.kur) : '—'}</td><td class="r b">${money(p.cevrilmis, t.doviz)}</td><td>${p.pesinat ? 'Peşinat' : (DB.yontem.find(p.yontemId)?.ad || '—')}${p.hesapId && bkBul(p.hesapId) ? html`<div class="muted sm">${bkAd(bkBul(p.hesapId))}</div>` : ''}</td><td class="wrap">${p.aciklama || ''}</td>
           <td class="nowrap">${p.pesinat ? html`<button class="btn ghost icon sm" data-act="editTeklif" data-id="${t.id}" aria-label="Peşinatı düzenle" title="Peşinat sipariş formundan düzenlenir">${I('edit')}</button>` : html`<button class="btn ghost icon sm" data-act="editPay" data-id="${p.id}" aria-label="Düzenle">${I('edit')}</button><button class="btn ghost icon sm" data-act="delPay" data-id="${p.id}" aria-label="Sil">${I('trash')}</button>`}</td></tr>`)}</tbody></table>
         <div class="cards">${payRows.map(p => html`<div class="lcard" style="cursor:default"><div class="row"><span class="b">${money(p.tutar, p.doviz)}</span><span class="muted sm">${fmtDate(p.tarih)}</span></div>
-          <div class="row sm"><span class="muted">${p.pesinat ? 'Peşinat' : (DB.yontem.find(p.yontemId)?.ad || '—')}${p.doviz !== t.doviz ? ' · ' + kurText(p.doviz, t.doviz, p.kur) : ''}</span><span>${money(p.cevrilmis, t.doviz)}</span></div>${p.aciklama ? html`<div class="sm muted">${p.aciklama}</div>` : ''}
+          <div class="row sm"><span class="muted">${p.pesinat ? 'Peşinat' : (DB.yontem.find(p.yontemId)?.ad || '—')}${p.hesapId && bkBul(p.hesapId) ? ' · ' + bkAd(bkBul(p.hesapId)) : ''}${p.doviz !== t.doviz ? ' · ' + kurText(p.doviz, t.doviz, p.kur) : ''}</span><span>${money(p.cevrilmis, t.doviz)}</span></div>${p.aciklama ? html`<div class="sm muted">${p.aciklama}</div>` : ''}
           <div class="row" style="justify-content:flex-end">${p.pesinat ? html`<button class="btn sm" data-act="editTeklif" data-id="${t.id}">Düzenle</button>` : html`<button class="btn sm" data-act="editPay" data-id="${p.id}">Düzenle</button><button class="btn sm danger" data-act="delPay" data-id="${p.id}">Sil</button>`}</div></div>`)}</div></div>`
       : html`<div class="empty card"><b>Bu siparişe henüz ödeme girilmedi</b>Peşinat veya ara ödeme almak için "Ödeme Ekle"yi kullanın.</div>`}`}
     <div class="totbar"><div class="c x"><span>Ana Para</span><span>${money(c.ana, t.doviz)}</span></div><div class="c x"><span>İskonto</span><span>${c.isk ? '-' + money(c.isk, t.doviz) : money(0, t.doviz)}</span></div>
-      <div class="c x"><span>Ara Toplam</span><span>${money(c.ara, t.doviz)}</span></div><div class="c x"><span>KDV %${NF.format(t.kdv).replace(',00', '')}</span><span>${money(c.kdv, t.doviz)}</span></div>
+      <div class="c x"><span>Ara Toplam</span><span>${money(c.ara, t.doviz)}</span></div>${t.hesapTur === 'gayri' ? '' : html`<div class="c x"><span>KDV %${NF.format(t.kdv).replace(',00', '')}</span><span>${money(c.kdv, t.doviz)}</span></div>`}
       <div class="c"><span>Genel Toplam</span><span class="b">${money(c.genel, t.doviz)}</span></div><div class="c x"><span>Peşinat</span><span>${money(c.pes, t.doviz)}</span></div><div class="c"><span>Kalan</span><span>${money(c.kalan, t.doviz)}</span></div>
       <button class="btn sm mob" data-act="totDetail" data-id="${t.id}">Detay</button></div></div>`);
 };
@@ -2641,12 +2760,16 @@ A.delPay = async el => {
   DB.odeme.remove(p.id); logAct(`Sipariş ${t.no}: ödeme silindi`); toast('Ödeme silindi'); go('teklifDetay', { id: t.id, tab: 'odemeler' });
 };
 function payForm(t, p) {
-  const v = p ? { ...p } : { tarih: todayISO(), tutar: '', doviz: t.doviz, kur: '', yontemId: DB.yontem.all()[0]?.id || '', aciklama: '' };
+  const tekHesap = (Array.isArray(t.bankalar) ? t.bankalar : []).filter(b => b && b.doviz === t.doviz && bkBul(b.id) && !bkBul(b.id).silindi);
+  const v = p ? { hesapId: '', ...p } : { tarih: todayISO(), tutar: '', doviz: t.doviz, kur: '', yontemId: DB.yontem.all()[0]?.id || '', hesapId: tekHesap.length === 1 ? tekHesap[0].id : '', aciklama: '' };
+  const hesapOps = () => { const l = bkTum().filter(b => b.doviz === v.doviz && (b.aktif !== false || b.id === v.hesapId)); const cur = v.hesapId && !l.some(b => b.id === v.hesapId) ? bkBul(v.hesapId) : null;
+    return html`<option value="">Hesap belirtilmemiş</option>${l.map(b => html`<option value="${b.id}" ${b.id === v.hesapId ? 'selected' : ''}>${bkAd(b)}${b.aktif === false ? ' (pasif)' : ''}</option>`)}${cur ? html`<option value="${cur.id}" selected>${bkAd(cur)} (silinmiş)</option>` : ''}`; };
   modal({ title: p ? 'Ödemeyi düzenle' : 'Ödeme ekle', body: html`<div class="grid g2">
       <div class="field"><label>Tarih <span class="req">*</span></label><input type="date" class="inp" data-p="tarih" value="${v.tarih}"></div>
       <div class="field"><label>Ödeme Yöntemi <span class="req">*</span></label><button class="btn pickbtn" type="button" data-yon><span>—</span>${I('down')}</button></div>
       <div class="field"><label>Tutar <span class="req">*</span></label><input class="inp" inputmode="decimal" data-p="tutar" value="${numStr(v.tutar)}" placeholder="0,00" autofocus></div>
       <div class="field"><label>Ödeme Dövizi</label><select class="inp" data-p="doviz">${CURS.map(c => html`<option ${v.doviz === c ? 'selected' : ''}>${c}</option>`)}</select></div>
+      <div class="field span2"><label>Hangi hesaba geldi <span class="muted" style="font-weight:500">(isteğe bağlı)</span></label><select class="inp" data-p="hesapId" data-hesap>${hesapOps()}</select></div>
       <div class="field span2" data-kurw><label data-kurl></label><input class="inp" inputmode="decimal" data-p="kur" value="${numStr(v.kur)}" placeholder="0,0000"></div>
       <div class="field span2"><label>Açıklama</label><textarea class="inp" data-p="aciklama" maxlength="300">${v.aciklama || ''}</textarea></div>
       <div class="span2 muted sm" data-conv></div></div>`,
@@ -2661,7 +2784,7 @@ function payForm(t, p) {
       };
       upd();
       m.el.addEventListener('input', e => { const k = e.target.dataset.p; if (k) { v[k] = e.target.value; upd(); } });
-      m.el.addEventListener('change', e => { const k = e.target.dataset.p; if (k) { v[k] = e.target.value; upd(); } });
+      m.el.addEventListener('change', e => { const k = e.target.dataset.p; if (k) { v[k] = e.target.value; if (k === 'doviz') { if (bkBul(v.hesapId)?.doviz !== v.doviz) v.hesapId = ''; mount(m.$('[data-hesap]'), hesapOps()); } upd(); } });
       m.el.addEventListener('click', async e => {
         if (e.target.closest('[data-yon]')) picker({ title: 'Ödeme yöntemi', value: v.yontemId, options: DB.yontem.all().map(y => ({ v: y.id, l: y.ad, sub: y.aciklama })), onPick: id => { v.yontemId = id; upd(); }, addLabel: 'Ödeme Yöntemi Ekle', onAdd: () => yontemForm(null, y => { v.yontemId = y.id; upd(); }) });
         if (e.target.closest('[data-save]')) {
@@ -2670,7 +2793,7 @@ function payForm(t, p) {
           if (er.length) return toast(er.join(' · '), 'err');
           if (p && !await confirmBox({ title: 'Kaydet', body: html`<p>Değişikliği kaydetmek istiyor musunuz?</p>`, ok: 'Kaydet' })) return;
           const _k = await kimSor(p ? 'Ödeme düzenleme' : 'Ödeme ekleme'); if (_k === null) return;
-          const row = { id: p?.id || uid(), teklifId: t.id, tarih: v.tarih, tutar: tu, doviz: v.doviz, kur: diff ? ku : 1, cevrilmis: convert(tu, v.doviz, t.doviz, ku), yontemId: v.yontemId, aciklama: clean(v.aciklama, 300), created: p?.created || Date.now(),
+          const row = { id: p?.id || uid(), teklifId: t.id, tarih: v.tarih, tutar: tu, doviz: v.doviz, kur: diff ? ku : 1, cevrilmis: convert(tu, v.doviz, t.doviz, ku), yontemId: v.yontemId, ...(bkBul(v.hesapId) && bkBul(v.hesapId).doviz === v.doviz ? { hesapId: v.hesapId } : {}), aciklama: clean(v.aciklama, 300), created: p?.created || Date.now(),
             giren: p ? (p.giren || '') : _k, ...(p ? { duzenleyen: _k, duzenleyenAt: Date.now() } : {}) };
           DB.odeme.upsert(row); logAct(`Sipariş ${t.no}: ${money(tu, v.doviz)} ödeme ${p ? 'düzenlendi' : 'eklendi'}`);
           m.close(); toast(p ? 'Ödeme güncellendi' : 'Ödeme eklendi'); go('teklifDetay', { id: t.id, tab: 'odemeler' });
@@ -2686,11 +2809,11 @@ const PL = {
   tr: { teklif: 'SİPARİŞ FORMU', no: 'Sipariş No', tarih: 'Sipariş Tarihi', teslim: 'Teslim Tarihi', doviz: 'Döviz', montaj: 'Montaj', nakliye: 'Nakliye', yer: 'Teslim Yeri', dahil: 'Dahil', haric: 'Hariç', fabrika: 'Fabrika', adres: 'Adres',
     foto: 'Fotoğraf', urun: 'Ürün', olcu: 'Ölçü', renk: 'Renk', yon: 'Yön', birim: 'Birim Fiyat', adet: 'Adet', toplam: 'Toplam Fiyat', yok: 'Fotoğraf Yok',
     notlar: 'Notlar', fxTarih: 'Tarih', fxTutar: 'Alınan', fxKur: 'Kur', fxKars: 'Karşılığı', fxYon: 'Yöntem', fxTop: 'Toplam alınan', ana: 'Ana Para', isk: 'İskonto', ara: 'Ara Toplam', kdv: 'KDV', genel: 'Genel Toplam', pes: 'Alınan Peşinat', kalan: 'Kalan Tutar', odemeler: 'Ödemeler', sayfa: 'Sayfa',
-    yetkili: 'Yetkili', gsm: 'GSM', sabit: 'Tel', eposta: 'E-posta', vkn: 'VKN', tckn: 'TCKN', vd: 'Vergi Dairesi' },
+    yetkili: 'Yetkili', gsm: 'GSM', sabit: 'Tel', eposta: 'E-posta', vkn: 'VKN', tckn: 'TCKN', vd: 'Vergi Dairesi', banka: 'Banka Bilgileri', bUnvan: 'Ünvan', iban: 'IBAN', swift: 'SWIFT' },
   en: { teklif: 'ORDER FORM', no: 'Order No', tarih: 'Order Date', teslim: 'Delivery Date', doviz: 'Currency', montaj: 'Assembly', nakliye: 'Shipping', yer: 'Delivery', dahil: 'Included', haric: 'Excluded', fabrika: 'Ex-works', adres: 'To address',
     foto: 'Photo', urun: 'Product', olcu: 'Size', renk: 'Color', yon: 'Side', birim: 'Unit Price', adet: 'Qty', toplam: 'Total', yok: 'No Photo',
     notlar: 'Notes', fxTarih: 'Date', fxTutar: 'Received', fxKur: 'Rate', fxKars: 'Equivalent', fxYon: 'Method', fxTop: 'Total received', ana: 'Subtotal', isk: 'Discount', ara: 'Net', kdv: 'VAT', genel: 'Grand Total', pes: 'Paid', kalan: 'Balance', odemeler: 'Payments', sayfa: 'Page',
-    yetkili: 'Contact', gsm: 'Mobile', sabit: 'Phone', eposta: 'E-mail', vkn: 'Tax No', tckn: 'ID No', vd: 'Tax Office' }
+    yetkili: 'Contact', gsm: 'Mobile', sabit: 'Phone', eposta: 'E-mail', vkn: 'Tax No', tckn: 'ID No', vd: 'Tax Office', banka: 'Bank Details', bUnvan: 'Account Holder', iban: 'IBAN', swift: 'SWIFT' }
 };
 /* Siparişte müşteri bilgileri: caride girilen her bilgi yazılır, boş olan hiç görünmez */
 function custSatirlar(cs, L) {
@@ -2708,6 +2831,9 @@ function custSatirlar(cs, L) {
   return out.map(x => (Array.isArray(x[0]) ? x : [x]));   // her satır: [[etiket, değer], ...]
 }
 const FOTO_PX = { s: 56, m: 88, l: 130 }, LOGO_PX = { s: 34, m: 52, l: 76 };
+/* PDF'e giden banka satırları: yalnız ünvan + IBAN (+ USD/EUR'da SWIFT) */
+const pdfBankalar = t => (Array.isArray(t.bankalar) ? t.bankalar : []).filter(b => b && b.iban && b.doviz === t.doviz).slice(0, 10)
+  .map(b => ({ unvan: clean(b.unvan, 120), iban: ibanTemiz(b.iban), swift: t.doviz !== 'TRY' ? swiftTemiz(b.swift) : '' }));
 function pdfDoc(t, o) {
   const L = PL[o.lang] || PL.tr, cs = t.cariSnap, pays = (payMap()[t.id] || []).sort((a, b) => a.tarih.localeCompare(b.tarih)), c = calc(t, pays), fp = FOTO_PX[o.foto] || 88;
   const items = t.items.map((it, n) => ({ it, n }));   /* girildiği sıra */
@@ -2729,8 +2855,9 @@ function pdfDoc(t, o) {
           ${it.aciklama ? html`<tr><td></td><td colspan="7" class="ds">${enT(L, it.aciklama)}</td></tr>` : ''}</tbody>`; })}</table>
     <div class="pd-sum"><div class="pd-pay">${(pays.length || t.pesinat > 0) ? html`<b>${L.odemeler}</b>${pdfFx(t, pays) ? html`<table><tr><th>${L.fxTarih}</th><th>${L.fxTutar}</th><th>${L.fxKur}</th><th>${L.fxKars} (${t.doviz})</th><th>${L.fxYon}</th></tr>${pdfOdSatir(t, pays, L).map(r => html`<tr><td>${r[0]}</td><td class="nowrap">${r[1]}</td><td class="nowrap">${r[2]}</td><td class="nowrap">${r[3]}</td><td>${r[4]}</td></tr>`)}</table><div class="pd-at">${pdfAlinan(t, pays, L)}</div>` : html`<table>${t.pesinat > 0 ? html`<tr><td>${t.pesinatTarih ? fmtDate(t.pesinatTarih) : '—'}</td><td class="nowrap">${money(t.pesinat, t.doviz)}</td><td>${L.pes}</td></tr>` : ''}${pays.map(p => html`<tr><td>${fmtDate(p.tarih)}</td><td class="nowrap">${money(p.cevrilmis, t.doviz)}</td><td>${odYon(p, L)}</td></tr>`)}</table>`}` : ''}</div>
       <div class="pd-tot"><div><span>${L.ana}</span><span>${money(c.ana, t.doviz)}</span></div><div><span>${L.isk}</span><span>${c.isk ? '-' + money(c.isk, t.doviz) : money(0, t.doviz)}</span></div>
-        <div><span>${L.ara}</span><span>${money(c.ara, t.doviz)}</span></div><div><span>${L.kdv} %${NF.format(t.kdv).replace(',00', '')}</span><span>${money(c.kdv, t.doviz)}</span></div>
+        <div><span>${L.ara}</span><span>${money(c.ara, t.doviz)}</span></div>${t.hesapTur === 'gayri' ? '' : html`<div><span>${L.kdv} %${NF.format(t.kdv).replace(',00', '')}</span><span>${money(c.kdv, t.doviz)}</span></div>`}
         <div class="g"><span>${L.genel}</span><span>${money(c.genel, t.doviz)}</span></div><div><span>${L.pes}</span><span>${money(c.pes, t.doviz)}</span></div><div><span>${L.kalan}</span><span>${money(c.kalan, t.doviz)}</span></div></div></div>
+    ${pdfBankalar(t).length ? html`<div class="pd-bank"><b>${L === PL.en ? L.banka.toUpperCase() : L.banka.toLocaleUpperCase('tr-TR')}</b><table>${pdfBankalar(t).map(b => html`<tr><td><span>${L.bUnvan}</span>${b.unvan}</td><td><span>${L.iban}</span><b class="nowrap">${ibanFmt(b.iban)}</b></td>${b.swift ? html`<td><span>${L.swift}</span><b>${b.swift}</b></td>` : ''}</tr>`)}</table></div>` : ''}
     ${t.genelNot ? html`<div class="pd-not"><b>${L.notlar}</b>${enT(L, t.genelNot)}</div>` : ''}
     <div class="pd-foot"><span>${[S.firma.ad, S.firma.tel, S.firma.adres, S.firma.eposta].filter(Boolean).join('  |  ')}</span><span class="pg">${L.sayfa} 1 / 1</span></div></div>`;
 }
@@ -2862,9 +2989,15 @@ async function tkPdfBlob(t, o) {
       { text: pdfAlinan(t, pays, L), bold: true, fontSize: 8, margin: [0, 5, 0, 0] }] }
     : payRows.length ? { width: '*', stack: [{ text: L.odemeler, bold: true, fontSize: 8, margin: [0, 0, 0, 3] }, { table: { body: payRows.map(r => r.map((x, i) => ({ text: x, fontSize: 8, noWrap: i === 1 }))) }, layout: { hLineWidth: () => 0, vLineWidth: () => 0, paddingLeft: () => 0, paddingRight: () => 12, paddingTop: () => 1.5, paddingBottom: () => 1.5 } }] } : { width: '*', text: '' };
   const kdvL = `${L.kdv} %${NF.format(t.kdv).replace(',00', '')}`;
-  const totRows = [[L.ana, m(c.ana)], [L.isk, c.isk ? '-' + m(c.isk) : m(0)], [L.ara, m(c.ara)], [kdvL, m(c.kdv)], [L.genel, m(c.genel), true], [L.pes, m(c.pes)], [L.kalan, m(c.kalan)]];
+  const totRows = [[L.ana, m(c.ana)], [L.isk, c.isk ? '-' + m(c.isk) : m(0)], [L.ara, m(c.ara)], ...(t.hesapTur === 'gayri' ? [] : [[kdvL, m(c.kdv)]]), [L.genel, m(c.genel), true], [L.pes, m(c.pes)], [L.kalan, m(c.kalan)]];
+  const gi = totRows.findIndex(r => r[2]);
   const totNode = { width: 200, table: { widths: ['*', 'auto'], body: totRows.map(([a, b, g]) => [{ text: a, color: g ? INK : '#4a4f5a', bold: !!g, fontSize: 8.4 }, { text: b, bold: !!g, fontSize: 8.4, alignment: 'right', noWrap: true }]) },
-    layout: { hLineWidth: (i) => (i === 4 ? 1.1 : 0), hLineColor: () => INK, vLineWidth: () => 0, paddingLeft: () => 0, paddingRight: () => 0, paddingTop: (i) => (i === 4 ? 5 : 2), paddingBottom: () => 2 } };
+    layout: { hLineWidth: (i) => (i === gi ? 1.1 : 0), hLineColor: () => INK, vLineWidth: () => 0, paddingLeft: () => 0, paddingRight: () => 0, paddingTop: (i) => (i === gi ? 5 : 2), paddingBottom: () => 2 } };
+  const bks = pdfBankalar(t);
+  const bankNode = bks.length ? [{ unbreakable: true, margin: [0, 16, 0, 0], table: { widths: ['*'], body: [[{ stack: [{ text: L.banka.toLocaleUpperCase(L === PL.en ? 'en-US' : 'tr-TR'), bold: true, fontSize: 7.5, characterSpacing: 0.6, margin: [0, 0, 0, 4] },
+      { table: { widths: bks.some(b => b.swift) ? ['*', 'auto', 'auto'] : ['*', 'auto'], body: bks.map(b => [{ stack: [{ text: L.bUnvan, fontSize: 6.5, color: MUT }, { text: b.unvan, fontSize: 8.4 }] }, { stack: [{ text: L.iban, fontSize: 6.5, color: MUT }, { text: ibanFmt(b.iban), fontSize: 8.4, bold: true, noWrap: true }] }].concat(bks.some(x => x.swift) ? [{ stack: [{ text: b.swift ? L.swift : '', fontSize: 6.5, color: MUT }, { text: b.swift || '', fontSize: 8.4, bold: true }] }] : [])) },
+        layout: { hLineWidth: (i, n) => (i > 0 && i < n.table.body.length ? 0.5 : 0), hLineColor: () => '#eceef1', vLineWidth: () => 0, paddingLeft: () => 0, paddingRight: () => 12, paddingTop: () => 3, paddingBottom: () => 3 } }] }]] },
+    layout: { hLineWidth: () => 0.7, vLineWidth: () => 0.7, hLineColor: () => '#d5d8dd', vLineColor: () => '#d5d8dd', paddingLeft: () => 9, paddingRight: () => 9, paddingTop: () => 7, paddingBottom: () => 7 } }] : [];
   const firma = [S.firma.ad, S.firma.tel, S.firma.adres, S.firma.eposta].filter(Boolean).join('  |  ');
   const dd = {
     info: { title: `${pfBaslik(t, L)} ${t.no}`, author: S.firma.ad || 'PRONTO', creator: 'PRONTO', producer: 'PRONTO' },
@@ -2876,7 +3009,7 @@ async function tkPdfBlob(t, o) {
       { columns: [{ width: '*', stack: [logoNode].concat(cust) }, right], columnGap: 16, margin: [0, 0, 0, 16] },
       table,
       { columns: [payNode, totNode], columnGap: 24, margin: [0, 16, 0, 0], unbreakable: true }
-    ].concat(t.genelNot ? [{ unbreakable: true, margin: [0, 16, 0, 0], table: { widths: ['*'], body: [[{ stack: [{ text: L.notlar.toLocaleUpperCase(L === PL.en ? 'en-US' : 'tr-TR'), bold: true, fontSize: 7.5, characterSpacing: 0.6, margin: [0, 0, 0, 3] }, { text: enT(L, t.genelNot), fontSize: 8.4 }], fillColor: '#f6f6f4' }]] },
+    ].concat(bankNode).concat(t.genelNot ? [{ unbreakable: true, margin: [0, 16, 0, 0], table: { widths: ['*'], body: [[{ stack: [{ text: L.notlar.toLocaleUpperCase(L === PL.en ? 'en-US' : 'tr-TR'), bold: true, fontSize: 7.5, characterSpacing: 0.6, margin: [0, 0, 0, 3] }, { text: enT(L, t.genelNot), fontSize: 8.4 }], fillColor: '#f6f6f4' }]] },
         layout: { hLineWidth: () => 0, vLineWidth: (i) => (i === 0 ? 1.6 : 0), vLineColor: () => INK, paddingLeft: () => 9, paddingRight: () => 9, paddingTop: () => 7, paddingBottom: () => 7 } }] : [])
   };
   return new Promise((ok, no) => { try { window.pdfMake.createPdf(dd).getBlob(b => ok(b)); } catch (e) { no(e); } });
@@ -3504,7 +3637,7 @@ VIEWS.raporlar = main => {
       <div class="ph-act"><button class="btn" data-act="repXls">${I('xls')} Excel</button><button class="btn" data-act="repPrint">${I('print')} PDF / Yazdır</button></div></div>
     <div class="toolbar"><div class="chips">${[['', 'Tümü'], ...Object.entries(TARIH_L)].map(([k, l]) => html`<button class="chip ${RQ.p === k ? 'on' : ''}" data-act="repP" data-k="${k}">${l}</button>`)}</div>
       <div class="${RQ.p === 'ozel' ? '' : 'hidden'}" style="display:flex;gap:8px"><input type="date" class="inp" id="rf" value="${RQ.from}" style="width:auto"><input type="date" class="inp" id="rt" value="${RQ.to}" style="width:auto"></div></div>
-    <div class="tabs rep-tabs">${[['genel', 'Genel Bakış'], ['teklif', 'Sipariş'], ['musteri', 'Müşteri'], ['personel', 'Personel'], ['urun', 'Ürün'], ['finans', 'Finansal Özet']].map(([k, l]) => html`<button class="${RQ.tab === k ? 'on' : ''}" data-act="repTab" data-k="${k}">${l}</button>`)}</div>
+    <div class="tabs rep-tabs">${[['genel', 'Genel Bakış'], ['teklif', 'Sipariş'], ['musteri', 'Müşteri'], ['personel', 'Personel'], ['urun', 'Ürün'], ['finans', 'Finansal Özet'], ['tahsilat', 'Tahsilat (hesap)']].map(([k, l]) => html`<button class="${RQ.tab === k ? 'on' : ''}" data-act="repTab" data-k="${k}">${l}</button>`)}</div>
     <div id="rep"></div></div>`);
   ['rf', 'rt'].forEach(i => $('#' + i).addEventListener('change', e => { RQ[i === 'rf' ? 'from' : 'to'] = e.target.value; drawRep(); }));
   drawRep();
@@ -3516,8 +3649,31 @@ function repData() {
   const ts = DB.teklif.all().filter(t => !t.deletedAt && t.tur !== 'proforma' && (!rg || (t.tarih >= rg[0] && t.tarih <= rg[1]))).sort((a, b) => b.tarih.localeCompare(a.tarih));
   return { rg, pm, ts: ts.map(t => ({ t, c: calc(t, pm[t.id]) })) };
 }
+/* Tahsilat hesap bazında: ödeme TARİHİNE göre (sipariş tarihine göre değil); tutar ödemenin kendi dövizinde.
+   Peşinat ve hesabı seçilmemiş ödemeler "Hesap belirtilmemiş" satırına düşer. Yalnız uygulamada (PDF/Excel raporu), müşteri görmez. */
+function repTahsilat(D) {
+  const rg = D.rg, icin = tarih => !rg || (tarih >= rg[0] && tarih <= rg[1]);
+  const canli = new Map(DB.teklif.all().filter(t => !t.deletedAt).map(t => [t.id, t]));
+  const g = new Map(), ekle = (key, ad, dv, tur, tutar) => { const x = g.get(key) || { ad, dv, tur, n: 0, top: 0 }; x.n++; x.top = r2(x.top + tutar); g.set(key, x); };
+  for (const p of DB.odeme.all()) {
+    if (!canli.has(p.teklifId) || !icin(p.tarih)) continue;
+    const b = p.hesapId && bkBul(p.hesapId);
+    if (b) ekle(b.id + '|' + p.doviz, `${b.banka || b.unvan} · ${ibanFmt(b.iban)}${b.silindi ? ' (silinmiş)' : b.aktif === false ? ' (pasif)' : ''}`, p.doviz, b.doviz === 'TRY' ? b.tur : '', +p.tutar || 0);
+    else ekle('-|' + p.doviz, 'Hesap belirtilmemiş', p.doviz, '', +p.tutar || 0);
+  }
+  for (const t of canli.values()) if (t.pesinat > 0 && icin(t.pesinatTarih || t.tarih)) ekle('-|' + t.doviz, 'Hesap belirtilmemiş', t.doviz, '', +t.pesinat || 0);
+  const rows = [], sira = [...g.values()].sort((a, b) => CURS.indexOf(a.dv) - CURS.indexOf(b.dv) || (a.ad === 'Hesap belirtilmemiş') - (b.ad === 'Hesap belirtilmemiş') || b.top - a.top);
+  for (const dv of CURS) {
+    const L = sira.filter(x => x.dv === dv); if (!L.length) continue;
+    for (const x of L) rows.push([x.ad, dv, x.tur ? BK_TUR[x.tur] : '—', x.n, money(x.top, dv)]);
+    if (dv === 'TRY') for (const tur of ['resmi', 'gayri']) { const T = L.filter(x => x.tur === tur); if (T.length) rows.push([`Ara toplam — ${BK_TUR[tur]}`, dv, BK_TUR[tur], T.reduce((a, x) => a + x.n, 0), money(r2(T.reduce((a, x) => a + x.top, 0)), dv)]); }
+    rows.push([`TOPLAM ${dv}`, dv, '', L.reduce((a, x) => a + x.n, 0), money(r2(L.reduce((a, x) => a + x.top, 0)), dv)]);
+  }
+  return { title: 'Tahsilat (hesap bazında)', cols: ['Hesap', 'Döviz', 'Tür', 'Ödeme Sayısı', 'Toplam'], rows };
+}
 function repTable(tab, D) {
   const { ts } = D;
+  if (tab === 'tahsilat') return repTahsilat(D);
   if (tab === 'teklif') return { title: 'Sipariş raporu', cols: ['No', 'Tarih', 'Teslim', 'Müşteri', 'Personel', 'Döviz', 'Adet', 'Genel Toplam', 'Alınan', 'Kalan', 'Durum'], rows: ts.map(({ t, c }) => [t.no, fmtDate(t.tarih), fmtDate(t.teslim), t.cariSnap.unvan, t.personelAd, t.doviz, c.adet, money(c.genel, t.doviz), money(c.pes, t.doviz), money(c.kalan, t.doviz), tkDurum(t)]) };
   if (tab === 'musteri' || tab === 'personel') {
     const g = {}; for (const { t, c } of ts) { const k = tab === 'musteri' ? t.cariSnap.unvan : t.personelAd; const s = g[k] ||= { n: 0, top: {}, pes: {}, kal: {} }; s.n++; addTo(s.top, t.doviz, c.genel); addTo(s.pes, t.doviz, c.pes); addTo(s.kal, t.doviz, c.kalan); }
@@ -3570,12 +3726,12 @@ A.repXls = async () => {
 /* =====================================================================
    AYARLAR (aynı şifre ile açılır)
    ===================================================================== */
-const SECS = [['genel', 'Genel'], ['guvenlik', 'Şifre ve Bağlantı'], ['pdf', 'PDF'], ['cari', 'Müşteri/Cari'], ['odeme', 'Ödeme Yöntemleri'], ['cop', 'Geri Dönüşüm Kutusu'], ['yedek', 'Yedekler']];
+const SECS = [['genel', 'Genel'], ['guvenlik', 'Şifre ve Bağlantı'], ['pdf', 'PDF'], ['cari', 'Müşteri/Cari'], ['odeme', 'Ödeme Yöntemleri'], ['banka', 'Banka Hesapları'], ['cop', 'Geri Dönüşüm Kutusu'], ['yedek', 'Yedekler']];
 VIEWS.ayarlar = (main, { sec = 'genel' }) => {
   if (!state.settingsOk) { go('teklifler'); openSettings(); return; }
   mount(main, html`<div class="page"><div class="ph"><div class="ph-l"><button class="btn icon" data-act="nav" data-v="teklifler" aria-label="Ayarlardan çık">${I('back')}</button><h1>Ayarlar</h1></div></div>
     <div class="set"><nav class="set-nav">${SECS.map(([k, l]) => html`<button class="${sec === k ? 'on' : ''}" data-act="setSec" data-k="${k}">${l}</button>`)}</nav><div id="setBody"></div></div></div>`);
-  ({ genel: setGenel, guvenlik: setGuv, pdf: setPdf, cari: setCari, odeme: setOdeme, cop: setCop, yedek: setYedek })[sec]($('#setBody'));
+  ({ genel: setGenel, guvenlik: setGuv, pdf: setPdf, cari: setCari, odeme: setOdeme, banka: setBanka, cop: setCop, yedek: setYedek })[sec]($('#setBody'));
 };
 A.setSec = el => go('ayarlar', { sec: el.dataset.k });
 function setGenel(b) {
@@ -3688,6 +3844,76 @@ function setOdeme(b) {
     const ed = e.target.closest('[data-ed]'); if (ed) yontemForm(DB.yontem.find(ed.dataset.ed), draw);
     const mv = e.target.closest('[data-mv]'); if (mv) { const list = [...DB.yontem.all()].sort((a, c) => a.sira - c.sira); const i = list.findIndex(x => x.id === mv.dataset.mv), j = i + +mv.dataset.d; if (j < 0 || j >= list.length) return; [list[i], list[j]] = [list[j], list[i]]; DB.yontem.save(list.map((x, k) => ({ ...x, sira: k }))); draw(); }
     const del = e.target.closest('[data-del]'); if (del) { const y = DB.yontem.find(del.dataset.del); if (!await confirmBox({ title: 'Ödeme yöntemini sil', danger: true, ok: 'Sil', body: html`<p><b>${y.ad}</b> silinecek.</p>` })) return; DB.yontem.remove(y.id); draw(); }
+  });
+}
+/* ---------- Ayarlar → Banka Hesapları ---------- */
+function bankaForm(b, onSaved) {
+  const v = b ? { ...b } : { banka: '', unvan: S.firma.ad || '', iban: '', doviz: 'TRY', tur: '', swift: '', sube: '', hesapNo: '', not: '', varsayilan: false, aktif: true };
+  const f = (k, l, ext = '', req = false) => html`<div class="field" data-f="${k}"><label>${l}${req ? html` <span class="req">*</span>` : ''}</label><input class="inp" data-b="${k}" value="${k === 'iban' ? ibanFmt(v.iban) : v[k] || ''}" ${raw(ext)}></div>`;
+  modal({ title: b ? 'Banka hesabını düzenle' : 'Banka hesabı ekle', body: html`<div class="grid g2">
+      ${f('banka', 'Banka adı', 'maxlength="60" autofocus', true)}
+      <div class="field"><label>Döviz <span class="req">*</span></label><div class="seg" data-bseg="doviz">${CURS.map(c => html`<button type="button" data-v="${c}" class="${v.doviz === c ? 'on' : ''}">${c}</button>`)}</div></div>
+      <div class="field span2" data-f="unvan"><label>Hesap ünvanı <span class="req">*</span> <span class="muted" style="font-weight:500">— PDF'te görünür</span></label><input class="inp" data-b="unvan" value="${v.unvan || ''}" maxlength="120"></div>
+      <div class="field span2" data-f="iban"><label>IBAN <span class="req">*</span> <span class="muted" style="font-weight:500">— PDF'te görünür</span></label><input class="inp bk-iban" data-b="iban" value="${ibanFmt(v.iban)}" maxlength="42" placeholder="TR00 0000 0000 0000 0000 0000 00" autocomplete="off" spellcheck="false"><div class="muted sm" data-ibm></div></div>
+      <div class="field" data-tur><label>Hesap türü <span class="req">*</span> <span class="muted" style="font-weight:500">— PDF'te yazmaz</span></label><div class="seg" data-bseg="tur">${Object.entries(BK_TUR).map(([k, l]) => html`<button type="button" data-v="${k}" class="${v.tur === k ? 'on' : ''}">${l}</button>`)}</div></div>
+      <div class="field" data-f="swift" data-sw><label>SWIFT <span class="muted" style="font-weight:500">— USD/EUR PDF'inde görünür</span></label><input class="inp" data-b="swift" value="${v.swift || ''}" maxlength="11" placeholder="8 veya 11 karakter" autocomplete="off" spellcheck="false"></div>
+      ${f('sube', 'Şube', 'maxlength="60"')}${f('hesapNo', 'Hesap no', 'maxlength="30"')}
+      <div class="field span2"><label>Not <span class="muted" style="font-weight:500">— yalnız uygulamada</span></label><input class="inp" data-b="not" value="${v.not || ''}" maxlength="120"></div>
+      <label class="chk span2"><input type="checkbox" data-b="varsayilan" ${v.varsayilan ? 'checked' : ''}> Varsayılan — bu dövizde <span data-vtur></span> teklif açılınca otomatik seçilsin</label>
+      <label class="chk span2"><input type="checkbox" data-b="aktif" ${v.aktif !== false ? 'checked' : ''}> Aktif — kapalıysa yeni tekliflerde görünmez</label></div>`,
+    foot: html`<button class="btn" data-x>Vazgeç</button><button class="btn primary" data-s>Kaydet</button>`,
+    onMount: m => {
+      const upd = () => {
+        $$('[data-bseg]', m.el).forEach(sg => $$('button', sg).forEach(x => x.classList.toggle('on', v[sg.dataset.bseg] === x.dataset.v)));
+        m.$('[data-tur]').classList.toggle('hidden', v.doviz !== 'TRY'); m.$('[data-sw]').classList.toggle('hidden', v.doviz === 'TRY');
+        m.$('[data-vtur]').textContent = v.doviz === 'TRY' && BK_TUR[v.tur] ? '(' + BK_TUR[v.tur].toLocaleLowerCase('tr-TR') + ')' : '';
+        const i = ibanTemiz(m.$('[data-b="iban"]').value), ib = m.$('[data-ibm]');
+        ib.textContent = !i ? '' : ibanGecerli(i) ? '✓ IBAN geçerli' : i.length < (i.startsWith('TR') ? 26 : 15) ? `${i.length} / ${i.startsWith('TR') ? 26 : '?'} karakter` : '✗ IBAN hatalı — kontrol basamağı tutmuyor';
+        ib.style.color = i && ibanGecerli(i) ? 'var(--ok, #1a7f37)' : i.length >= 26 ? 'var(--danger, #c62828)' : '';
+      };
+      upd();
+      m.el.addEventListener('input', e => { if (e.target.dataset.b === 'iban') { if (e.target.selectionStart === e.target.value.length) e.target.value = ibanFmt(e.target.value); upd(); } if (e.target.dataset.b === 'swift') e.target.value = swiftTemiz(e.target.value); e.target.closest('.field')?.classList.remove('validation-error'); });
+      m.el.addEventListener('click', e => {
+        const sb = e.target.closest('[data-bseg] button'); if (sb) { v[sb.closest('[data-bseg]').dataset.bseg] = sb.dataset.v; sb.closest('.field')?.classList.remove('validation-error'); upd(); return; }
+        if (!e.target.closest('[data-s]')) return;
+        const g = k => m.$(`[data-b="${k}"]`);
+        const row = { ...(b || { id: uid(), created: Date.now() }), banka: clean(g('banka').value, 60), unvan: clean(g('unvan').value, 120).toLocaleUpperCase('tr-TR'), iban: ibanTemiz(g('iban').value),
+          doviz: CURS.includes(v.doviz) ? v.doviz : 'TRY', sube: clean(g('sube').value, 60), hesapNo: clean(g('hesapNo').value, 30).replace(/[^0-9A-Za-z-]/g, ''), not: clean(g('not').value, 120), varsayilan: g('varsayilan').checked, aktif: g('aktif').checked, updated: Date.now() };
+        if (row.doviz === 'TRY') { row.tur = BK_TUR[v.tur] ? v.tur : ''; delete row.swift; } else { row.swift = swiftTemiz(g('swift').value); delete row.tur; }
+        const er = [], isaret = k => m.$(k)?.closest('.field')?.classList.add('validation-error');
+        if (!row.banka) { er.push('Banka adı girin'); isaret('[data-b="banka"]'); }
+        if (!row.unvan) { er.push('Hesap ünvanı girin'); isaret('[data-b="unvan"]'); }
+        if (!ibanGecerli(row.iban)) { er.push('IBAN geçersiz'); isaret('[data-b="iban"]'); }
+        if (row.doviz === 'TRY' && !row.tur) { er.push('Hesap türü seçin'); isaret('[data-bseg="tur"]'); }
+        if (row.doviz !== 'TRY' && row.swift && !swiftGecerli(row.swift)) { er.push('SWIFT 8 veya 11 karakter olmalı (ör. TCZBTR2A)'); isaret('[data-b="swift"]'); }
+        if (bkTum().some(x => x.id !== row.id && ibanTemiz(x.iban) === row.iban && x.doviz === row.doviz)) { er.push('Bu IBAN zaten kayıtlı'); isaret('[data-b="iban"]'); }
+        if (er.length) return toast(er.join(' · '), 'err', 5000);
+        const L = Array.isArray(S.bankalar) ? [...S.bankalar] : [], i = L.findIndex(x => x.id === row.id);
+        if (i >= 0) L[i] = row; else L.push(row);
+        S.bankalar = L.slice(0, 200); saveS(); logAct(`Banka hesabı ${b ? 'düzenlendi' : 'eklendi'}: ${bkAd(row)}`);
+        m.close(); toast('Banka hesabı kaydedildi'); onSaved && onSaved(row);
+      });
+    } });
+}
+function setBanka(b) {
+  mount(b, html`<div class="card"><div class="card-h"><h3>Banka hesapları</h3><button class="btn sm primary" data-add>${I('plus')} Hesap Ekle</button></div>
+    <p class="muted sm" style="margin:0 0 10px">IBAN'lar yalnız buradan eklenir. Teklifte dövize göre varsayılan hesaplar otomatik seçilir. PDF'te yalnız <b>ünvan + IBAN</b> (USD/EUR'da ayrıca SWIFT) çıkar; resmi / gayri resmi, banka adı, şube ve not çıkmaz.</p><div data-l></div></div>`);
+  const draw = () => {
+    const L = bkTum().sort((x, y) => CURS.indexOf(x.doviz) - CURS.indexOf(y.doviz) || (x.tur === 'gayri') - (y.tur === 'gayri') || (x.created || 0) - (y.created || 0));
+    const grup = [...new Set(L.map(x => x.doviz + '|' + (x.doviz === 'TRY' ? x.tur : '')))];
+    mount(b.querySelector('[data-l]'), L.length ? grup.map(gk => { const [dv, tur] = gk.split('|'); const G = L.filter(x => x.doviz + '|' + (x.doviz === 'TRY' ? x.tur : '') === gk);
+      return html`<h4 class="bk-gh">${dv}${tur ? ' — ' + BK_TUR[tur] : ''}</h4><div class="tw"><table class="tbl static bk-t"><tbody>${G.map(x => html`<tr class="${x.aktif === false ? 'bk-pasif' : ''}"><td><div class="b">${x.banka}${x.varsayilan ? html` <span class="not-tag">Varsayılan</span>` : ''}${x.aktif === false ? html` <span class="not-tag">Pasif</span>` : ''}</div><div class="sm">${x.unvan}</div><code class="bk-ib">${ibanFmt(x.iban)}</code>${x.swift ? html`<div class="muted sm">SWIFT ${x.swift}</div>` : ''}${x.sube || x.hesapNo || x.not ? html`<div class="muted sm">${[x.sube, x.hesapNo, x.not].filter(Boolean).join(' · ')}</div>` : ''}</td>
+        <td class="r nowrap"><button class="btn sm" data-ed="${x.id}">Düzenle</button> <button class="btn sm" data-pas="${x.id}">${x.aktif === false ? 'Aktif yap' : 'Pasif yap'}</button> <button class="btn sm danger" data-del="${x.id}">Sil</button></td></tr>`)}</tbody></table></div>`; })
+      : html`<div class="empty">Henüz banka hesabı yok</div>`);
+  };
+  draw();
+  b.addEventListener('click', async e => {
+    if (e.target.closest('[data-add]')) bankaForm(null, draw);
+    const ed = e.target.closest('[data-ed]'); if (ed) { const x = bkBul(ed.dataset.ed); if (x) bankaForm(x, draw); }
+    const pa = e.target.closest('[data-pas]'); if (pa) { const x = bkBul(pa.dataset.pas); if (!x) return; S.bankalar = S.bankalar.map(y => y.id === x.id ? { ...y, aktif: y.aktif === false, updated: Date.now() } : y); saveS(); toast(x.aktif === false ? 'Hesap aktif' : 'Hesap pasif — yeni tekliflerde görünmez'); draw(); }
+    const de = e.target.closest('[data-del]'); if (de) { const x = bkBul(de.dataset.del); if (!x) return;
+      if (!await confirmBox({ title: 'Banka hesabını sil', danger: true, ok: 'Sil', body: html`<p><b>${x.banka}</b> · ${ibanFmt(x.iban)}</p><p>Listeden kalkar, yeni tekliflerde seçilemez. <b>Eski teklifler ve PDF'lerde aynen kalır.</b></p><p class="muted sm">Geçici kapatmak için "Pasif yap" kullanın.</p>` })) return;
+      S.bankalar = S.bankalar.map(y => y.id === x.id ? { ...y, silindi: Date.now(), varsayilan: false, aktif: false } : y); saveS(); logAct(`Banka hesabı silindi: ${bkAd(x)}`); toast('Banka hesabı silindi'); draw(); }
   });
 }
 function purgeBin() {

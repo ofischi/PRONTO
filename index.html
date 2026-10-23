@@ -723,7 +723,7 @@ tr.ps-off td, .lcard.ps-off{opacity:.62}
 .bk-ib2{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:var(--muted);white-space:nowrap}
 .sih-bk{margin-top:6px}
 .bk-mini{margin-top:12px;padding-top:10px;border-top:1px dashed var(--border-2);display:grid;gap:8px}
-.bk-mh{font-size:12px;color:var(--muted)}.bk-mh b{color:var(--text)}
+.bk-mh{font-size:12px;color:var(--muted);display:flex;align-items:baseline;gap:5px;min-width:0}.bk-mh b{color:var(--text)}.bk-mh1{flex:0 0 auto}.bk-mh .bk-et{flex:0 0 auto}
 .bk-et{display:inline-block;font-size:10.5px;font-weight:700;border-radius:999px;padding:0 7px;background:rgba(120,130,145,.16);color:var(--muted);margin-left:2px}
 .bk-mi{display:flex;align-items:center;gap:4px;margin-top:2px}
 .bk-iban-b{flex:1;min-width:0;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;font-weight:700;letter-spacing:.02em;overflow-wrap:anywhere}
@@ -2147,7 +2147,7 @@ function bankaMini(t) {
   const bks = Array.isArray(t.bankalar) ? t.bankalar.filter(b => b && b.iban) : [];
   if (!bks.length) return '';
   return html`<div class="bk-mini">${bks.map((b, i) => html`<div class="bk-mr">
-    <div class="bk-mh">Ödeme hesabı · <b>${b.banka || b.unvan}</b>${i === 0 && t.hesapTur ? html` <span class="bk-et">${BK_TUR[t.hesapTur]}</span>` : ''}</div>
+    <div class="bk-mh"><span class="bk-mh1">Ödeme hesabı · <b>${b.banka || b.unvan}</b></span>${b.banka && b.unvan ? html`<span class="bk-un" title="${b.unvan}">· ${b.unvan}</span>` : html`<span class="bk-un"></span>`}${i === 0 && t.hesapTur ? html`<span class="bk-et">${BK_TUR[t.hesapTur]}</span>` : ''}</div>
     <div class="bk-mi"><span class="bk-iban-b">${ibanFmt(b.iban)}${b.swift ? html`<small>SWIFT ${b.swift}</small>` : ''}</span>
       <button type="button" class="btn ghost icon sm" data-act="ibanKopya" data-iban="${ibanTemiz(b.iban)}" title="IBAN'ı kopyala" aria-label="IBAN'ı kopyala">${I('copy')}</button>
       ${i === 0 ? html`<button type="button" class="btn ghost icon sm bk-wa" data-act="ibanWa" data-id="${t.id}" title="IBAN'ı WhatsApp'la gönder" aria-label="IBAN'ı WhatsApp'la gönder">${I('wa')}</button>` : html`<span class="bk-bosluk"></span>`}</div></div>`)}</div>`;

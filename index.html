@@ -701,26 +701,35 @@ tr.ps-off td, .lcard.ps-off{opacity:.62}
 @media (max-width:560px){.ky-b{width:100%}.ky-b .btn{flex:1 1 auto}}
 .pd-not{margin-top:6mm;padding:3mm 4mm;border-left:2px solid #1d1d1f;background:#f6f6f4;font-size:9pt;white-space:pre-wrap;break-inside:avoid;page-break-inside:avoid}
 .pd-not b{display:block;font-size:8pt;letter-spacing:.06em;text-transform:uppercase;margin-bottom:1.5mm}
-.pd-bank{margin-top:6mm;padding:3mm 4mm;border:1px solid #d5d8dd;border-radius:2mm;font-size:9pt;break-inside:avoid;page-break-inside:avoid}
 .bk-sec{margin:10px 0 14px;display:grid;gap:10px}.bk-sec .field{margin:0}
-.bk-list{display:grid;gap:6px}
-.bk-opt{display:flex;gap:10px;align-items:flex-start;text-align:left;width:100%;padding:9px 11px;border:1px solid var(--border-2);border-radius:var(--r-sm);background:transparent;color:inherit;cursor:pointer}
-.bk-opt.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,transparent)}
-.bk-opt .bk-cb{flex:0 0 18px;height:18px;margin-top:1px;border:1.5px solid var(--border-2);border-radius:4px;display:grid;place-items:center}
-.bk-opt.on .bk-cb{background:var(--accent);border-color:var(--accent)}.bk-opt.on .bk-cb::after{content:'';width:5px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:translateY(-1px) rotate(45deg)}
-.bk-opt .t{display:flex;flex-direction:column;min-width:0}.bk-opt .t span{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;letter-spacing:.02em;overflow-wrap:anywhere}
-.bk-opt .t i{font-style:normal;font-size:11.5px;color:var(--muted)}
-.bk-seg button{height:34px}
-.sih-bk{margin-top:6px}.sih-bk.bad .bk-seg{border-color:var(--danger,#c62828)}
+.bk-tg{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.bk-tg button{height:40px;border-radius:10px;border:1px solid var(--border-2);background:var(--surface-2,#fff);color:var(--muted);font:inherit;font-weight:600;font-size:14px;cursor:pointer}
+.bk-tg button.on{background:var(--text,#1a1d24);border-color:var(--text,#1a1d24);color:var(--bg,#fff)}
+.validation-error .bk-tg button,.sih-bk.bad .bk-tg button{border-color:var(--err,#c62828)}
+.bk-kdvnot{margin-top:6px;font-size:12px;color:#7a5a00;background:#fff4d6;border-radius:8px;padding:4px 9px;width:fit-content}
+.bk-ozet{display:flex;align-items:center;gap:10px;border:1px solid var(--border-2);border-radius:10px;padding:8px 10px;min-height:48px}
+.bk-ozet .i{flex:1;min-width:0;font-size:13px}.bk-ozet b{font-size:14px}
+.bk-ozi{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:var(--muted);letter-spacing:.02em;overflow-wrap:anywhere}
+.bk-vs{display:inline-block;font-size:10.5px;font-weight:700;color:#7a5a00;background:#fff1c7;border-radius:999px;padding:1px 7px;vertical-align:1px}
+.bk-vs.gri{color:var(--muted);background:rgba(120,130,145,.18)}
+.bk-la{border:1px solid var(--border-2);border-radius:10px;overflow:hidden}
+.bk-la button{display:grid;grid-template-columns:20px minmax(70px,auto) 1fr auto;gap:10px;align-items:center;width:100%;padding:10px 12px;border:0;border-top:1px solid var(--border);background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer;font-size:13.5px}
+.bk-la button:first-child{border-top:0}.bk-la button.on{background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.bk-la .bk-cb{width:18px;height:18px;border:1.5px solid var(--border-2);border-radius:4px;display:grid;place-items:center}
+.bk-la .on .bk-cb{background:var(--accent);border-color:var(--accent)}.bk-la .on .bk-cb::after{content:'';width:5px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:translateY(-1px) rotate(45deg)}
+.bk-ib2{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:var(--muted);white-space:nowrap}
+.sih-bk{margin-top:6px}
 .bk-kl{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}.bk-kl>div{display:flex;flex-direction:column;gap:2px}
 .bk-kl code,.bk-ib{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;letter-spacing:.02em;overflow-wrap:anywhere}
 .bk-gh{margin:14px 0 6px;font-size:13px;color:var(--muted);letter-spacing:.04em}.bk-pasif td{opacity:.5}.bk-pasif td.r{opacity:1}
 .chk{display:flex;gap:8px;align-items:center;cursor:pointer;font-size:14px}.chk input{width:18px;height:18px;flex:0 0 18px}
 .bk-iban{font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.03em}
+.pd-bank{margin-top:6mm;font-size:9pt;break-inside:avoid;page-break-inside:avoid}
 .pd-bank>b{display:block;font-size:8pt;letter-spacing:.06em;margin-bottom:1.5mm}
-.pd-bank table{width:100%;border-collapse:collapse}.pd-bank td{padding:1.2mm 4mm 1.2mm 0;vertical-align:top}
-.pd-bank tr+tr td{border-top:1px solid #eceef1}.pd-bank td span{display:block;font-size:7pt;color:#6b707c}
-.pd-bank td b{font-weight:700;letter-spacing:.02em}
+.pd-bk{border-left:2px solid #1d1d1f;background:#f6f6f4;padding:2.5mm 4mm}
+.pd-bkh{padding:1.2mm 0}.pd-bkh+.pd-bkh{border-top:1px solid #e3e4e6}
+.pd-bkh b{font-weight:700}.pd-bki{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:8.6pt;letter-spacing:.02em;margin-top:.6mm}
+.pd-bki span{margin-left:6mm}
 .not-g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .not-g .field textarea{min-height:74px;resize:vertical}
 .not-tag{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;font-size:10.5px;font-weight:600;background:rgba(120,130,145,.18);color:var(--muted);text-transform:none;letter-spacing:0}
@@ -1274,15 +1283,29 @@ function bkYenile() {
 function bkSecimHTML(d) {
   if (!CURS.includes(d.doviz)) return html`<div class="muted sm bk-bos">Banka hesapları döviz seçilince gelir.</div>`;
   const tr = d.doviz === 'TRY';
-  const turH = tr ? html`<div class="field bk-turf"><label>HESAP TÜRÜ <span class="req">*</span></label><div class="seg bk-seg" data-d="hesapTur">${Object.entries(BK_TUR).map(([v, l]) => html`<button type="button" class="${d.hesapTur === v ? 'on' : ''}" data-act="bkTur" data-v="${v}">${l}</button>`)}</div>${d.hesapTur === 'gayri' ? html`<div class="muted sm">Gayri resmi teklifte KDV yok.</div>` : ''}</div>` : '';
+  const turH = tr ? html`<div class="field bk-turf"><label>HESAP TÜRÜ <span class="req">*</span></label><div class="bk-tg" data-d="hesapTur">${Object.entries(BK_TUR).map(([v, l]) => html`<button type="button" class="${d.hesapTur === v ? 'on' : ''}" data-act="bkTur" data-v="${v}" aria-pressed="${d.hesapTur === v ? 'true' : 'false'}">${l}</button>`)}</div>${d.hesapTur === 'gayri' ? html`<div class="bk-kdvnot">Gayri resmi teklifte KDV yok.</div>` : ''}</div>` : '';
   if (tr && !BK_TUR[d.hesapTur]) return html`<div class="bk-sec">${turH}</div>`;
-  const secili = Array.isArray(d.bankalar) ? d.bankalar : [], ids = new Set(secili.map(b => b.id));
-  const list = bkAktif(d.doviz, d.hesapTur);
-  const diger = secili.filter(b => !list.some(x => x.id === b.id));   /* teklifte kayıtlı ama artık pasif/silinmiş */
-  const satir = (b, on, not) => html`<button type="button" class="bk-opt ${on ? 'on' : ''}" data-act="bkSec" data-id="${b.id}" aria-pressed="${on ? 'true' : 'false'}"><span class="bk-cb"></span><span class="t"><b>${b.banka || b.unvan}</b><span>${ibanFmt(b.iban)}</span>${not ? html`<i>${not}</i>` : ''}</span></button>`;
-  return html`<div class="bk-sec">${turH}<div class="field"><label>BANKA HESAPLARI <span class="muted" style="font-weight:500">— PDF'te ünvan + IBAN${tr ? '' : ' + SWIFT'}</span></label>
-    ${list.length || diger.length ? html`<div class="bk-list">${list.map(b => satir(b, ids.has(b.id), b.varsayilan ? 'Varsayılan' : ''))}${diger.map(b => satir(b, true, 'Teklifte kayıtlı (Ayarlar\'da pasif/silinmiş)'))}</div>`
-      : html`<div class="muted sm">${d.doviz}${tr ? ' ' + BK_TUR[d.hesapTur].toLocaleLowerCase('tr-TR') : ''} hesabı yok. Ayarlar → Banka Hesapları'ndan ekleyin.</div>`}</div></div>`;
+  const secili = Array.isArray(d.bankalar) ? d.bankalar : [];
+  const varMi = bkAktif(d.doviz, d.hesapTur).length || secili.length;
+  const ilk = secili[0], ilkAyar = ilk && bkBul(ilk.id);
+  const ozet = ilk ? html`<div class="i"><b>${ilk.banka || ilk.unvan}</b>${ilkAyar?.varsayilan ? html` <span class="bk-vs">Varsayılan</span>` : ''}${secili.length > 1 ? html` <span class="muted sm">+ ${secili.length - 1} hesap</span>` : ''}<div class="bk-ozi">${ibanFmt(ilk.iban)}</div></div>`
+    : html`<div class="i"><span class="muted">${varMi ? 'Hesap seçilmedi — PDF\'te banka bilgisi çıkmaz' : `${d.doviz}${tr ? ' ' + BK_TUR[d.hesapTur].toLocaleLowerCase('tr-TR') : ''} hesabı yok. Ayarlar → Banka Hesapları'ndan ekleyin.`}</span></div>`;
+  return html`<div class="bk-sec">${turH}<div class="field"><label>BANKA HESAPLARI</label>
+    <div class="bk-ozet">${ozet}${varMi ? html`<button type="button" class="btn sm" data-act="bkDegistir">${ilk ? 'Değiştir' : 'Seç'}</button>` : ''}</div></div></div>`;
+}
+/* "Değiştir": küçük pencerede kompakt liste — her hesap tek satır, işaretleyince hemen uygulanır */
+function bkSecPencere() {
+  const d = state.draft; if (!d || !CURS.includes(d.doviz)) return;
+  const ciz = m => {
+    const secili = Array.isArray(d.bankalar) ? d.bankalar : [], ids = new Set(secili.map(b => b.id));
+    const list = bkAktif(d.doviz, d.hesapTur), diger = secili.filter(b => !list.some(x => x.id === b.id));
+    const sat = (b, on, eski) => { const ib = ibanFmt(b.iban); return html`<button type="button" class="${on ? 'on' : ''}" data-bk="${b.id}" aria-pressed="${on ? 'true' : 'false'}"><span class="bk-cb"></span><b>${b.banka || b.unvan}</b><span class="bk-ib2">${ib.slice(0, 9)} … ${ib.slice(-7)}</span>${eski ? html`<span class="bk-vs gri">Pasif/silinmiş</span>` : b.varsayilan ? html`<span class="bk-vs">Varsayılan</span>` : html`<span></span>`}</button>`; };
+    mount(m.$('[data-l]'), list.length || diger.length ? html`${list.map(b => sat(b, ids.has(b.id)))}${diger.map(b => sat(b, true, true))}` : html`<div class="empty sm">Hesap yok</div>`);
+  };
+  modal({ title: `Banka hesapları — ${d.doviz}${d.doviz === 'TRY' && BK_TUR[d.hesapTur] ? ' · ' + BK_TUR[d.hesapTur] : ''}`, size: 'sm',
+    body: html`<div class="bk-la" data-l></div><p class="muted sm" style="margin:10px 0 0">İşaretlediğiniz hesaplar PDF'e yazılır. Yeni hesap Ayarlar → Banka Hesapları'ndan eklenir.</p>`,
+    foot: html`<button class="btn primary" data-x>Tamam</button>`,
+    onMount: m => { ciz(m); m.el.addEventListener('click', e => { const b = e.target.closest('[data-bk]'); if (!b) return; A.bkSec({ dataset: { id: b.dataset.bk } }); ciz(m); }); } });
 }
 
 /* ---------- hesaplama ---------- */
@@ -1525,6 +1548,7 @@ function openSettings() {
 /* ---------- global olay yönetimi ---------- */
 const A = {};
 /* Banka hesabı seçimi (teklif formu + telefon sihirbazı) */
+A.bkDegistir = () => bkSecPencere();
 A.bkTur = async el => {
   const d = state.draft, v = el.dataset.v; if (!d || !BK_TUR[v] || d.doviz !== 'TRY' || d.hesapTur === v) return;
   if (d.id && d.hesapTur && !await confirmBox({ title: 'Hesap türü değişsin mi?', body: html`<p>Bu sipariş <b>${BK_TUR[d.hesapTur]}</b> kayıtlı. <b>${BK_TUR[v]}</b> yapılırsa banka hesapları ${v === 'gayri' ? 've KDV (0 olur)' : 've KDV (%' + NF.format(S.kdv).replace(',00', '') + ' olur)'} değişir.</p>`, ok: 'Değiştir' })) return;
@@ -2831,9 +2855,9 @@ function custSatirlar(cs, L) {
   return out.map(x => (Array.isArray(x[0]) ? x : [x]));   // her satır: [[etiket, değer], ...]
 }
 const FOTO_PX = { s: 56, m: 88, l: 130 }, LOGO_PX = { s: 34, m: 52, l: 76 };
-/* PDF'e giden banka satırları: yalnız ünvan + IBAN (+ USD/EUR'da SWIFT) */
+/* PDF'e giden banka satırları: banka adı + ünvan + IBAN (+ USD/EUR'da SWIFT); tür/şube/not asla */
 const pdfBankalar = t => (Array.isArray(t.bankalar) ? t.bankalar : []).filter(b => b && b.iban && b.doviz === t.doviz).slice(0, 10)
-  .map(b => ({ unvan: clean(b.unvan, 120), iban: ibanTemiz(b.iban), swift: t.doviz !== 'TRY' ? swiftTemiz(b.swift) : '' }));
+  .map(b => ({ banka: clean(b.banka, 60).toLocaleUpperCase('tr-TR'), unvan: clean(b.unvan, 120), iban: ibanTemiz(b.iban), swift: t.doviz !== 'TRY' ? swiftTemiz(b.swift) : '' }));
 function pdfDoc(t, o) {
   const L = PL[o.lang] || PL.tr, cs = t.cariSnap, pays = (payMap()[t.id] || []).sort((a, b) => a.tarih.localeCompare(b.tarih)), c = calc(t, pays), fp = FOTO_PX[o.foto] || 88;
   const items = t.items.map((it, n) => ({ it, n }));   /* girildiği sıra */
@@ -2857,7 +2881,7 @@ function pdfDoc(t, o) {
       <div class="pd-tot"><div><span>${L.ana}</span><span>${money(c.ana, t.doviz)}</span></div><div><span>${L.isk}</span><span>${c.isk ? '-' + money(c.isk, t.doviz) : money(0, t.doviz)}</span></div>
         <div><span>${L.ara}</span><span>${money(c.ara, t.doviz)}</span></div>${t.hesapTur === 'gayri' ? '' : html`<div><span>${L.kdv} %${NF.format(t.kdv).replace(',00', '')}</span><span>${money(c.kdv, t.doviz)}</span></div>`}
         <div class="g"><span>${L.genel}</span><span>${money(c.genel, t.doviz)}</span></div><div><span>${L.pes}</span><span>${money(c.pes, t.doviz)}</span></div><div><span>${L.kalan}</span><span>${money(c.kalan, t.doviz)}</span></div></div></div>
-    ${pdfBankalar(t).length ? html`<div class="pd-bank"><b>${L === PL.en ? L.banka.toUpperCase() : L.banka.toLocaleUpperCase('tr-TR')}</b><table>${pdfBankalar(t).map(b => html`<tr><td><span>${L.bUnvan}</span>${b.unvan}</td><td><span>${L.iban}</span><b class="nowrap">${ibanFmt(b.iban)}</b></td>${b.swift ? html`<td><span>${L.swift}</span><b>${b.swift}</b></td>` : ''}</tr>`)}</table></div>` : ''}
+    ${pdfBankalar(t).length ? html`<div class="pd-bank"><b>${L === PL.en ? L.banka.toUpperCase() : L.banka.toLocaleUpperCase('tr-TR')}</b><div class="pd-bk">${pdfBankalar(t).map(b => html`<div class="pd-bkh"><div><b>${b.banka}</b>${b.banka && b.unvan ? ' — ' : ''}${b.unvan}</div><div class="pd-bki">${L.iban}: <b>${ibanFmt(b.iban)}</b>${b.swift ? html`<span>${L.swift}: <b>${b.swift}</b></span>` : ''}</div></div>`)}</div></div>` : ''}
     ${t.genelNot ? html`<div class="pd-not"><b>${L.notlar}</b>${enT(L, t.genelNot)}</div>` : ''}
     <div class="pd-foot"><span>${[S.firma.ad, S.firma.tel, S.firma.adres, S.firma.eposta].filter(Boolean).join('  |  ')}</span><span class="pg">${L.sayfa} 1 / 1</span></div></div>`;
 }
@@ -2994,10 +3018,11 @@ async function tkPdfBlob(t, o) {
   const totNode = { width: 200, table: { widths: ['*', 'auto'], body: totRows.map(([a, b, g]) => [{ text: a, color: g ? INK : '#4a4f5a', bold: !!g, fontSize: 8.4 }, { text: b, bold: !!g, fontSize: 8.4, alignment: 'right', noWrap: true }]) },
     layout: { hLineWidth: (i) => (i === gi ? 1.1 : 0), hLineColor: () => INK, vLineWidth: () => 0, paddingLeft: () => 0, paddingRight: () => 0, paddingTop: (i) => (i === gi ? 5 : 2), paddingBottom: () => 2 } };
   const bks = pdfBankalar(t);
-  const bankNode = bks.length ? [{ unbreakable: true, margin: [0, 16, 0, 0], table: { widths: ['*'], body: [[{ stack: [{ text: L.banka.toLocaleUpperCase(L === PL.en ? 'en-US' : 'tr-TR'), bold: true, fontSize: 7.5, characterSpacing: 0.6, margin: [0, 0, 0, 4] },
-      { table: { widths: bks.some(b => b.swift) ? ['*', 'auto', 'auto'] : ['*', 'auto'], body: bks.map(b => [{ stack: [{ text: L.bUnvan, fontSize: 6.5, color: MUT }, { text: b.unvan, fontSize: 8.4 }] }, { stack: [{ text: L.iban, fontSize: 6.5, color: MUT }, { text: ibanFmt(b.iban), fontSize: 8.4, bold: true, noWrap: true }] }].concat(bks.some(x => x.swift) ? [{ stack: [{ text: b.swift ? L.swift : '', fontSize: 6.5, color: MUT }, { text: b.swift || '', fontSize: 8.4, bold: true }] }] : [])) },
-        layout: { hLineWidth: (i, n) => (i > 0 && i < n.table.body.length ? 0.5 : 0), hLineColor: () => '#eceef1', vLineWidth: () => 0, paddingLeft: () => 0, paddingRight: () => 12, paddingTop: () => 3, paddingBottom: () => 3 } }] }]] },
-    layout: { hLineWidth: () => 0.7, vLineWidth: () => 0.7, hLineColor: () => '#d5d8dd', vLineColor: () => '#d5d8dd', paddingLeft: () => 9, paddingRight: () => 9, paddingTop: () => 7, paddingBottom: () => 7 } }] : [];
+  const bankNode = bks.length ? [{ unbreakable: true, margin: [0, 16, 0, 0], stack: [{ text: L.banka.toLocaleUpperCase(L === PL.en ? 'en-US' : 'tr-TR'), bold: true, fontSize: 7.5, characterSpacing: 0.6, margin: [0, 0, 0, 4] },
+    { table: { widths: ['*'], body: bks.map(b => [{ fillColor: '#f6f6f4', stack: [
+      { fontSize: 8.4, text: [{ text: b.banka, bold: true }, { text: b.banka && b.unvan ? ' — ' : '' }, { text: b.unvan }] },
+      { fontSize: 8.4, margin: [0, 2, 0, 0], text: [{ text: L.iban + ': ', color: MUT }, { text: ibanFmt(b.iban), bold: true }].concat(b.swift ? [{ text: '      ' + L.swift + ': ', color: MUT }, { text: b.swift, bold: true }] : []) }] }]) },
+      layout: { hLineWidth: (i, n) => (i > 0 && i < n.table.body.length ? 0.5 : 0), hLineColor: () => '#e3e4e6', vLineWidth: (i) => (i === 0 ? 1.6 : 0), vLineColor: () => INK, paddingLeft: () => 9, paddingRight: () => 9, paddingTop: () => 5, paddingBottom: () => 5 } }] }] : [];
   const firma = [S.firma.ad, S.firma.tel, S.firma.adres, S.firma.eposta].filter(Boolean).join('  |  ');
   const dd = {
     info: { title: `${pfBaslik(t, L)} ${t.no}`, author: S.firma.ad || 'PRONTO', creator: 'PRONTO', producer: 'PRONTO' },
@@ -3869,7 +3894,7 @@ function bankaForm(b, onSaved) {
         m.$('[data-vtur]').textContent = v.doviz === 'TRY' && BK_TUR[v.tur] ? '(' + BK_TUR[v.tur].toLocaleLowerCase('tr-TR') + ')' : '';
         const i = ibanTemiz(m.$('[data-b="iban"]').value), ib = m.$('[data-ibm]');
         ib.textContent = !i ? '' : ibanGecerli(i) ? '✓ IBAN geçerli' : i.length < (i.startsWith('TR') ? 26 : 15) ? `${i.length} / ${i.startsWith('TR') ? 26 : '?'} karakter` : '✗ IBAN hatalı — kontrol basamağı tutmuyor';
-        ib.style.color = i && ibanGecerli(i) ? 'var(--ok, #1a7f37)' : i.length >= 26 ? 'var(--danger, #c62828)' : '';
+        ib.style.color = i && ibanGecerli(i) ? 'var(--ok, #1a7f37)' : i.length >= 26 ? 'var(--err, #c62828)' : '';
       };
       upd();
       m.el.addEventListener('input', e => { if (e.target.dataset.b === 'iban') { if (e.target.selectionStart === e.target.value.length) e.target.value = ibanFmt(e.target.value); upd(); } if (e.target.dataset.b === 'swift') e.target.value = swiftTemiz(e.target.value); e.target.closest('.field')?.classList.remove('validation-error'); });

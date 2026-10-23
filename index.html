@@ -719,8 +719,15 @@ tr.ps-off td, .lcard.ps-off{opacity:.62}
 .bk-la .on .bk-cb{background:var(--accent);border-color:var(--accent)}.bk-la .on .bk-cb::after{content:'';width:5px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:translateY(-1px) rotate(45deg)}
 .bk-ib2{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:var(--muted);white-space:nowrap}
 .sih-bk{margin-top:6px}
-.bk-kl{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}.bk-kl>div{display:flex;flex-direction:column;gap:2px}
-.bk-kl code,.bk-ib{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;letter-spacing:.02em;overflow-wrap:anywhere}
+.bk-mini{margin-top:12px;padding-top:10px;border-top:1px dashed var(--border-2);display:grid;gap:8px}
+.bk-mh{font-size:12px;color:var(--muted)}.bk-mh b{color:var(--text)}
+.bk-et{display:inline-block;font-size:10.5px;font-weight:700;border-radius:999px;padding:0 7px;background:rgba(120,130,145,.16);color:var(--muted);margin-left:2px}
+.bk-mi{display:flex;align-items:center;gap:4px;margin-top:2px}
+.bk-iban-b{flex:1;min-width:0;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;font-weight:700;letter-spacing:.02em;overflow-wrap:anywhere}
+.bk-iban-b small{display:block;font-weight:600;color:var(--muted);font-size:11px}
+.bk-mi .btn.icon{width:30px;height:30px;min-height:0;padding:0;flex:0 0 30px;border:1px solid var(--border-2)}.bk-mi .btn.icon .i{width:15px;height:15px}
+.bk-mi .bk-wa{color:#1f9d55}.bk-bosluk{width:30px;flex:0 0 30px}
+.bk-ib{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;letter-spacing:.02em;overflow-wrap:anywhere}
 .bk-gh{margin:14px 0 6px;font-size:13px;color:var(--muted);letter-spacing:.04em}.bk-pasif td{opacity:.5}.bk-pasif td.r{opacity:1}
 .chk{display:flex;gap:8px;align-items:center;cursor:pointer;font-size:14px}.chk input{width:18px;height:18px;flex:0 0 18px}
 .bk-iban{font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.03em}
@@ -838,6 +845,8 @@ const IP = {
   img:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/>',
   xls:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 12l5 6M14 12l-5 6"/>'
 };
+IP.copy = '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>';
+IP.wa = '<path d="M3 21l1.6-4.6A8.5 8.5 0 1 1 8 20z"/><path d="M9.2 9.3c.4 2.6 2.6 4.8 5.2 5.2l1.1-1.1 1.9.9-.5 1.4c-4 .3-8-3.7-7.7-7.7l1.4-.5.9 1.9z" stroke-width="1.3"/>';
 IP.pf = '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h3" stroke-dasharray="2 2"/>';
 const I = (n, cls = '') => raw(`<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${IP[n] || ''}</svg>`);
 
@@ -2098,19 +2107,31 @@ function notKart(t) {
     <div><div class="muted sm" style="margin-bottom:4px">Sipariş notu <span class="not-tag">PDF'te görünür</span></div><div class="nt">${t.genelNot || '—'}</div></div>
     <div><div class="muted sm" style="margin-bottom:4px">İç not <span class="not-tag">Müşteri görmez</span></div><div class="nt">${t.icNot || '—'}</div></div></div></div>`;
 }
-function bankaKart(t) {
+/* Sipariş detayı: Ödeme özeti kartının altında küçük "Ödeme hesabı" bölümü (kopyala + WhatsApp simgeleri) */
+function bankaMini(t) {
   const bks = Array.isArray(t.bankalar) ? t.bankalar.filter(b => b && b.iban) : [];
   if (!bks.length) return '';
-  return html`<div class="card bk-kart"><div class="card-h"><h3>Banka hesapları ${t.hesapTur ? html`<span class="not-tag">${BK_TUR[t.hesapTur]} — PDF'te yazmaz</span>` : ''}</h3><button class="btn sm" data-act="ibanWa" data-id="${t.id}">${I('share')} IBAN'ı WhatsApp'la gönder</button></div>
-    <div class="bk-kl">${bks.map(b => html`<div><b>${b.unvan}</b><span class="muted sm">${b.banka || ''}</span><code>${ibanFmt(b.iban)}</code>${b.swift ? html`<span class="sm">SWIFT: <b>${b.swift}</b></span>` : ''}</div>`)}</div></div>`;
+  return html`<div class="bk-mini">${bks.map((b, i) => html`<div class="bk-mr">
+    <div class="bk-mh">Ödeme hesabı · <b>${b.banka || b.unvan}</b>${i === 0 && t.hesapTur ? html` <span class="bk-et">${BK_TUR[t.hesapTur]}</span>` : ''}</div>
+    <div class="bk-mi"><span class="bk-iban-b">${ibanFmt(b.iban)}${b.swift ? html`<small>SWIFT ${b.swift}</small>` : ''}</span>
+      <button type="button" class="btn ghost icon sm" data-act="ibanKopya" data-iban="${ibanTemiz(b.iban)}" title="IBAN'ı kopyala" aria-label="IBAN'ı kopyala">${I('copy')}</button>
+      ${i === 0 ? html`<button type="button" class="btn ghost icon sm bk-wa" data-act="ibanWa" data-id="${t.id}" title="IBAN'ı WhatsApp'la gönder" aria-label="IBAN'ı WhatsApp'la gönder">${I('wa')}</button>` : html`<span class="bk-bosluk"></span>`}</div></div>`)}</div>`;
 }
+A.ibanKopya = async el => {
+  const v = ibanTemiz(el.dataset.iban); if (!v) return;
+  let ok = false;
+  try { await navigator.clipboard.writeText(v); ok = true; } catch {
+    try { const ta = document.createElement('textarea'); ta.value = v; ta.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(ta); ta.select(); ok = document.execCommand('copy'); ta.remove(); } catch {}
+  }
+  toast(ok ? 'IBAN kopyalandı' : 'Kopyalanamadı', ok ? 'ok' : 'err');
+};
 /* WhatsApp: müşteriye IBAN + kalan tutar; tür yazılmaz. Sunucuya istek yok (wa.me bağlantısı). */
 A.ibanWa = el => {
   const t = DB.teklif.find(el.dataset.id); if (!t) return;
   const bks = (Array.isArray(t.bankalar) ? t.bankalar : []).filter(b => b && b.iban); if (!bks.length) return;
   const c = calc(t, payMap()[t.id]), cs = t.cariSnap || {};
   const satir = [`Sayın ${clean(cs.unvan, 120)},`, `Sipariş No: ${t.no}`, `Kalan tutar: ${money(Math.max(0, c.kalan), t.doviz)}`, ''];
-  for (const b of bks) { satir.push(`Ünvan: ${clean(b.unvan, 120)}`, `IBAN: ${ibanFmt(b.iban)}`); if (t.doviz !== 'TRY' && b.swift) satir.push(`SWIFT: ${swiftTemiz(b.swift)}`); satir.push(''); }
+  for (const b of bks) { if (b.banka) satir.push(`Banka: ${clean(b.banka, 60)}`); satir.push(`Ünvan: ${clean(b.unvan, 120)}`, `IBAN: ${ibanFmt(b.iban)}`); if (t.doviz !== 'TRY' && b.swift) satir.push(`SWIFT: ${swiftTemiz(b.swift)}`); satir.push(''); }
   satir.push(`Lütfen ödeme açıklamasına sipariş no (${t.no}) yazınız.`, clean(S.firma.ad, 80));
   const tel = waPhone(cs.gsm), txt = encodeURIComponent(satir.join('\n').trim());
   openOut(`https://wa.me/${tel}?text=${txt}`);
@@ -2742,8 +2763,8 @@ VIEWS.teklifDetay = (main, { id, tab = 'urunler' }) => {
           ${t.pesinat > 0 ? html`<dt>Peşinat${t.pesinatTarih ? ` (${fmtDate(t.pesinatTarih)})` : ''}</dt><dd>${money(t.pesinat, t.doviz)}</dd>` : ''}
           ${pays.length ? html`<dt>Diğer ödemeler</dt><dd>${money(r2(c.pes - (+t.pesinat || 0)), t.doviz)}</dd>` : ''}
           <dt>Toplam alınan</dt><dd>${money(c.pes, t.doviz)}</dd><dt>Kalan</dt><dd class="b">${money(c.kalan, t.doviz)}</dd><dt>Ödeme sayısı</dt><dd>${payCount}</dd></dl>
-        <div class="prog"><i style="width:${pct.toFixed(1)}%"></i></div></div></div>
-    ${notKart(t)}${bankaKart(t)}${pfBant(t)}${sipPanel(t)}<div class="tabs" role="tablist"><button class="${tab === 'urunler' ? 'on' : ''}" data-act="dTab" data-id="${t.id}" data-t="urunler">Ürünler (${t.items.length})</button><button class="${tab === 'odemeler' ? 'on' : ''}" data-act="dTab" data-id="${t.id}" data-t="odemeler">Ödemeler (${payCount})</button></div>
+        <div class="prog"><i style="width:${pct.toFixed(1)}%"></i></div>${bankaMini(t)}</div></div>
+    ${notKart(t)}${pfBant(t)}${sipPanel(t)}<div class="tabs" role="tablist"><button class="${tab === 'urunler' ? 'on' : ''}" data-act="dTab" data-id="${t.id}" data-t="urunler">Ürünler (${t.items.length})</button><button class="${tab === 'odemeler' ? 'on' : ''}" data-act="dTab" data-id="${t.id}" data-t="odemeler">Ödemeler (${payCount})</button></div>
     ${tab === 'urunler' ? html`<div class="tw"><table class="tbl static resp"><thead><tr>${['', 'Ürün', ...(sipBag(t) ? ['Sipariş'] : []), 'Ölçü', 'Renk', 'Yön', 'Adet', 'Birim Fiyat', 'Toplam', 'Açıklama'].map((h, i, a) => html`<th class="${i >= a.length - 4 && i <= a.length - 2 ? 'r' : ''}"><div class="thi">${h}</div></th>`)}</tr></thead><tbody>
         ${t.items.map(it => { const f = safeImg(offerFotoGet(it)); return html`<tr><td>${f ? html`<img class="thumb" src="${f}" alt="" data-act="img">` : html`<span class="thumb">Fotoğraf Yok</span>`}</td><td class="b">${itemTitle(it)}</td>${sipBag(t) ? html`<td class="nowrap">${sipKalemTag(t, it) || html`<span class="muted sm">—</span>`}</td>` : ''}<td>${it.olcu || '—'}</td><td>${it.renk || '—'}</td><td>${it.yon || '—'}</td><td class="r">${it.adet}</td><td class="r">${money(it.fiyat, t.doviz)}</td><td class="r b">${money(it.fiyat * it.adet, t.doviz)}</td><td class="wrap" style="min-width:180px">${it.aciklama || ''}</td></tr>`; })}</tbody></table>
         <div class="cards">${t.items.map(it => { const f = safeImg(offerFotoGet(it)); return html`<div class="lcard" style="cursor:default"><div class="row" style="justify-content:flex-start">${f ? html`<img class="thumb" src="${f}" alt="" data-act="img">` : html`<span class="thumb">Fotoğraf Yok</span>`}<div style="min-width:0"><div class="ttl">${itemTitle(it)}</div><div class="muted sm">${[it.olcu, it.renk, it.yon].filter(Boolean).join(' · ')}</div></div></div>

@@ -2149,16 +2149,19 @@ function bankaMini(t) {
   return html`<div class="bk-mini">${bks.map((b, i) => html`<div class="bk-mr">
     <div class="bk-mh"><span class="bk-mh1">Ödeme hesabı · <b>${b.banka || b.unvan}</b></span>${b.banka && b.unvan ? html`<span class="bk-un" title="${b.unvan}">· ${b.unvan}</span>` : html`<span class="bk-un"></span>`}${i === 0 && t.hesapTur ? html`<span class="bk-et">${BK_TUR[t.hesapTur]}</span>` : ''}</div>
     <div class="bk-mi"><span class="bk-iban-b">${ibanFmt(b.iban)}${b.swift ? html`<small>SWIFT ${b.swift}</small>` : ''}</span>
-      <button type="button" class="btn ghost icon sm" data-act="ibanKopya" data-iban="${ibanTemiz(b.iban)}" title="IBAN'ı kopyala" aria-label="IBAN'ı kopyala">${I('copy')}</button>
+      <button type="button" class="btn ghost icon sm" data-act="ibanKopya" data-id="${t.id}" data-i="${i}" title="Banka bilgilerini kopyala" aria-label="Banka bilgilerini kopyala">${I('copy')}</button>
       ${i === 0 ? html`<button type="button" class="btn ghost icon sm bk-wa" data-act="ibanWa" data-id="${t.id}" title="IBAN'ı WhatsApp'la gönder" aria-label="IBAN'ı WhatsApp'la gönder">${I('wa')}</button>` : html`<span class="bk-bosluk"></span>`}</div></div>`)}</div>`;
 }
 A.ibanKopya = async el => {
-  const v = ibanTemiz(el.dataset.iban); if (!v) return;
+  /* Panoya: banka, ünvan, IBAN (+ döviz hesabında SWIFT); tür yazılmaz */
+  const t = DB.teklif.find(el.dataset.id), b = (Array.isArray(t?.bankalar) ? t.bankalar.filter(x => x && x.iban) : [])[+el.dataset.i || 0];
+  if (!b) return;
+  const v = [b.banka && `Banka: ${clean(b.banka, 60)}`, b.unvan && `Ünvan: ${clean(b.unvan, 120)}`, `IBAN: ${ibanFmt(b.iban)}`, t.doviz !== 'TRY' && b.swift && `SWIFT: ${swiftTemiz(b.swift)}`].filter(Boolean).join('\n');
   let ok = false;
   try { await navigator.clipboard.writeText(v); ok = true; } catch {
     try { const ta = document.createElement('textarea'); ta.value = v; ta.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(ta); ta.select(); ok = document.execCommand('copy'); ta.remove(); } catch {}
   }
-  toast(ok ? 'IBAN kopyalandı' : 'Kopyalanamadı', ok ? 'ok' : 'err');
+  toast(ok ? 'Banka bilgileri kopyalandı' : 'Kopyalanamadı', ok ? 'ok' : 'err');
 };
 /* WhatsApp: müşteriye IBAN + kalan tutar; tür yazılmaz. Sunucuya istek yok (wa.me bağlantısı). */
 A.ibanWa = el => {

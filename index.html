@@ -709,6 +709,9 @@ tr.ps-off td, .lcard.ps-off{opacity:.62}
 .bk-kdvnot{margin-top:6px;font-size:12px;color:#7a5a00;background:#fff4d6;border-radius:8px;padding:4px 9px;width:fit-content}
 .bk-ozet{display:flex;align-items:center;gap:10px;border:1px solid var(--border-2);border-radius:10px;padding:8px 10px;min-height:48px}
 .bk-ozet .i{flex:1;min-width:0;font-size:13px}.bk-ozet b{font-size:14px}
+.bk-o1{display:flex;align-items:baseline;gap:6px;min-width:0}.bk-o1 b{flex:0 0 auto}
+.bk-un{flex:1 1 auto;min-width:0;font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bk-arti{flex:0 0 auto;font-size:11px;font-weight:700;color:var(--muted);background:rgba(120,130,145,.16);border-radius:999px;padding:0 7px}
 .bk-ozi{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:var(--muted);letter-spacing:.02em;overflow-wrap:anywhere}
 .bk-vs{display:inline-block;font-size:10.5px;font-weight:700;color:#7a5a00;background:#fff1c7;border-radius:999px;padding:1px 7px;vertical-align:1px}
 .bk-vs.gri{color:var(--muted);background:rgba(120,130,145,.18)}
@@ -1312,7 +1315,7 @@ function bkSecimHTML(d) {
   const secili = Array.isArray(d.bankalar) ? d.bankalar : [];
   const varMi = bkAktif(d.doviz, d.hesapTur).length || secili.length;
   const ilk = secili[0], ilkAyar = ilk && bkBul(ilk.id);
-  const ozet = ilk ? html`<div class="i"><b>${ilk.banka || ilk.unvan}</b>${ilkAyar?.varsayilan ? html` <span class="bk-vs">Varsayılan</span>` : ''}${secili.length > 1 ? html` <span class="muted sm">+ ${secili.length - 1} hesap</span>` : ''}<div class="bk-ozi">${ibanFmt(ilk.iban)}</div></div>`
+  const ozet = ilk ? html`<div class="i"><div class="bk-o1"><b>${ilk.banka || ilk.unvan}</b>${ilk.banka && ilk.unvan ? html`<span class="bk-un" title="${ilk.unvan}">· ${ilk.unvan}</span>` : html`<span class="bk-un"></span>`}${secili.length > 1 ? html`<span class="bk-arti">+${secili.length - 1} hesap</span>` : ''}</div><div class="bk-ozi">${ibanFmt(ilk.iban)}</div></div>`
     : html`<div class="i"><span class="muted">${varMi ? 'Hesap seçilmedi — PDF\'te banka bilgisi çıkmaz' : `${d.doviz}${tr ? ' ' + BK_TUR[d.hesapTur].toLocaleLowerCase('tr-TR') : ''} hesabı yok. Ayarlar → Banka Hesapları'ndan ekleyin.`}</span></div>`;
   return html`<div class="bk-sec">${turH}<div class="field"><label>BANKA HESAPLARI</label>
     <div class="bk-ozet">${ozet}${varMi ? html`<button type="button" class="btn sm" data-act="bkDegistir">${ilk ? 'Değiştir' : 'Seç'}</button>` : ''}</div></div></div>`;
@@ -2166,7 +2169,8 @@ A.ibanWa = el => {
   if (kalan > 0 && t.teslim) satir.push(`Teslim tarihi: ${fmtDate(t.teslim)}`);
   satir.push('');
   for (const b of bks) { if (b.banka) satir.push(`Banka: ${clean(b.banka, 60)}`); satir.push(`Ünvan: ${clean(b.unvan, 120)}`, `IBAN: ${ibanFmt(b.iban)}`); if (t.doviz !== 'TRY' && b.swift) satir.push(`SWIFT: ${swiftTemiz(b.swift)}`); satir.push(''); }
-  satir.push(`Lütfen ödeme açıklamasına sipariş no (${t.no}) yazınız.`, clean(S.firma.ad, 80));
+  if (t.hesapTur !== 'gayri') satir.push(`Lütfen ödeme açıklamasına sipariş no (${t.no}) yazınız.`);   /* gayri resmide açıklama istenmez */
+  satir.push(clean(S.firma.ad, 80));
   const tel = waPhone(cs.gsm), txt = encodeURIComponent(satir.join('\n').replace(/\n{3,}/g, '\n\n').trim());
   openOut(`https://wa.me/${tel}?text=${txt}`);
 };

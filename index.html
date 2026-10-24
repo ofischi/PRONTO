@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; object-src 'none'; base-uri 'self'">
+<script>/* G4: başka sitenin çerçevesi içinde açılmaz */if(window.top!==window.self){document.documentElement.style.display="none";try{window.top.location.replace(window.location.href)}catch(_){}}</script>
 <!-- telefona uygulama gibi kurulum (ana ekran simgesi, tam ekran) -->
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="64x64" href="ikon-64.png">
@@ -764,6 +765,7 @@ tr.ps-off td, .lcard.ps-off{opacity:.62}
 .sih-not{margin-top:2px}.sih-not summary{cursor:pointer;font-weight:600;padding:8px 0;list-style:none}.sih-not summary::-webkit-details-marker{display:none}
 .sih-not .field{margin-top:8px}.sih-not textarea{min-height:70px}
 @media (max-width:640px){.not-g,.not-k .nb{grid-template-columns:1fr}}
+.daha{display:flex;justify-content:center;padding:14px 0 18px}.daha .muted{font-weight:400;margin-left:4px}
 </style>
 <style id="klavye-css">
 /* telefon/tablet: 16px altı yazı iPhone'da otomatik yakınlaştırır -> tüm kutular 16px */
@@ -1632,9 +1634,17 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#cbOv'
 A.toggleTheme = () => { S.theme = S.theme === 'dark' ? 'light' : 'dark'; Local.set('theme', S.theme); applyTheme(); $$('.tgl').forEach(x => x.classList.toggle('on', S.theme === 'dark')); };
 A.logout = async () => {
   const n = Sync.outbox.size;
-  if (!await confirmBox({ title: 'Çıkış', body: html`<p>Bir sonraki girişte şifre istenecek.</p>${n ? html`<p class="b">${n} değişiklik henüz sunucuya gönderilmedi. İnternet gelince tekrar giriş yaptığınızda gönderilir.</p>` : ''}`, ok: 'Çıkış Yap' })) return;
-  RT.stop(); await Auth.logout(); loginFlow();
+  if (!await confirmBox({ title: 'Çıkış', body: html`<p>Bir sonraki girişte şifre istenecek.</p>${n ? html`<p class="b">${n} değişiklik henüz sunucuya gönderilmedi. İnternet gelince tekrar giriş yaptığınızda gönderilir.</p>` : html`<p>Güvenlik için bu cihazdaki kayıtlı liste ve yarım kalan taslak silinir; bir sonraki girişte sunucudan yeniden yüklenir.</p>`}`, ok: 'Çıkış Yap' })) return;
+  RT.stop(); await Auth.logout();
+  if (!Sync.outbox.size) { await g6CihazTemizle(); location.reload(); return; }   /* G6: gönderilmemiş değişiklik yoksa cihazda veri bırakılmaz */
+  loginFlow();
 };
+/* G6: çıkışta cihaz önbelleği (müşteri/teklif listesi), eşitleme imleci, işlem günlüğü ve taslak silinir. Kişi, tema, PDF tercihleri kalır. Sunucudaki veriye dokunulmaz. */
+async function g6CihazTemizle() {
+  try { if (idb) { idb.close(); idb = null; } } catch {}
+  try { await new Promise(ok => { const q = indexedDB.deleteDatabase(IDB_NAME); q.onsuccess = q.onerror = q.onblocked = () => ok(); setTimeout(ok, 3000); }); } catch {}
+  ['last_sync', 'log', TK_TASLAK].forEach(k => Local.del(k));
+}
 A.img = el => imgPreview(el.getAttribute('src'));
 
 /* =====================================================================
@@ -3031,8 +3041,8 @@ let tkPdfmakeP = null;
 function tkEnsurePdfmake() {
   if (window.pdfMake && window.pdfMake.vfs && window.pdfMake.vfs['Roboto-Regular.ttf']) return Promise.resolve();
   const load = src => new Promise((ok, no) => { const el = document.createElement('script'); el.src = src; el.onload = ok; el.onerror = () => no(new Error('PDF motoru yüklenemedi. İnternet bağlantısını kontrol edin.')); document.head.appendChild(el); });
-  tkPdfmakeP ||= load('https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js')
-    .then(() => load('https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js'))
+  tkPdfmakeP ||= load('lib/pdfmake.min.js')
+    .then(() => load('lib/vfs_fonts.js'))
     .catch(e => { tkPdfmakeP = null; throw e; });
   return tkPdfmakeP;
 }
@@ -3444,25 +3454,31 @@ function cariTuruForm(old, onSaved) {
       saveS(); m.close(); onSaved && onSaved(n); }) });
 }
 const cariStats = () => { const pm = payMap(), o = {}; for (const t of DB.teklif.all()) { if (t.deletedAt || t.tur === 'proforma') continue; const s = o[t.cariId] ||= { n: 0, top: {}, kalan: {} }; const c = calc(t, pm[t.id]); s.n++; addTo(s.top, t.doviz, c.genel); addTo(s.kalan, t.doviz, c.kalan); } return o; };
-const MQ = { q: '' };
+const MQ = { q: '', lim: 100 };   /* H4: liste 100'er 100'er çizilir */
 VIEWS.musteriler = main => {
   mount(main, html`<div class="page fill"><div class="ph"><div><h1>Müşteriler</h1><div class="muted sm" id="cnt"></div></div><div class="ph-act"><button class="btn primary" data-act="newCari">${I('plus')} Yeni Cari</button></div></div>
     <div class="toolbar"><div class="search"><span>${I('search')}</span><input class="inp" id="q" placeholder="Ünvan, şehir, telefon, e-posta ara" value="${MQ.q}" maxlength="60"></div></div><div class="tw" id="tw"></div></div>`);
-  $('#q').addEventListener('input', debounce(e => { MQ.q = clean(e.target.value, 60); drawCari(); }));
+  $('#q').addEventListener('input', debounce(e => { MQ.q = clean(e.target.value, 60); MQ.lim = 100; drawCari(); }));
   drawCari();
 };
 function drawCari() {
   if (!$('#tw')) return;
   const st = cariStats(), q = trAra(MQ.q);
-  const rows = DB.cari.all().filter(c => !q || trAra([c.unvan, c.tur, c.sehir, c.ilce, c.mahalle, c.adres, c.ulke, c.gsm, c.eposta, c.yetkili, c.vkn].join(' ')).includes(q)).sort((a, b) => a.unvan.localeCompare(b.unvan, 'tr'));
+  let rows = DB.cari.all().filter(c => !q || trAra([c.unvan, c.tur, c.sehir, c.ilce, c.mahalle, c.adres, c.ulke, c.gsm, c.eposta, c.yetkili, c.vkn].join(' ')).includes(q)).sort((a, b) => a.unvan.localeCompare(b.unvan, 'tr'));
   $('#cnt').textContent = `${rows.length} cari`;
-  mount($('#tw'), rows.length ? html`<table class="tbl resp"><thead><tr>${['Cari Ünvanı', 'Tür', 'Şehir / Ülke', 'GSM', 'E-Posta', 'Döviz', 'Sipariş', 'Toplam', ''].map(h => html`<th><div class="thi">${h}</div></th>`)}</tr></thead><tbody>
+  const tumu = rows, tw = $('#tw'), sc = tw.scrollTop; rows = rows.slice(0, MQ.lim);
+  mount(tw, rows.length ? html`<table class="tbl resp"><thead><tr>${['Cari Ünvanı', 'Tür', 'Şehir / Ülke', 'GSM', 'E-Posta', 'Döviz', 'Sipariş', 'Toplam', ''].map(h => html`<th><div class="thi">${h}</div></th>`)}</tr></thead><tbody>
     ${rows.map(c => html`<tr data-act="openCari" data-id="${c.id}"><td class="b">${c.unvan}</td><td>${c.tur}</td><td>${c.sehir || c.ulke}</td><td>${c.gsm}</td><td>${c.eposta || '—'}</td><td>${c.doviz}</td><td>${st[c.id]?.n || 0}</td><td>${fmtMulti(st[c.id]?.top || {})}</td>
       <td><button class="btn ghost icon sm" data-act="cariMenu" data-id="${c.id}" aria-label="İşlemler">${I('dots')}</button></td></tr>`)}</tbody></table>
     <div class="cards">${rows.map(c => html`<div class="lcard" data-act="openCari" data-id="${c.id}"><div class="row"><span class="ttl">${c.unvan}</span><button class="btn ghost icon sm" data-act="cariMenu" data-id="${c.id}" aria-label="İşlemler">${I('dots')}</button></div>
-      <div class="row sm muted"><span>${c.tur} · ${c.sehir || c.ulke}</span><span>${c.gsm}</span></div><div class="row sm"><span class="muted">${st[c.id]?.n || 0} sipariş</span><span>${fmtMulti(st[c.id]?.top || {})}</span></div></div>`)}</div>`
+      <div class="row sm muted"><span>${c.tur} · ${c.sehir || c.ulke}</span><span>${c.gsm}</span></div><div class="row sm"><span class="muted">${st[c.id]?.n || 0} sipariş</span><span>${fmtMulti(st[c.id]?.top || {})}</span></div></div>`)}</div>${dahaBtn(tumu.length - rows.length, 'cariDaha')}`
     : html`<div class="empty"><b>${DB.cari.all().length ? 'Aramayla eşleşen cari yok' : 'Henüz cari yok'}</b>${DB.cari.all().length ? '' : 'Yeni Cari ile ilk müşterinizi ekleyin.'}</div>`);
+  tw.scrollTop = sc;
 }
+/* H3/H4: "Daha fazla göster" — kalan kayıtlar 100'er eklenir */
+const dahaBtn = (kalan, act) => kalan > 0 ? html`<div class="daha"><button class="btn" data-act="${act}">Daha fazla göster <span class="muted">(${kalan} kaldı)</span></button></div>` : '';
+A.cariDaha = () => { MQ.lim += 100; drawCari(); };
+A.urunDaha = () => { UQ.lim += 100; drawUrun(); };
 A.newCari = () => cariForm(null, () => drawCari());
 A.openCari = el => go('musteriDetay', { id: el.dataset.id });
 A.cariMenu = (el, e) => { e.stopPropagation(); const c = DB.cari.find(el.dataset.id); popMenu(el, [
@@ -3658,26 +3674,28 @@ A.katYonet = () => katYonet();
 /* =====================================================================
    ÜRÜNLER
    ===================================================================== */
-const UQ = { q: '', kat: '' };
+const UQ = { q: '', kat: '', lim: 100 };   /* H3: liste 100'er 100'er çizilir */
 VIEWS.urunler = main => {
   mount(main, html`<div class="page fill"><div class="ph"><div><h1>Ürünler</h1><div class="muted sm" id="cnt"></div></div><div class="ph-act"><button class="btn" data-act="katYonet">${I('edit')} Kategoriler</button><button class="btn primary" data-act="newUrun">${I('plus')} Yeni Ürün</button></div></div>
     <div class="toolbar"><div class="search"><span>${I('search')}</span><input class="inp" id="q" placeholder="Kod, kategori, model, renk ara" value="${UQ.q}" maxlength="60"></div><select class="inp" id="ukat" style="width:auto;min-width:170px"></select></div><div class="tw" id="tw"></div></div>`);
-  $('#q').addEventListener('input', debounce(e => { UQ.q = clean(e.target.value, 60); drawUrun(); }));
-  $('#ukat').addEventListener('change', e => { UQ.kat = e.target.value; drawUrun(); });
+  $('#q').addEventListener('input', debounce(e => { UQ.q = clean(e.target.value, 60); UQ.lim = 100; drawUrun(); }));
+  $('#ukat').addEventListener('change', e => { UQ.kat = e.target.value; UQ.lim = 100; drawUrun(); });
   drawUrun();
 };
 function drawUrun() {
   if (!$('#tw') || !$('#ukat')) return;
   const all = DB.urun.all(), kats = [...new Map(all.map(u => [trLower(u.kategori), u.kategori])).values()].sort((a, b) => a.localeCompare(b, 'tr'));
   mount($('#ukat'), html`<option value="">Tüm kategoriler</option>${kats.map(k => html`<option ${UQ.kat === k ? 'selected' : ''}>${k}</option>`)}`);
-  const q = trAra(UQ.q), rows = all.filter(u => (!UQ.kat || u.kategori === UQ.kat) && (!q || trAra([u.kod, u.kategori, u.model, u.modul, u.olcu, u.renk, u.yon].join(' ')).includes(q)));
-  $('#cnt').textContent = `${rows.length} ürün`;
+  const q = trAra(UQ.q), tumu = all.filter(u => (!UQ.kat || u.kategori === UQ.kat) && (!q || trAra([u.kod, u.kategori, u.model, u.modul, u.olcu, u.renk, u.yon].join(' ')).includes(q)));
+  $('#cnt').textContent = `${tumu.length} ürün`;
+  const rows = tumu.slice(0, UQ.lim), tw = $('#tw'), sc = tw.scrollTop;
   const th = u => { const f = safeImg(modelFoto.get(u.kategori, u.model, u.modul)); return f ? html`<img class="thumb" src="${f}" alt="">` : html`<span class="thumb">Fotoğraf Yok</span>`; };
-  mount($('#tw'), rows.length ? html`<table class="tbl resp"><thead><tr>${['', 'Kod', 'Kategori', 'Model', 'Modül', 'Ölçü', 'Renk', 'Yön', 'Liste Fiyatı', ''].map(h => html`<th><div class="thi">${h}</div></th>`)}</tr></thead><tbody>
+  mount(tw, rows.length ? html`<table class="tbl resp"><thead><tr>${['', 'Kod', 'Kategori', 'Model', 'Modül', 'Ölçü', 'Renk', 'Yön', 'Liste Fiyatı', ''].map(h => html`<th><div class="thi">${h}</div></th>`)}</tr></thead><tbody>
     ${rows.map(u => html`<tr data-act="openUrun" data-id="${u.id}"><td>${th(u)}</td><td class="muted">${u.kod}</td><td>${u.kategori}</td><td class="b">${u.model}</td><td>${u.modul || '—'}</td><td>${u.olcu || '—'}</td><td>${u.renk || '—'}</td><td>${u.yon || '—'}</td><td>${u.fiyat ? money(u.fiyat, u.doviz) : '—'}</td>
       <td><button class="btn ghost icon sm" data-act="urunMenu" data-id="${u.id}" aria-label="İşlemler">${I('dots')}</button></td></tr>`)}</tbody></table>
-    <div class="cards">${rows.map(u => html`<div class="lcard" data-act="openUrun" data-id="${u.id}"><div class="row" style="justify-content:flex-start">${th(u)}<div style="min-width:0;flex:1"><div class="ttl ttl-tam">${u.model}</div><div class="muted sm">${[u.kategori, u.modul, u.olcu, u.renk, u.yon].filter(Boolean).join(' · ')}</div></div><button class="btn ghost icon sm" data-act="urunMenu" data-id="${u.id}" aria-label="İşlemler">${I('dots')}</button></div></div>`)}</div>`
+    <div class="cards">${rows.map(u => html`<div class="lcard" data-act="openUrun" data-id="${u.id}"><div class="row" style="justify-content:flex-start">${th(u)}<div style="min-width:0;flex:1"><div class="ttl ttl-tam">${u.model}</div><div class="muted sm">${[u.kategori, u.modul, u.olcu, u.renk, u.yon].filter(Boolean).join(' · ')}</div></div><button class="btn ghost icon sm" data-act="urunMenu" data-id="${u.id}" aria-label="İşlemler">${I('dots')}</button></div></div>`)}</div>${dahaBtn(tumu.length - rows.length, 'urunDaha')}`
     : html`<div class="empty"><b>${all.length ? 'Eşleşen ürün yok' : 'Katalog boş'}</b>${all.length ? '' : 'Yeni Ürün ile kategori, model ve varyant bilgilerini girin.'}</div>`);
+  tw.scrollTop = sc;
 }
 function urunForm(u, onSaved) {
   const v = u ? { ...u } : { kategori: '', model: '', modul: '', olcu: '', renk: '', yon: '', fiyat: '', doviz: S.doviz };
@@ -3866,7 +3884,7 @@ function repForExport() {
 A.repPrint = () => { const { T, D } = repForExport();
   printHTML(html`<div class="rep"><h2>${S.firma.ad} — ${T.title}</h2><p>${D.rg ? `${fmtDate(D.rg[0])} – ${fmtDate(D.rg[1])}` : 'Tüm zamanlar'} · Oluşturma: ${fmtDT(Date.now())}</p><table><thead><tr>${T.cols.map(c => html`<th>${c}</th>`)}</tr></thead><tbody>${T.rows.map(r => html`<tr>${r.map(v => html`<td>${v}</td>`)}</tr>`)}</tbody></table></div>`, pageCss('A4', 'landscape')); };
 let xlsxP = null;
-const loadXLSX = () => xlsxP ||= new Promise((ok, no) => { if (window.XLSX) return ok(window.XLSX); const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; s.onload = () => ok(window.XLSX); s.onerror = () => { xlsxP = null; no(); }; document.head.appendChild(s); });
+const loadXLSX = () => xlsxP ||= new Promise((ok, no) => { if (window.XLSX) return ok(window.XLSX); const s = document.createElement('script'); s.src = 'lib/xlsx.full.min.js'; s.onload = () => ok(window.XLSX); s.onerror = () => { xlsxP = null; no(); }; document.head.appendChild(s); });
 const safeCell = v => typeof v === 'string' && /^[=+\-@\t\r]/.test(v) ? "'" + v : v;
 function downloadBlob(blob, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }
 A.repXls = async () => {

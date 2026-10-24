@@ -52,8 +52,16 @@ jobs:
           # al <paket@surum veya resmi tgz adresi> <paket icindeki dosya> <yayin adi>
           # npm pack, indirilen paketi kayit defterindeki butunluk ozetiyle (sha512) dogrular; surumler sabittir.
           al() {
-            ( cd "$K" && rm -rf package ./*.tgz && f=$(npm pack --silent "$1" | tail -n1) && tar xzf "$f" )
-            cp "$K/package/$2" "$H/_site/lib/$3"
+            rm -rf "$K"/*
+            npm pack "$1" --pack-destination "$K" --loglevel=warn > /dev/null
+            tar xzf "$K"/*.tgz -C "$K"
+            kaynak="$K/package/$2"
+            # bazı paketlerde yalnız sıkıştırılmamış sürüm var (x.min.js yoksa x.js)
+            [ -f "$kaynak" ] || kaynak="$K/package/${2%.min.js}.js"
+            if [ ! -f "$kaynak" ]; then
+              echo "BULUNAMADI: $1 içinde $2 — paketteki .js dosyaları:"; (cd "$K/package" && find . -name '*.js' -path '*dist*' | head -40); exit 1
+            fi
+            cp "$kaynak" "$H/_site/lib/$3"
             echo "$3 <- $1  sha256:$(sha256sum "$H/_site/lib/$3" | cut -c1-16)"
           }
           al pdfmake@0.2.10 build/pdfmake.min.js pdfmake.min.js

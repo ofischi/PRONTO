@@ -3,10 +3,12 @@ name: Siteyi yayinla ve bildir
 # index.html, config.js veya adres listesi değişince siteyi yayınlar.
 # Sürüm damgası yalnızca index.html + config.js'ten hesaplanır: sadece adres listesi
 # değiştiğinde programlarda "yeni sürüm" bildirimi çıkmaz.
+# Kütüphaneler (PDF, Excel) sabit sürümle npm'den doğrulanarak indirilir ve sitenin kendi lib/
+# klasöründen sunulur; dış CDN'e bağımlılık yoktur. İndirilemezse yayın durur, eski site kalır.
 on:
   push:
     branches: [main]
-    paths: ['index.html', 'config.js', 'adres/*.json', 'manifest.webmanifest', '*.png']
+    paths: ['index.html', 'config.js', 'adres/*.json', 'manifest.webmanifest', '*.png', '.github/workflows/deploy-pages.yml']
   workflow_dispatch:
 
 permissions:
@@ -41,6 +43,24 @@ jobs:
           echo "V=$V" >> "$GITHUB_ENV"
           sed -i "s/const BUILD = '__BUILD__'/const BUILD = '$V'/" _site/index.html
           grep -q "const BUILD = '$V'" _site/index.html
+
+      - name: Kutuphaneler (sabit surum, npm butunluk kontrolu)
+        run: |
+          set -euo pipefail
+          mkdir -p _site/lib
+          K=$(mktemp -d); H="$PWD"
+          # al <paket@surum veya resmi tgz adresi> <paket icindeki dosya> <yayin adi>
+          # npm pack, indirilen paketi kayit defterindeki butunluk ozetiyle (sha512) dogrular; surumler sabittir.
+          al() {
+            ( cd "$K" && rm -rf package ./*.tgz && f=$(npm pack --silent "$1" | tail -n1) && tar xzf "$f" )
+            cp "$K/package/$2" "$H/_site/lib/$3"
+            echo "$3 <- $1  sha256:$(sha256sum "$H/_site/lib/$3" | cut -c1-16)"
+          }
+          al pdfmake@0.2.10 build/pdfmake.min.js pdfmake.min.js
+          al pdfmake@0.2.10 build/vfs_fonts.js vfs_fonts.js
+          al https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz dist/xlsx.full.min.js xlsx.full.min.js
+          grep -q '0\.20\.3' _site/lib/xlsx.full.min.js
+          ls -la _site/lib
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

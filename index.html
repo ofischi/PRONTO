@@ -49,7 +49,7 @@ h1{font-size:22px}h2{font-size:17px}h3{font-size:15px}
 svg.i{width:18px;height:18px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 
 /* ---------- doğrulama: yalnızca kırmızı etiket + nokta, çerçeve yok ---------- */
-.validation-error>label,.validation-error .field>label,.offer-person-row.validation-error .offer-person-label,.it.validation-error .it-title,
+.validation-error>label,.validation-error .field>label,.offer-person-row.validation-error .offer-person-label,
 .field:has(.inp.bad)>label{color:#e5484d!important}
 .validation-error>label::after,.validation-error .field>label::after,.offer-person-row.validation-error .offer-person-label::after,
 .field:has(.inp.bad)>label::after{content:"";display:inline-block;width:6px;height:6px;margin-left:7px;vertical-align:middle;border-radius:50%;background:#e5484d}
@@ -135,9 +135,9 @@ select.inp option{background:var(--bg2);color:var(--text)}
 .pickbtn{justify-content:space-between;width:100%;font-weight:500;background:var(--input)}
 .err-t{color:var(--err);font-size:12px}
 .grid{display:grid;gap:12px}
-.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
 .span2{grid-column:span 2}
-@media (max-width:640px){.g2,.g3,.g4{grid-template-columns:minmax(0,1fr)}.span2{grid-column:auto}}
+@media (max-width:640px){.g2,.g3{grid-template-columns:minmax(0,1fr)}.span2{grid-column:auto}}
 .search{position:relative;flex:1;min-width:180px;max-width:420px}
 .search svg{position:absolute;left:11px;top:10px;color:var(--muted)}
 .search .inp{padding-left:36px}
@@ -297,8 +297,7 @@ img.thumb{cursor:zoom-in}
 .plist button{display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;padding:10px;border:0;border-radius:8px;background:transparent}
 .plist button:hover,.plist button.on{background:var(--hover)}
 .plist button.on{color:var(--accent);font-weight:700}
-.spin{width:16px;height:16px;border-radius:50%;border:2px solid var(--border-2);border-top-color:var(--accent);animation:rot .7s linear infinite}
-@keyframes rot{to{transform:rotate(360deg)}}
+
 .imgview{max-width:100%;max-height:70dvh;border-radius:var(--r);display:block;margin:auto}
 
 /* ---------- sipariş formu ---------- */
@@ -460,7 +459,7 @@ table.pd-t{width:100%;border-collapse:collapse;font-size:9pt}
 .pd-t .cat td{background:#fff!important;font-weight:800;font-size:9pt;padding-top:10px;border-bottom:1.5px solid #1a1d24}
 .pd-sum{display:flex;justify-content:space-between;gap:10mm;margin-top:7mm;break-inside:avoid;page-break-inside:avoid}
 .pd-pay{font-size:9pt;min-width:0}
-.pd-pay table{border-collapse:collapse}.pd-pay .pd-kur{font-size:7.5pt;color:#6a707c}.pd-pay th{font-size:7.5pt;font-weight:600;color:#6a707c;text-align:left;padding:0 14px 2px 0}.pd-pay .pd-at{margin-top:5px;font-size:8.5pt;font-weight:600}.pd-pay td{padding:2px 14px 2px 0}
+.pd-pay table{border-collapse:collapse}.pd-pay th{font-size:7.5pt;font-weight:600;color:#6a707c;text-align:left;padding:0 14px 2px 0}.pd-pay .pd-at{margin-top:5px;font-size:8.5pt;font-weight:600}.pd-pay td{padding:2px 14px 2px 0}
 .pd-tot{min-width:70mm;font-size:9.5pt}
 .pd-tot div{display:flex;justify-content:space-between;gap:10mm;padding:2.5px 0}
 .pd-tot div span:first-child{color:#4a4f5a}
@@ -583,11 +582,7 @@ table.pd-t{width:100%;border-collapse:collapse;font-size:9pt}
 .sih-chip{min-height:40px;padding:8px 14px;border-radius:999px;border:1px solid var(--border-2);background:var(--surface);color:var(--text);font:650 13.5px var(--font);cursor:pointer;display:inline-flex;align-items:center;gap:6px;-webkit-tap-highlight-color:transparent}
 .sih-chip.on{background:var(--text);color:var(--bg);border-color:transparent}
 .sih-chip:disabled{opacity:.5}
-.sih-chip-ek{border-style:dashed}
 .sih-chip svg.i{width:16px;height:16px}
-.sih-kat{display:flex;gap:7px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;margin:0 -16px;padding-left:16px;padding-right:16px}
-.sih-kat::-webkit-scrollbar{display:none}
-.sih-kat .sih-chip{flex:none;white-space:nowrap}
 .sih-img{width:60px;height:60px;border-radius:12px;object-fit:cover;flex:none;background:var(--surface-2);border:1px solid var(--border)}
 .sih-img.bos{display:flex;align-items:center;justify-content:center;color:var(--muted)}
 .sih-img.sm{width:46px;height:46px;border-radius:10px}
@@ -867,7 +862,6 @@ const trLower = s => String(s ?? '').toLocaleLowerCase('tr-TR');
 const trAra = s => trLower(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ı/g, 'i').replace(/\s+/g, ' ').trim();
 const debounce = (fn, ms = 220) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
 const deep = o => JSON.parse(JSON.stringify(o));
-const isMobile = () => matchMedia('(max-width:767px)').matches;
 const V = {
   phone: s => !s || (/^\+?[\d\s()-]+$/.test(s) && (s.replace(/\D/g, '').length >= 10 && s.replace(/\D/g, '').length <= 15)),
   email: s => !s || /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]{2,}$/.test(s),
@@ -1377,7 +1371,7 @@ function bkSecimHTML(d) {
   if (tr && !BK_TUR[d.hesapTur]) return html`<div class="bk-sec">${turH}</div>`;
   const secili = Array.isArray(d.bankalar) ? d.bankalar : [];
   const varMi = bkAktif(d.doviz, d.hesapTur).length || secili.length;
-  const ilk = secili[0], ilkAyar = ilk && bkBul(ilk.id);
+  const ilk = secili[0];
   const ozet = ilk ? html`<div class="i"><div class="bk-o1"><b>${ilk.banka || ilk.unvan}</b>${ilk.banka && ilk.unvan ? html`<span class="bk-un" title="${ilk.unvan}">· ${ilk.unvan}</span>` : html`<span class="bk-un"></span>`}${secili.length > 1 ? html`<span class="bk-arti">+${secili.length - 1} hesap</span>` : ''}</div><div class="bk-ozi">${ibanFmt(ilk.iban)}</div></div>`
     : html`<div class="i"><span class="muted">${varMi ? 'Hesap seçilmedi — PDF\'te banka bilgisi çıkmaz' : `${d.doviz}${tr ? ' ' + BK_TUR[d.hesapTur].toLocaleLowerCase('tr-TR') : ''} hesabı yok. Ayarlar → Banka Hesapları'ndan ekleyin.`}</span></div>`;
   return html`<div class="bk-sec">${turH}<div class="field"><label>BANKA HESAPLARI</label>
@@ -1853,7 +1847,6 @@ A.nav = el => { cbKapat(); go(el.dataset.v); };
 function cbKapat() { const o = $('#cbOv'); if (o && !o.classList.contains('hidden')) { o.classList.add('hidden'); o.classList.remove('acik'); markNav(); } }
 A.cbDaha = () => { const o = $('#cbOv'); if (!o) return; if (!o.classList.contains('hidden')) return cbKapat(); closePop(); o.classList.remove('hidden'); requestAnimationFrame(() => o.classList.add('acik')); setSync(); markNav(); };
 A.cbGit = el => { cbKapat(); go(el.dataset.v); };
-A.cbAyar = () => { cbKapat(); openSettings(); };
 /* Daha menüsündeki logo: 2 sn basılı tutunca ayarlar şifresi sorulur (masaüstündeki logo gibi) */
 (() => { let t = null, x0 = 0, y0 = 0; const dur = () => { clearTimeout(t); t = null; };
   document.addEventListener('pointerdown', e => { const l = e.target.closest('#cbLogo'); if (!l) return; e.preventDefault(); x0 = e.clientX; y0 = e.clientY; dur(); t = setTimeout(() => { t = null; navigator.vibrate?.(30); cbKapat(); openSettings(); }, 2000); });
@@ -2105,7 +2098,6 @@ async function tkSilIste(t, b) {
 /* =====================================================================
    YENİ TEKLİF / DÜZENLE
    ===================================================================== */
-function catOrder() { const o = []; for (const u of DB.urun.all()) if (!o.includes(trLower(u.kategori))) o.push(trLower(u.kategori)); return o; }
 function newDraft() { return { tarih: todayISO(), teslim: '', doviz: '', cariId: '', personelId: '', items: [], iskontoTip: 'tutar', iskontoDeger: 0, iskontoTutar: 0, pesinat: 0, pesinatTarih: '', kdv: S.kdv, bankalar: [], montaj: '', nakliye: '', teslimYeri: '', durum: 'Beklemede' }; }
 const PK = { kat: '', model: '', katQ: '', modelQ: '' };
 VIEWS.teklifForm = (main, { id, taslak }) => {
@@ -3097,8 +3089,6 @@ A.sipGonder = async el => {
   el.disabled = true; try { await sipGonder(t); } finally { el.disabled = false; }
 };
 
-A.printT = el => printTeklif(DB.teklif.find(el.dataset.id));
-A.shareT = el => shareTeklif(DB.teklif.find(el.dataset.id));
 A.totDetail = el => { const t = DB.teklif.find(el.dataset.id); modal({ title: `Sipariş ${t.no} toplamlar`, size: 'sm', body: totsHTML(calc(t, payMap()[t.id]), t) }); };
 function kurText(pd, td, kur) { return pd === 'TRY' ? `1 ${td} = ${NF.format(kur)} TRY` : `1 ${pd} = ${NF.format(kur)} ${td}`; }
 function convert(tutar, pd, td, kur) { if (pd === td) return r2(tutar); return pd === 'TRY' ? r2(tutar / kur) : r2(tutar * kur); }
@@ -3257,15 +3247,6 @@ async function teklifPdfFile(t, o, { ask = true, reveal = false } = {}) {
 }
 const curPdfOpts = () => ({ ...S.pdf, ...(Local.get('pdf_last', null) || {}) });
 // Masaüstü köprüsü yoksa (eski program veya tarayıcı) ne yapılacağını açıkça söyle
-function needDesktop(t, o) {
-  const exe = /Electron/i.test(navigator.userAgent);
-  modal({ title: 'Masaüstü programı güncellenmeli', size: 'sm', body: html`<p style="margin-top:0">${exe
-      ? 'PDF indirme ve PDF paylaşma, PRONTO Teklif programının yeni sürümüyle çalışır. Bu bilgisayarda eski sürüm açık.'
-      : 'PDF indirme ve PDF paylaşma, PRONTO Teklif masaüstü programında çalışır.'}</p>
-    <p class="muted sm">${exe ? 'Programı kapatıp açın; güncelleme sorusu gelince "İndir" ve "Yeniden Başlat" deyin.' : 'Tarayıcıda yazdırma penceresinden "PDF olarak kaydet" seçebilirsiniz.'}</p>`,
-    foot: html`<button class="btn" data-x>Kapat</button><button class="btn primary" data-p>Yazdırma penceresiyle kaydet</button>`,
-    onMount: m => m.el.addEventListener('click', e => { if (e.target.closest('[data-p]')) { m.close(); printTeklif(t, o); } }) });
-}
 async function downloadTeklifPdf(t, o = curPdfOpts()) {
   if (!desktop()) return tkSaveAs(t, o);
   try {

@@ -767,6 +767,16 @@ tr.ps-off td, .lcard.ps-off{opacity:.62}
 @media (max-width:640px){.not-g,.not-k .nb{grid-template-columns:1fr}}
 .daha{display:flex;justify-content:center;padding:14px 0 18px}.daha .muted{font-weight:400;margin-left:4px}
 /* İade / Değişim */
+.iade-k{align-items:flex-start}
+.iade-k .iade-cb{margin-top:10px}
+.iade-th{flex:none;width:44px;height:44px;object-fit:cover}
+.iade-dg{margin-top:4px}
+.iade-l{font-size:11px;font-weight:700;color:var(--muted);margin:8px 0 4px;text-transform:uppercase;letter-spacing:.03em}
+.iade-sonuc{display:flex;gap:8px;align-items:center;margin-top:8px;padding:8px;border-radius:var(--r-sm);border:1px dashed color-mix(in srgb,var(--accent) 50%,transparent);background:color-mix(in srgb,var(--accent) 6%,transparent);font-size:13px}
+.iade-ks-l{display:flex;flex-direction:column;gap:4px;margin-top:6px;max-height:260px;overflow:auto}
+.iade-ks{display:flex;gap:8px;align-items:center;text-align:left;border:1px solid var(--border-2);border-radius:var(--r-sm);background:transparent;padding:6px 8px;font:inherit;font-size:13px;color:inherit}
+.iade-ks>span{display:flex;flex-direction:column}
+.iade-ks .iade-th{width:36px;height:36px}
 .iade-kart{margin-bottom:14px}
 .iade-r{padding:10px 0;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:3px}
 .iade-r:first-of-type{border-top:0}
@@ -1667,7 +1677,7 @@ function iadeKart(t) {
   const c = calc(t, payMap()[t.id] || []), fazla = c.kalan < 0 ? -c.kalan : 0;   /* müşterinin fazla ödediği (iade / alacak) */
   return html`<div class="card iade-kart"><div class="card-h"><h3>İade / Değişim (${L.length})</h3></div>${L.map(r => {
     const tut = iadeTutar(t, r), kap = !iadeAcik(r);
-    const kal = (r.kalemler || []).map(k => { const it = t.items.find(i => i.uid === k.uid); return `${it ? itemTitle(it) : 'Ürün'} × ${k.adet}${k.yeni_renk ? ' → ' + k.yeni_renk : ''}${k.yeni_urun ? ' → ' + k.yeni_urun : ''}`; }).join(' · ');
+    const kal = (r.kalemler || []).map(k => { const it = t.items.find(i => i.uid === k.uid); return `${it ? itemTitle(it) : 'Ürün'} × ${k.adet}${k.katalog ? ' → ' + iadeYAd(k.katalog) : (k.yeni_urun ? ' → ' + k.yeni_urun : '') + (k.yeni_renk ? ' · ' + k.yeni_renk : '')}`; }).join(' · ');
     return html`<div class="iade-r ${kap ? 'kapali' : ''}"><div class="iade-b"><b>${r.no}</b> <span class="iade-tur">${iadeTur(r)}</span> <span class="st st-iade-${r.durum}">${IADE_DURUM[r.durum] || r.durum}</span></div>
       <div class="sm">${kal}</div>
       <div class="muted sm">${r.sebep}${r.sebep_not ? ': ' + r.sebep_not : ''}${r.not ? ' · ' + r.not : ''}</div>
@@ -1704,9 +1714,10 @@ A.iadeSonuc = async el => {
 };
 A.iadeParaSec = el => {
   const [t, r] = iadeBul(el); if (!r) return;
-  const v = { para: r.para || 'yok', fark: numStr(r.fark) };
+  const oneri = r.tur === 'degisim' ? degFark(t, (r.kalemler || []).filter(k => k.katalog)) : null;
+  const v = { para: r.para || 'yok', fark: numStr(+r.fark || oneri || 0) };
   modal({ title: `${r.no} · ${r.tur === 'degisim' ? 'Fark / para' : 'Para seçimi'}`, size: 'sm', body: html`
-    ${r.tur === 'degisim' ? html`<div class="field"><label>Fiyat farkı (${t.doviz}) <span class="muted" style="font-weight:500">artı: müşteri öder · eksi: müşteriye iade</span></label><input class="inp" inputmode="decimal" data-fark value="${v.fark}" placeholder="0,00"></div>` : ''}
+    ${r.tur === 'degisim' ? html`<div class="field"><label>Fiyat farkı (${t.doviz}) <span class="muted" style="font-weight:500">artı: müşteri öder · eksi: müşteriye iade</span></label><input class="inp" inputmode="decimal" data-fark value="${v.fark}" placeholder="0,00">${oneri != null ? html`<div class="muted sm" style="margin-top:4px">Önerilen (liste fiyatı farkı): ${money(oneri, t.doviz)}</div>` : ''}</div>` : ''}
     <div class="field"><label>Para</label><div class="seg iade-seg">${Object.entries(IADE_PARA).map(([k, l]) => html`<button type="button" class="${v.para === k ? 'on' : ''}" data-p="${k}">${l}</button>`)}</div></div>
     <p class="muted sm" style="margin:6px 0 0">Para iadesi: tutar kalan ödemeden düşer, "Para iadesini kaydet" ile ödeme olarak işlenir. Mahsup: müşterinin alacağı olarak kalır.</p>`,
     foot: html`<button class="btn" data-x>Vazgeç</button><button class="btn primary" data-s>Kaydet</button>`,
@@ -1722,11 +1733,39 @@ A.iadeParaSec = el => {
 /* yalnız müşterinin fazla ödediği kısım geri ödenir (iade önce kalan borçtan düşer) */
 A.iadeOdeme = el => { const [t, r] = iadeBul(el); if (!r) return; const c = calc(t, payMap()[t.id] || []), fazla = c.kalan < 0 ? -c.kalan : 0;
   const ust = r.tur === 'iade' ? iadeTutar(t, r) : Math.abs(+r.fark || 0); payForm(t, null, { iade: r, tutar: r2(Math.min(fazla, ust || fazla)) }); };
+/* katalog: fotoğraf, değişimde aynı ürünün varyantları / arama, otomatik fiyat farkı */
+const iadeKy = x => trLower(String(x || '').trim());
+const iadeAyni = (u, b) => iadeKy(u.kategori) === iadeKy(b.kategori) && iadeKy(u.model) === iadeKy(b.model) && iadeKy(u.modul) === iadeKy(b.modul);
+const iadeVaryant = b => b ? DB.urun.all().filter(u => iadeAyni(u, b)) : [];
+const iadeKatBul = y => y ? iadeVaryant(y).find(u => ['olcu', 'renk', 'yon'].every(d => iadeKy(u[d]) === iadeKy(y[d]))) : null;
+const iadeYAd = y => { const v = [y.olcu, y.renk, y.yon].filter(Boolean); return [y.kategori, y.model, y.modul].filter(Boolean).join(' ') + (v.length ? ' · ' + v.join(' · ') : ''); };
+const iadeTh = (f) => { f = safeImg(f); return f ? html`<img class="thumb iade-th" src="${f}" alt="">` : html`<span class="thumb iade-th">Fotoğraf Yok</span>`; };
+/* değişim farkı (teklif dövizinde, iskonto + KDV oranıyla): (yeni liste fiyatı − eski birim fiyat) × adet; liste fiyatı bilinmeyen kalem varsa null */
+function degFark(t, list) {
+  const ana = t.items.reduce((a, i) => a + (+i.fiyat || 0) * (+i.adet || 0), 0); if (!ana) return null;
+  const isk = t.iskontoTip === '%' ? ana * (+t.iskontoDeger || 0) / 100 : +t.iskontoTutar || 0;
+  const ara = Math.max(0, ana - isk), oran = (ara + ara * (+t.kdv || 0) / 100) / ana;
+  let top = 0;
+  for (const k of list) {
+    const it = t.items.find(i => i.uid === k.uid), y = k.yeni || k.katalog; if (!it || !y) return null;
+    const u = iadeKatBul(y); if (!u || !(+u.fiyat > 0) || (u.doviz || t.doviz) !== t.doviz) return null;
+    top += (+u.fiyat - (+it.fiyat || 0)) * (+k.adet || 0);
+  }
+  return r2(top * oran);
+}
+function iadeAraSonuc(q) {
+  const t = trLower(String(q || '').trim()); if (!t) return html`<div class="muted sm">Kategori, model, renk yazın…</div>`;
+  const L = DB.urun.all().filter(u => trLower([u.kod, u.kategori, u.model, u.modul, u.olcu, u.renk, u.yon].join(' ')).includes(t)).slice(0, 20);
+  return L.length ? L.map(u => html`<button type="button" class="iade-ks" data-ks="${u.id}">${iadeTh(modelFoto.get(u.kategori, u.model, u.modul))}<span><b>${u.kategori} / ${u.model}</b><span class="muted sm">${[u.modul, u.olcu, u.renk, u.yon].filter(Boolean).join(' · ') || 'Standart'}${u.fiyat ? ' · ' + money(u.fiyat, u.doviz) : ''}</span></span></button>`) : html`<div class="muted sm">Katalogda bulunamadı.</div>`;
+}
 A.iadeTalep = el => {
   const t = DB.teklif.find(el.dataset.id); if (!t) return;
   const L = t.items.filter(it => iadeTeslimli(t, it));
   const kalan = it => Math.max(0, (+it.adet || 0) - iadeAdet(t, it.uid));
-  const S = { tur: 'iade', sec: new Map(), yeni: {}, sebep: '', sebepNot: '', para: 'iade', not: '', fark: '' };
+  const S = { tur: 'iade', sec: new Map(), yeni: {}, ara: {}, sebep: '', sebepNot: '', para: 'iade', not: '', fark: '', farkElle: false };
+  const yeniBas = it => ({ kategori: it.kategori || '', model: it.model || '', modul: it.modul || '', olcu: it.olcu || '', renk: it.renk || '', yon: it.yon || '' });
+  const farkOto = () => S.tur === 'degisim' && S.sec.size ? degFark(t, [...S.sec.entries()].map(([u, n]) => ({ uid: u, adet: n, yeni: S.yeni[u] || yeniBas(t.items.find(i => i.uid === u) || {}) }))) : null;
+  const farkGuncelle = () => { if (!S.farkElle) { const f = farkOto(); S.fark = f ? numStr(f) : ''; } };
   const ilk = L.find(it => kalan(it) > 0); if (!ilk) return toast('İade edilebilecek teslim edilmiş ürün yok', 'err');
   S.sec.set(ilk.uid, kalan(ilk));
   modal({ title: `İade / Değişim talebi — Sipariş ${t.no}`, body: html`<div data-ib></div>`,
@@ -1737,28 +1776,43 @@ A.iadeTalep = el => {
           <div class="field"><label>İşlem</label><div class="seg iade-seg">${[['iade', 'İade'], ['degisim', 'Değişim']].map(([k, l]) => html`<button type="button" class="${S.tur === k ? 'on' : ''}" data-tur="${k}">${l}</button>`)}</div></div>
           <div class="field"><label>Ürünler (yalnız teslim edilmiş)</label><div class="iade-kl">${t.items.map(it => { const tes = iadeTeslimli(t, it), kl = kalan(it), on = S.sec.has(it.uid), y = S.yeni[it.uid] || {};
             return html`<div class="iade-k ${on ? 'on' : ''} ${!tes || !kl ? 'kapali' : ''}"><button type="button" class="iade-cb ${on ? 'on' : ''}" data-cb="${it.uid}" ${!tes || !kl ? 'disabled' : ''} aria-label="Seç"></button>
-              <div class="grow"><b>${itemTitle(it)}</b><div class="muted sm">${[it.olcu, it.renk].filter(Boolean).join(' · ')} · ${!tes ? 'henüz teslim edilmedi' : kl ? `teslim ${it.adet}, iade edilebilir ${kl}` : 'tamamı iade edilmiş'}</div>
-                ${on && S.tur === 'degisim' ? html`<div class="grid g2" style="margin-top:6px"><input class="inp" data-yu="${it.uid}" maxlength="200" placeholder="Yeni ürün (aynıysa boş)" value="${y.urun || ''}"><input class="inp" data-yr="${it.uid}" maxlength="80" placeholder="Yeni renk (aynıysa boş)" value="${y.renk || ''}"></div>` : ''}</div>
-              ${on ? html`<div class="iade-step"><button type="button" data-ad="${it.uid}" data-d="-1" aria-label="Azalt">−</button><b>${S.sec.get(it.uid)}</b><button type="button" data-ad="${it.uid}" data-d="1" aria-label="Artır">+</button></div>` : ''}</div>`; })}</div></div>
+              ${iadeTh(offerFotoGet(it))}
+              <div class="grow"><b>${itemTitle(it)}</b><div class="muted sm">${[it.olcu, it.renk, it.yon].filter(Boolean).join(' · ')} · ${!tes ? 'henüz teslim edilmedi' : kl ? `teslim ${it.adet}, iade edilebilir ${kl}` : 'tamamı iade edilmiş'}</div>
+                ${on && S.tur === 'degisim' ? (() => { const yy = S.yeni[it.uid] ||= yeniBas(it), V = iadeVaryant(yy), uu = iadeKatBul(yy);
+                  return html`<div class="iade-dg"><div class="iade-l">Yeni ürün</div>
+                    ${[['renk', 'Renk'], ['olcu', 'Ölçü'], ['yon', 'Yön']].map(([d, ad]) => { const ops = [...new Map(V.map(u => [iadeKy(u[d]), u[d]])).values()].filter(Boolean);
+                      return ops.length < 2 && !(ops.length === 1 && iadeKy(ops[0]) !== iadeKy(yy[d])) ? '' : html`<div class="iade-l">${ad}</div><div class="iade-chips">${ops.map(x => html`<button type="button" class="${iadeKy(x) === iadeKy(yy[d]) ? 'on' : ''}" data-vv="${it.uid}" data-d="${d}" data-deger="${x}">${x}</button>`)}</div>`; })}
+                    <div class="iade-sonuc">${iadeTh(modelFoto.get(yy.kategori, yy.model, yy.modul))}<div>→ <b>${iadeYAd(yy)}</b>${uu && uu.fiyat ? html`<br><span class="muted sm">Liste fiyatı ${money(uu.fiyat, uu.doviz)}</span>` : !uu ? html`<br><span class="muted sm">Bu birleşim katalogda yok</span>` : ''}</div></div>
+                    ${S.ara[it.uid] != null ? html`<input class="inp" data-q="${it.uid}" maxlength="80" placeholder="Katalogda ara: kategori, model, renk…" value="${S.ara[it.uid]}" style="margin-top:8px"><div class="iade-ks-l" data-ksl="${it.uid}">${iadeAraSonuc(S.ara[it.uid])}</div>`
+                      : html`<button type="button" class="btn sm" data-baska="${it.uid}" style="margin-top:8px">Başka ürün seç…</button>`}</div>`; })() : ''}</div>
+              ${on ? html`<div class="iade-step"><button type="button" data-ad="${it.uid}" data-adim="-1" aria-label="Azalt">−</button><b>${S.sec.get(it.uid)}</b><button type="button" data-ad="${it.uid}" data-adim="1" aria-label="Artır">+</button></div>` : ''}</div>`; })}</div></div>
           <div class="field"><label>Sebep <span class="req">*</span></label><div class="iade-chips">${IADE_SEBEP.map(s => html`<button type="button" class="${S.sebep === s ? 'on' : ''}" data-sb="${s}">${s}</button>`)}</div>
             ${S.sebep === 'Diğer' ? html`<input class="inp" data-sn maxlength="300" placeholder="Sebebi kısaca yazın" value="${S.sebepNot}" style="margin-top:6px">` : ''}</div>
           ${S.tur === 'iade' ? html`<div class="field"><label>Para</label><div class="seg iade-seg">${Object.entries(IADE_PARA).map(([k, l]) => html`<button type="button" class="${S.para === k ? 'on' : ''}" data-pr="${k}">${l}</button>`)}</div></div>`
-            : html`<div class="field"><label>Fiyat farkı (${t.doviz}) <span class="muted" style="font-weight:500">isteğe bağlı · artı: müşteri öder</span></label><input class="inp" inputmode="decimal" data-fk value="${S.fark}" placeholder="0,00"></div>`}
+            : html`<div class="field"><label>Fiyat farkı (${t.doviz}) <span class="muted" style="font-weight:500">artı: müşteri öder · eksi: müşteriye iade</span></label><input class="inp" inputmode="decimal" data-fk value="${S.fark}" placeholder="0,00">
+                <div class="muted sm" style="margin-top:4px">${(() => { const f = farkOto(); return f == null ? 'Liste fiyatı bilinmeyen ürün var; farkı elle girin.' : `Otomatik: ${money(f, t.doviz)} (yeni liste fiyatı − birim fiyat, iskonto ve KDV dahil)${S.farkElle ? ' · elle değiştirildi' : ''}`; })()}</div></div>`}
           <div class="field"><label>Not</label><textarea class="inp" data-nt maxlength="1000">${S.not}</textarea></div>`);
       };
       ciz();
-      m.el.addEventListener('input', e => { const d = e.target.dataset; if ('sn' in d) S.sebepNot = e.target.value; else if ('nt' in d) S.not = e.target.value; else if ('fk' in d) S.fark = e.target.value;
-        else if (d.yu) (S.yeni[d.yu] ||= {}).urun = e.target.value; else if (d.yr) (S.yeni[d.yr] ||= {}).renk = e.target.value; });
+      m.el.addEventListener('input', e => { const d = e.target.dataset; if ('sn' in d) S.sebepNot = e.target.value; else if ('nt' in d) S.not = e.target.value; else if ('fk' in d) { S.fark = e.target.value; S.farkElle = true; }
+        else if (d.q) { S.ara[d.q] = e.target.value; const box = m.$(`[data-ksl="${d.q}"]`); if (box) mount(box, iadeAraSonuc(e.target.value)); } });
       m.el.addEventListener('click', async e => {
         const b = e.target.closest('[data-tur],[data-cb],[data-ad],[data-sb],[data-pr]');
         if (b) {
-          if (b.dataset.tur) S.tur = b.dataset.tur;
+          if (b.dataset.tur) { S.tur = b.dataset.tur; }
           else if (b.dataset.cb) { const it = t.items.find(i => i.uid === b.dataset.cb); S.sec.has(it.uid) ? S.sec.delete(it.uid) : S.sec.set(it.uid, kalan(it)); }
-          else if (b.dataset.ad) { const it = t.items.find(i => i.uid === b.dataset.ad); S.sec.set(it.uid, Math.min(kalan(it), Math.max(1, (S.sec.get(it.uid) || 1) + +b.dataset.d))); }
+          else if (b.dataset.ad) { const it = t.items.find(i => i.uid === b.dataset.ad); S.sec.set(it.uid, Math.min(kalan(it), Math.max(1, (S.sec.get(it.uid) || 1) + +b.dataset.adim))); }
           else if (b.dataset.sb) S.sebep = b.dataset.sb;
           else if (b.dataset.pr) S.para = b.dataset.pr;
-          ciz(); return;
+          farkGuncelle(); ciz(); return;
         }
+        const vv = e.target.closest('[data-vv]');
+        if (vv) { const y = S.yeni[vv.dataset.vv]; if (y) { S.yeni[vv.dataset.vv] = { ...y, [vv.dataset.d]: vv.dataset.deger }; farkGuncelle(); ciz(); } return; }
+        const bs = e.target.closest('[data-baska]');
+        if (bs) { S.ara[bs.dataset.baska] = ''; ciz(); m.$(`[data-q="${bs.dataset.baska}"]`)?.focus(); return; }
+        const ks = e.target.closest('[data-ks]');
+        if (ks) { const box = ks.closest('[data-ksl]'), u = DB.urun.find(ks.dataset.ks);
+          if (box && u) { S.yeni[box.dataset.ksl] = { kategori: u.kategori || '', model: u.model || '', modul: u.modul || '', olcu: u.olcu || '', renk: u.renk || '', yon: u.yon || '' }; delete S.ara[box.dataset.ksl]; farkGuncelle(); ciz(); } return; }
         if (e.target.closest('[data-gonder]')) {
           if (!S.sec.size) return toast('En az bir ürün seçin', 'err');
           if (!S.sebep) return toast('İade sebebini seçin', 'err');
@@ -1766,7 +1820,7 @@ A.iadeTalep = el => {
           if (await kimSor('İade / değişim talebi') === null) return;
           const p = { tur: S.tur, teklif_id: t.id, sebep: S.sebep, sebep_not: S.sebep === 'Diğer' ? clean(S.sebepNot, 300) : '', para_sonuc: S.tur === 'iade' ? S.para : 'yok', not: clean(S.not, 1000),
             fark: S.tur === 'degisim' && num(S.fark) ? String(r2(num(S.fark))) : null,
-            kalemler: [...S.sec.entries()].map(([u, n]) => ({ teklif_kalem: u, adet: n, yeni_urun: clean((S.yeni[u] || {}).urun || '', 200), yeni_renk: clean((S.yeni[u] || {}).renk || '', 80) })) };
+            kalemler: [...S.sec.entries()].map(([u, n]) => ({ teklif_kalem: u, adet: n, ...(S.tur === 'degisim' && S.yeni[u] ? { yeni: S.yeni[u] } : {}) })) };
           const btn = e.target.closest('[data-gonder]'); btn.disabled = true;
           const r = await iadeRpc('pronto_iade_ac', { p }, null);
           btn.disabled = false;
